@@ -1,0 +1,88 @@
+\section{Background}
+
+\subsection{Fuzzing}
+
+Fuzz testing, or \textit{fuzzing} for short, is a widely deployed method for automatic
+software testing and vulnerability discovery that makes use of a diverse set of
+tools.\cite{8863940}
+Its goal is to find inputs to a Program Under Test (PUT) that trigger a certain
+behavior, often a crash that might then lead to the discovery of bugs or security
+vulnerabilities.
+One way to classify fuzzers is by the information that is available to them.
+
+Fuzzers that only make use of externally observable behavior of the PUT are
+called \textit{black-box} fuzzers.
+In this case, there might only be access to a crash oracle and no further
+conclusions about the behavior of the PUT under a certain input can be drawn.
+In contrast to this, \textit{white-box} fuzzers allow full access to the PUT,
+usually including any original source code or documentation which can greatly
+aid the fuzzing process.
+
+Since detailed information is often not available but observing certain parts
+of the internal behavior of the PUT might still be possible, \textit{grey-box}
+fuzzers represent an important middle-ground between the previous two extremes.
+A common source of instrumentation data that grey-box fuzzers make use of is the
+\textit{coverage map} of the PUT during execution.
+It allows the fuzzer to direct its exploration efforts towards promising regions of the PUT.
+
+
+One famous example of a coverage-guided greybox fuzzer is AFL++\cite{fioraldi2020afl++}.
+It works by iteratively improving the \textit{corpus}, a set of promising
+inputs, through a series of mutations and selections.
+Mutations include operations like bit flips, substitutions and splicing.
+Newly generated inputs are then evaluated and added to the corpus for further
+mutation and selection if they produce new coverage.
+The success of a greybox fuzzer is strongly dependent on a high-quality initial
+corpus and appropriate seed mutation and selection strategies.
+
+\subsection{Reinforcement learning}
+
+Reinforcement learning (RL) is an extremely general framework for approaching problems
+in which an agent strives to maximize a reward signal through a selection of actions
+in certain states.\cite{sutton1998reinforcement}
+These kinds of problems can be modeled as finite Markov decision processes (MDPs).
+A Markov decision process is a 3-tuple $MDP=(S,A,p)$ where
+
+\begin{itemize}
+  \item $\mathcal{S}$ is the set of states,
+  \item $\mathcal{A}$ is the set of actions where $\mathcal{A}_s\subseteq A$ are actions available in state $s\in\mathcal{S}$,
+  \item $p(s^\prime,r|s,a)=\Pr\{S_t=s^\prime, R_t=r|S_{t-1}=s, A_{t-1}=a\}$
+  describes the system dynamics, i.e., the probability of encountering a next
+  state $s^\prime$ and reward $r$ at time step $t$ when taking action $a$ in
+  state $s$ at time step $t-1$
+\end{itemize}
+
+An RL agent's goal is to learn a policy $\pi:\mathcal{S}\times\mathcal{A}\rightarrow [0,1]$
+mapping each state $s$ to probabilities of taking each possible action $a$ to maximize
+the cumulative reward.
+Algorithms for finding an optimal $\pi^*$ can be divided into three classes:
+value-based, policy-based and actor-critic.
+
+Value-based methods try to learn a value function $Q:\mathcal{S}\rightarrow \mathcal{R}$
+mapping states to their expected cumulative reward so that in each step, the
+action that maximizes the expected reward can be taken.
+These include well-known methods such as Q-learning, TD($\lambda$) or SARSA.
+
+Policy-based methods try to directly construct an optimal policy $\pi^*$ without the
+use of a value function.
+They have various advantages.
+For example, they can easily handle continuous action spaces and ensure stochasticity
+which is important for state space exploration.
+A well-known classical policy-based algorithm is REINFORCE.\cite{williams1992simple}
+
+Actor-critic methods synthesize value- and policy-based methods by including information
+about a state's value in the policy learning process.\\
+
+Since classical, tabular methods don't work well with large state spaces,
+state-of-the-art methods make use modern-day deep learning advancements.
+Examples include the family of Deep-Q Network (DQN)
+algorithms\cite{mnih2013playing}\cite{hessel2018rainbow} approximating the $Q$
+function by neural networks, policy-based gradient-descent methods like
+Proximal Policy Optimization (PPO)\cite{schulman2017proximal} and actor-critic
+methods like A3C\cite{mnih2016asynchronous}.
+Impressive results range from the master-level Go program
+AlphaGo\cite{silver2016mastering} and its more generalized successors
+AlphaZero\cite{silver2017mastering} and MuZero\cite{schrittwieser2020mastering}
+to Dreamerv3\cite{hafner2023mastering} that is able to learn how to acquire
+diamonds in the popular video game \textit{Minecraft} without any human input
+or expert knowledge.
