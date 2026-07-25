@@ -1,0 +1,115 @@
+%!TEX root = ../../thesis.tex
+
+\section{Reinforcement Learning for Fuzzing}\label{sec:reinforcement-fuzzing}
+
+% Drafting outline: bullet points to be fleshed out into prose.
+
+\subsection{Fuzzing as a Reinforcement Learning Problem}\label{sec:rlfuzz-framing}
+
+\begin{itemize}
+  \item Why the fit is natural: fuzzing is sequential decision making under uncertainty over an
+    enormous search space, with a cheap scalar progress signal (new coverage) --- exactly the RL
+    interface of \cref{sec:rl-mdp}; first formalized as an MDP by Böttinger et
+    al.~\cite{bottinger_deep_2018}.
+  \item The generic correspondence (present as a table; concrete instantiation for this thesis in
+    \cref{chap:efficientzero-fuzzing}):
+    \begin{itemize}
+      \item \emph{environment} $=$ the target program (plus harness/emulator),
+      \item \emph{state/observation} $=$ execution feedback: coverage information, program or
+        protocol state, current input~\cite{bottinger_deep_2018,borcherding_bandits_2023},
+      \item \emph{action} $=$ a fuzzing decision: mutation operator/position, seed choice,
+        protocol message~\cite{bottinger_deep_2018,binosi_rainfuzz_2023,borcherding_bandits_2023},
+      \item \emph{reward} $=$ newly discovered coverage (or crashes, execution-time
+        properties)~\cite{bottinger_deep_2018,wang_syzvegas_2021},
+      \item \emph{episode} $=$ one test case or one protocol session, ended by a target reset.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Prior Work}\label{sec:rlfuzz-prior-work}
+
+\begin{itemize}
+  \item Organize the survey by \emph{which decision in the fuzzing loop} is learned
+    (following the taxonomy of ML-for-fuzzing surveys~\cite{wang_systematic_2020,qiu_survey_2025}):
+  \item \textbf{Where/how to mutate}:
+    \begin{itemize}
+      \item deep Q-learning over mutation actions on input substrings
+        ~\cite{bottinger_deep_2018},
+      \item Rainfuzz: PPO-trained heat maps scoring byte positions by expected
+        usefulness, run collaboratively with AFL++~\cite{binosi_rainfuzz_2023},
+      \item (non-RL baseline for the same problem: MOpt's particle-swarm mutation-operator
+        scheduling~\cite{lyu_mopt_nodate}).
+    \end{itemize}
+  \item \textbf{Which seed/task to schedule}:
+    \begin{itemize}
+      \item multi-armed-bandit / hierarchical seed scheduling for greybox
+        fuzzing~\cite{wang_reinforcement_2021},
+      \item SyzVegas: MAB-based task and seed selection inside the Syzkaller kernel
+        fuzzer~\cite{wang_syzvegas_2021},
+      \item Alphuzz: MCTS over the seed-mutation tree~\cite{zhao_alphuzz_2022} --- closest prior
+        use of tree search, but over seeds, not program interaction.
+    \end{itemize}
+  \item \textbf{Which grammar construct / input token to use}:
+    BanditFuzz for SMT solvers~\cite{christakis_banditfuzz_2020}; BertRLFuzzer combines a language
+    model with RL-chosen attack mutations~\cite{jha_bertrlfuzzer_2024}.
+  \item \textbf{Which protocol state to fuzz} (stateful setting, closest to this thesis):
+    stochastic and adversarial MABs for state selection in industrial-protocol
+    fuzzing~\cite{borcherding_bandits_2023}.
+  \item Adjacent security applications showing the same pattern: curiosity-driven web
+    testing~\cite{zheng_automatic_2021}, Q-learning agents for SQL
+    injection~\cite{erdodi_simulating_2021}, DQN-based autonomous penetration
+    testing~\cite{zhou_autonomous_2021}.
+\end{itemize}
+
+\subsection{Recurring Difficulties}\label{sec:rlfuzz-difficulties}
+
+\begin{itemize}
+  \item \emph{Reward design}: coverage rewards are sparse and non-stationary --- each edge pays
+    out only once, so the reward distribution decays as the campaign progresses; motivates the
+    adversarial-bandit view~\cite{borcherding_bandits_2023} and reward-model care
+    in~\cite{wang_syzvegas_2021}.
+  \item \emph{Observation design}: what the agent sees (raw bytes, coverage bitmap, protocol
+    responses) is a heavily aliased, partial view of true program state
+    (cf.\ \cref{sec:rl-mdp})~\cite{bottinger_deep_2018}.
+  \item \emph{Throughput mismatch}: a classic fuzzer executes thousands of inputs per second;
+    NN inference per decision must earn back its latency --- one reason prior work often keeps the
+    RL component advisory/parallel to a conventional fuzzer~\cite{binosi_rainfuzz_2023}.
+  \item \emph{Sample cost}: model-free learners need more interactions than a fuzzing campaign
+    can afford, especially under emulation (\cref{sec:rl-sample-efficiency}).
+  \item \emph{Mixed empirical results}: learned components do not consistently beat well-tuned
+    static heuristics --- e.g.\ AFLNet outperformed both bandit models
+    in~\cite{borcherding_bandits_2023}; deep-RL evaluation pitfalls compound
+    this~\cite{henderson_deep_2019}.
+  \item Honest framing for the thesis: these difficulties define the burden of proof for the
+    approach evaluated in \cref{chap:analysis}.
+\end{itemize}
+
+\subsection{The Gap Addressed by This Thesis}\label{sec:rlfuzz-gap}
+
+\begin{itemize}
+  \item Common shape of prior work: a \emph{model-free} learner (Q-learning, PPO, bandits) tunes
+    \emph{one heuristic knob} of an otherwise conventional random fuzzer
+    ~\cite{bottinger_deep_2018,binosi_rainfuzz_2023,wang_reinforcement_2021,wang_syzvegas_2021,christakis_banditfuzz_2020}.
+  \item Unexplored combination --- the subject of this thesis:
+    \begin{itemize}
+      \item a \emph{model-based, planning} algorithm (EfficientZero: learned latent dynamics
+        model + MCTS~\cite{ye_mastering_2021,schrittwieser_mastering_2020}) as the decision maker,
+      \item acting \emph{directly} at the protocol level against a \emph{stateful} target ---
+        the agent drives the session, rather than advising a random mutator
+        (\cref{chap:efficientzero-fuzzing}),
+      \item on targets rehosted in an emulator (MOGI, \cref{chap:mogi-setup}), whose snapshots
+        provide the exact, cheap episode resets and basic-block coverage observations the MDP
+        framing requires (\cref{sec:fuzzing-emulation}),
+      \item rationale: the learned model lets planning happen in latent space, amortizing
+        expensive real executions --- directly attacking the sample-cost and throughput
+        objections above (\cref{sec:rl-sample-efficiency}).
+    \end{itemize}
+  \item Research questions to state explicitly here (evaluated in \cref{chap:analysis}):
+    \begin{itemize}
+      \item Can EfficientZero learn useful policies on fuzzing-shaped reward landscapes
+        (sparse, decaying, heavily aliased observations)?
+      \item How does the approach scale from toy targets (\cref{chap:targets}) up to a real
+        protocol implementation (open62541, \cref{sec:target-open62541})?
+      \item Where does planning with a learned model help or fail compared to classic greybox
+        baselines (\cref{sec:analysis-advantages,sec:analysis-disadvantages})?
+    \end{itemize}
+\end{itemize}

@@ -1,0 +1,166 @@
+%!TEX root = ../../thesis.tex
+
+\section{Reinforcement Learning}\label{sec:reinforcement-learning}
+
+% Drafting outline: bullet points to be fleshed out into prose.
+
+\subsection{Agent, Environment, and Markov Decision Processes}\label{sec:rl-mdp}
+
+% --- Verbatim excerpt from the proposal (own text; citation keys remapped) ---
+Reinforcement learning (RL) is an extremely general framework for approaching problems
+in which an agent strives to maximize a reward signal through a selection of actions
+in certain states~\cite{sutton_reinforcement_2020}.
+These kinds of problems can be modeled as finite Markov decision processes (MDPs).
+A Markov decision process is a 3-tuple $MDP=(S,A,p)$ where
+
+\begin{itemize}
+  \item $\mathcal{S}$ is the set of states,
+  \item $\mathcal{A}$ is the set of actions where $\mathcal{A}_s\subseteq A$ are actions available in state $s\in\mathcal{S}$,
+  \item $p(s^\prime,r|s,a)=\Pr\{S_t=s^\prime, R_t=r|S_{t-1}=s, A_{t-1}=a\}$
+  describes the system dynamics, i.e., the probability of encountering a next
+  state $s^\prime$ and reward $r$ at time step $t$ when taking action $a$ in
+  state $s$ at time step $t-1$
+\end{itemize}
+
+An RL agent's goal is to learn a policy $\pi:\mathcal{S}\times\mathcal{A}\rightarrow [0,1]$
+mapping each state $s$ to probabilities of taking each possible action $a$ to maximize
+the cumulative reward.
+% --- End excerpt (notation cleanup when fleshing out: unify $S$ vs.\ $\mathcal{S}$
+%     in the tuple; consider extending to $(\mathcal{S},\mathcal{A},p,\gamma)$) ---
+
+\begin{itemize}
+  \item Distinguish from supervised learning: no labeled correct actions, only evaluative
+    (and possibly delayed) feedback; trial-and-error credit assignment
+    ~\cite{sutton_reinforcement_2020}; idea traces back to early AI~\cite{minsky_steps_1961};
+    add \cite{puterman_markov_2009} as the standard MDP reference next to the excerpt.
+  \item Extend the excerpt's formalism~\cite{sutton_reinforcement_2020}:
+    \begin{itemize}
+      \item Markov property: transition depends only on current state and action,
+      \item episodic vs.\ continuing tasks; discount factor $\gamma$ and discounted return
+        $G_t = \sum_k \gamma^k r_{t+k}$,
+      \item state value $V^\pi$, action value $Q^\pi$; Bellman (optimality) equations;
+        optimal policy $\pi^*$.
+    \end{itemize}
+  \item Partial observability: agent often sees an \emph{observation}, not the full state
+    (POMDP setting)~\cite{sutton_reinforcement_2020} --- relevant later: a coverage vector is a
+    very partial view of the emulated program's true state
+    (\cref{chap:efficientzero-fuzzing}).
+\end{itemize}
+
+\subsection{Exploration versus Exploitation}\label{sec:rl-exploration}
+
+\begin{itemize}
+  \item Fundamental dilemma: exploit the best-known action or explore to find better
+    ones~\cite{sutton_reinforcement_2020}.
+  \item Minimal setting: multi-armed bandit (single state); $\varepsilon$-greedy and
+    optimism-in-the-face-of-uncertainty / UCB-style strategies
+    ~\cite{sutton_reinforcement_2020,hutchison_bandit_2006}.
+  \item Contextual bandit as intermediate step between bandit and full MDP ---
+    mirrors the ladder of evaluation targets in \cref{chap:targets}
+    (\cref{sec:target-bandit,sec:target-contextual-bandit,sec:target-sequence}).
+  \item Foreshadow: fuzzing has exactly this structure --- keep hammering a productive protocol
+    state vs.\ probe untested ones~\cite{borcherding_bandits_2023}.
+\end{itemize}
+
+\subsection{Algorithm Families}\label{sec:rl-algorithms}
+
+% --- Verbatim excerpt from the proposal (own text; citation keys remapped).
+%     Key changes vs.\ proposal: williams1992simple (REINFORCE) is not in references/*.bib yet
+%     (todo below); mnih2013playing (arXiv DQN) mapped to the Nature version
+%     mnih_human-level_2015; hafner2023mastering mapped to hafner_mastering_2024.
+%     Small fixes for fleshing out: "make use modern-day" -> "make use of modern-day";
+%     $Q:\mathcal{S}\rightarrow\mathcal{R}$ should arguably be
+%     $Q:\mathcal{S}\times\mathcal{A}\rightarrow\mathbb{R}$. ---
+Algorithms for finding an optimal $\pi^*$ can be divided into three classes:
+value-based, policy-based and actor-critic.
+
+Value-based methods try to learn a value function $Q:\mathcal{S}\rightarrow \mathcal{R}$
+mapping states to their expected cumulative reward so that in each step, the
+action that maximizes the expected reward can be taken.
+These include well-known methods such as Q-learning, TD($\lambda$) or SARSA.
+
+Policy-based methods try to directly construct an optimal policy $\pi^*$ without the
+use of a value function.
+They have various advantages.
+For example, they can easily handle continuous action spaces and ensure stochasticity
+which is important for state space exploration.
+A well-known classical policy-based algorithm is
+REINFORCE\todo{cite: Williams 1992, ``Simple statistical gradient-following algorithms
+for connectionist reinforcement learning'' (was williams1992simple in the proposal)}.
+
+Actor-critic methods synthesize value- and policy-based methods by including information
+about a state's value in the policy learning process.
+
+Since classical, tabular methods don't work well with large state spaces,
+state-of-the-art methods make use modern-day deep learning advancements.
+Examples include the family of Deep-Q Network (DQN)
+algorithms~\cite{mnih_human-level_2015,hessel_rainbow_2017} approximating the $Q$
+function by neural networks, policy-based gradient-descent methods like
+Proximal Policy Optimization (PPO)~\cite{schulman_proximal_2017} and actor-critic
+methods like A3C~\cite{mnih_asynchronous_2016}.
+Impressive results range from the master-level Go program
+AlphaGo~\cite{silver_mastering_2016} and its more generalized successors
+AlphaZero~\cite{silver_mastering_2017} and MuZero~\cite{schrittwieser_mastering_2020}
+to Dreamerv3~\cite{hafner_mastering_2024} that is able to learn how to acquire
+diamonds in the popular video game \textit{Minecraft} without any human input
+or expert knowledge.
+% --- End excerpt ---
+
+% Complementary bullets not covered by the excerpt:
+\begin{itemize}
+  \item Foundational citations to attach to the excerpt's method names:
+    temporal-difference learning~\cite{sutton_learning_1988}; Q-learning
+    \todo{cite: Watkins \& Dayan 1992, ``Q-learning''}.
+  \item Further DQN refinements between DQN and Rainbow: double DQN~\cite{hasselt_deep_2015},
+    dueling networks~\cite{wang_dueling_2016}, prioritized experience
+    replay~\cite{schaul_prioritized_2016} (PER returns in EfficientZero,
+    \cref{chap:efficientzero}).
+  \item Further policy-gradient/actor-critic methods: TRPO~\cite{schulman_trust_2017},
+    SAC~\cite{haarnoja_soft_2018}.
+  \item Broad algorithm surveys~\cite{ghasemi_comprehensive_2025}.
+  \item Practical caveats of deep RL: high variance across seeds, hyperparameter sensitivity,
+    reproducibility concerns~\cite{henderson_deep_2019} --- informs the evaluation methodology in
+    \cref{sec:analysis-evaluation}.
+\end{itemize}
+
+\subsection{Model-Free versus Model-Based RL}\label{sec:rl-model-based}
+
+\begin{itemize}
+  \item Model-free: learn policy/values directly from transitions; conceptually simple, but
+    notoriously sample-hungry --- millions to billions of environment steps
+    ~\cite{mnih_human-level_2015,moerland_model-based_2022}.
+  \item Model-based: additionally learn a \emph{dynamics model} of the environment and use it for
+    planning or imagined training --- the main lever for sample
+    efficiency~\cite{moerland_model-based_2022,kaiser_model-based_2024}.
+  \item World-model line: learn compressed latent dynamics, train the policy inside the
+    model~\cite{ha_world_2018,hafner_learning_2019,hafner_mastering_2024}.
+  \item Planning-with-search line:
+    \begin{itemize}
+      \item Monte-Carlo tree search (MCTS)~\cite{hutchison_efficient_2007}, UCT: bandit-based
+        selection inside the tree~\cite{hutchison_bandit_2006}, modern
+        review~\cite{swiechowski_monte_2023},
+      \item AlphaGo: MCTS + learned value/policy networks, with known rules
+        ~\cite{silver_mastering_2016}; AlphaGo Zero: self-play only
+        ~\cite{silver_mastering_2017-1}; AlphaZero: generalized across
+        games~\cite{silver_general_2018},
+      \item MuZero: replaces the known simulator with a \emph{learned latent model} --- planning
+        without knowing the rules~\cite{schrittwieser_mastering_2020},
+      \item EfficientZero: MuZero made sample-efficient (self-supervised consistency, value
+        prefix, model-based off-policy correction); strong Atari performance from only 100k
+        steps ($\approx$ 2 hours) of experience~\cite{ye_mastering_2021} --- treated in depth in
+        \cref{chap:efficientzero}.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Sample Efficiency}\label{sec:rl-sample-efficiency}
+
+\begin{itemize}
+  \item Define: performance achieved per environment interaction; the binding constraint whenever
+    a step is expensive~\cite{moerland_model-based_2022,ye_mastering_2021}.
+  \item In this thesis each environment step is a program execution under emulation
+    (\cref{sec:fuzzing-emulation}) --- orders of magnitude slower than a simulator frame, so the
+    fuzzing use case sits squarely in the low-sample regime that EfficientZero targets
+    ~\cite{ye_mastering_2021}.
+  \item This is the central argument for choosing a model-based, planning-heavy algorithm over the
+    model-free methods used by most prior RL fuzzers (\cref{sec:reinforcement-fuzzing}).
+\end{itemize}

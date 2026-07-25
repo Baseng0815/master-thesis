@@ -1,0 +1,157 @@
+% ============================================================================
+% thesis.tex -- main document
+% Build: latexmk -pdf thesis.tex   (bibliography is processed with biber)
+% ============================================================================
+\documentclass[11pt,a4paper]{report}
+% For print/submission consider: \documentclass[11pt,a4paper,twoside,openright]{report}
+
+% ----- Encoding & fonts -----------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ----- Language -------------------------------------------------------------
+\usepackage[english]{babel}
+\usepackage{csquotes}
+
+% ----- Page layout ----------------------------------------------------------
+\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=3cm,right=2.5cm,marginparwidth=2cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% ----- Mathematics ----------------------------------------------------------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtools}
+
+% ----- Figures --------------------------------------------------------------
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+
+% ----- Tables ---------------------------------------------------------------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+
+% ----- Units & numbers ------------------------------------------------------
+\usepackage{siunitx}
+
+% ----- Code listings --------------------------------------------------------
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\bfseries\color{blue!60!black},
+  commentstyle=\itshape\color{green!40!black},
+  stringstyle=\color{orange!70!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  frame=single,
+  breaklines=true,
+  showstringspaces=false,
+  captionpos=b,
+  tabsize=4,
+}
+
+% ----- Algorithms -----------------------------------------------------------
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% ----- Draft aids -----------------------------------------------------------
+\usepackage[colorinlistoftodos]{todonotes}   % \todo{...}, \listoftodos
+
+% ----- Bibliography ---------------------------------------------------------
+\usepackage[backend=biber,style=numeric,sorting=nyt]{biblatex}
+\addbibresource{references/fuzzing.bib}
+\addbibresource{references/reinforcement-learning.bib}
+\addbibresource{references/misc.bib}
+\addbibresource{references/oss-fuzz.bib}
+
+% ----- Hyperlinks & cross-references (load last) ----------------------------
+\usepackage[hidelinks,pdfusetitle]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+% ----- Theorem environments -------------------------------------------------
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+
+% ----- Metadata ---------------------------------------------------------------
+\title{Applications of Reinforcement Learning to Stateful Emulator-Based Greybox Fuzzing}
+\author{Bastian Engel}
+\date{\today}
+
+% ============================================================================
+\begin{document}
+
+% ----- Front matter ---------------------------------------------------------
+\hypersetup{pageanchor=false}  % title page has no page number; avoids duplicate anchors
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\LARGE Master's Thesis\par}
+  \vspace{1.5cm}
+  {\Huge\bfseries Applications of Reinforcement Learning to Stateful Emulator-Based Greybox Fuzzing\par} % TODO: final title
+  \vspace{2cm}
+  {\Large Bastian Engel\par}
+  \vfill
+  % TODO: university, faculty, supervisors, submission date
+  {\large \today\par}
+\end{titlepage}
+\hypersetup{pageanchor=true}
+\pagenumbering{roman}
+
+\input{chapters/abstract}
+
+\tableofcontents
+% \listoffigures
+% \listoftables
+% \lstlistoflistings
+% \listoftodos
+
+\cleardoublepage
+\pagenumbering{arabic}
+
+% ----- Main matter ----------------------------------------------------------
+\chapter{Introduction}\label{chap:introduction}
+\input{chapters/introduction/fuzzing}
+\input{chapters/introduction/reinforcement-learning}
+\input{chapters/introduction/reinforcement-fuzzing}
+
+\input{chapters/efficientzero}
+\input{chapters/efficientzero-fuzzing}
+
+\chapter{Targets}\label{chap:targets}
+\input{chapters/targets/bandit}
+\input{chapters/targets/contextual-bandit}
+\input{chapters/targets/sequence}
+\input{chapters/targets/open62541}
+
+\input{chapters/mogi-setup}
+
+\chapter{Analysis}\label{chap:analysis}
+\input{chapters/analysis/challenge}
+\input{chapters/analysis/evaluation}
+\input{chapters/analysis/advantages}
+\input{chapters/analysis/disadvantages}
+
+\input{chapters/conclusion}
+\input{chapters/future-work}
+
+% ----- Back matter ----------------------------------------------------------
+% \nocite{*}  % uncomment to list all references.bib entries while drafting
+\printbibliography[heading=bibintoc]
+
+% \appendix
+% \input{chapters/appendix}
+
+\end{document}

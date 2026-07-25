@@ -1,0 +1,375 @@
+%!TEX root = ../../thesis.tex
+
+\section{Fuzzing}\label{sec:fuzzing}
+
+% Drafting outline: bullet points to be fleshed out into prose.
+% \todo{cite: ...} marks claims whose canonical reference is not yet in references/*.bib.
+
+\subsection{Overview and Motivation}\label{sec:fuzzing-overview}
+
+% --- Verbatim excerpt from the proposal (own text; citation keys remapped to references/*.bib) ---
+Fuzz testing, or \textit{fuzzing} for short, is a widely deployed method for automatic
+software testing and vulnerability discovery that makes use of a diverse set of
+tools~\cite{manes_art_2019}.
+Its goal is to find inputs to a Program Under Test (PUT) that trigger a certain
+behavior, often a crash that might then lead to the discovery of bugs or security
+vulnerabilities.
+% --- End excerpt ---
+
+The technique was first introduced in the early 1990s as a way of testing the
+reliability of UNIX utilities~\cite{miller_empirical_1990}.
+The authors were inspired by spurious characters being introduced to a dial-up
+line causing crashes of common programs on a remote workstation.
+This lad to the creation of a simple command-line utility \emph{fuzz} that produced
+random input strings that were then sent to various utilities in the hope of causing
+a crash in the form of a core dump or a hang.
+They managed to find inputs that caused between 24\% and 33\% of the tested
+utility programs to crash or hang.
+By analyzing these inputs, bugs could be identified and fixed, thereby
+contributing to the reliability of the system.
+
+The same approach is still in use today to find security vulnerabilities in
+input-processing code, especially memory-safety bugs in C/C++.
+For example, Google's OSS-Fuzz
+\enquote{aims to make common open source software more secure and stable by combining
+modern fuzzing techniques with scalable, distributed execution}~\cite{arya_oss-fuzz_nodate}.
+It supports a variety of target languages and is therefore widely applicable.
+OSS-Fuzz has helped to fix over 13,000 security vulnerabilities and 50,000 bugs across
+1,000 projects, proving the importance of modern fuzzing techniques for ensuring reliability and security.\\
+
+\subsection{Core Terminology\label{sec:fuzzing-definitions}}
+
+We will introduce some general definitions that mainly follow \textcite{manes_art_2019}.
+
+\begin{enumerate}
+  \item \emph{Program Under Test (PUT):}
+    The program under test is an executable software artifact like a command-line utility
+    or library together with an interface that consumes input. In our case it denotes
+    a binary executed through the MOGI emulator\cref{chap:mogi-setup}.
+
+  \item \emph{Security Policy:}
+    A security policy defines which observable behaviors of the PUT are acceptable.
+    Each execution either satisfies or violates a given security policy. A common
+    security policy deems all executions that result in crashes like segmentation
+    fauls to be violations.
+
+  \item \emph{Bug Oracle:}
+    A bug oracle is a program that decides whether a given input to the PUT violates
+    a given security policy. A widely used bug oracle might deem an execution
+    a violation if the PUT crashes or hangs.
+
+  \item \emph{Fuzzing:}
+    Fuzzing denotes the process of feeding the PUT with inputs sampled from an input space.
+    This input space may include expected and valid inputs as well as invalid, unexpected
+    inputs in the hope of violating a given security policy.
+
+  \item \emph{Fuzz Testing:}
+    Fuzz testing denotes the software testing technique that makes use of fuzzing.
+
+  \item \emph{Fuzzer:}
+    A fuzzer is a program that performs fuzz testing on a PUT.
+
+  \item \emph{Fuzz Campaign:}
+    A fuzz campaign is a specific execution of a fuzzer on a PUT with a specific
+    security policy. Its goal is to find bugs in the PUT that violate this policy.
+
+  \item \emph{Test Case:}
+    A test case denotes a concrete input that the fuzzer feeds to the PUT during
+    a fuzzing campaign. The resulting execution is then judged by the bug oracle
+    and the test case recorded in case the bug oracle deems it a violation of the
+    security policy.
+
+  \item \emph{Fuzz Configuration:}
+    A fuzz configuration comprises the parameter values that control the fuzzing
+    algorithm.
+\end{enumerate}
+
+% TODO include the Fuzz Testing ALGORITHM scheme with the steps PREPROCESS, CONTINUE, etc.
+
+\subsection{Taxonomy\label{sec:fuzzing-taxonomy}}
+
+Fuzzers can be roughly divided into three classes, defined by the amount of
+information from the execution of the PUT available to them.~\cite{liang_fuzzing_2018}.
+
+\subsubsection{Black-box fuzzing}
+
+Black-box fuzzers have no access to the internal behavior of a PUT during execution.
+They can only make use of the bug oracle to decide whether a given input violates
+the security policy or not.
+The core advantage of this approach is the wide applicability since no instrumentation
+is required.
+This lack of potential instrumentation overhead also benefits execution throughput.
+The obvious disadvantage is the lack of information about PUT behavior.
+This makes it difficult for fuzzers to generate high-coverage inputs.
+
+\subsubsection{White-box fuzzing}
+
+In constrast to pure black-box fuzzers, white-box fuzzers have full access to
+the internal logic of the PUT as well as usually any original source code or
+documentation which can greatly aid the fuzzing process.
+In practice, this allows an approach known as \emph{symbolic execution}: instead
+of relying on actual execution traces, a white-box fuzzer can gather symbolic
+constraints at branching points and use constraint solving to find inputs that exercise
+a specific path.
+While this allows to easily find test cases of interest in theory, this approach scales poorly
+to large PUTs due to the path explosion problem.
+A popular white-box fuzzer is SAGE~\cite{TODO cite godefroid12}.
+
+\subsubsection{Grey-box fuzzing}
+
+Since full information is often not available but observing certain parts
+of the internal behavior of the PUT might still be possible, \textit{grey-box}
+fuzzing represents an important middle-ground between the previous two extremes.
+By making use of runtime instrumentation information like code coverage, the fuzzer can
+better judge the behavior of the PUT for a given input and direct its exploration efforts towards promising regions.
+Limitations are discussed in detail in~\cref{sec:fuzzing-limitations}.
+
+\subsubsection{Hybrid approaches}
+
+There also exists a variety of hybrid approaches combining different fuzzing methodologies.
+A prominent example is \emph{Driller} that alternates pure greybox fuzzing with
+\emph{concolic} execution (a combination of concrete and symbolic execution) to overcome hard branch
+conditions like CNC checks that have historically presented a major obstacle for fuzzers~\cite{stephens_driller_2016}
+
+\subsection{Input generation}\label{sec:fuzzing-input-generation}
+
+% Outline follows Manès et al. §5 (Input Generation); the § pointers below refer to that paper.
+
+The content of a test case directly controls whether a bug is triggered or not, making
+it one of the most influential design decisions of a fuzzer~\cite{manes_art_2019}.
+Input generation can be categorized into either generation- or mutation-based.
+
+\subsubsection{Generation-based input generation}
+
+Generation-based input generation makes use of a model of the input expected by
+the PUT, often represented through a grammar specification.
+These models can either be \emph{predefined}, \emph{inferred}, or \emph{encoder-based}.
+
+Predefined models are specified by the user.
+They are often used by network fuzzers consuming protocol specifications or kernel fuzzers
+consuming system call interfaces.
+
+Inferred models don't rely on an explicitly specified model but rather infer it through some automatic means.
+Inference can either take place as a preprocessing step or during a fuzz campaign.
+Test-Miner~\cite{TODO toffola17} searches for literals inside of the PUT and derives suitable inputs.
+PULSAR\cite{TODO wressnegger15} infers a network protocol from a set of captured network packages generated by the PUT.
+
+Encoder-based models interpret the PUT as a decoder for inputs generated by an existing encoder.
+
+\subsubsection{Mutation-based input generation}
+
+Generating purely random inputs is not an effective strategy.
+In general, a PUT contains checks that reject invalid inputs, making it
+difficult to reach code paths that violate a given security policy~\cite{manes_art_2019}.
+This motivates the use of a \emph{seed corpus}, a set of well-structured inputs
+to the PUT like valid network packages or files.
+The seeds inside of the seed corpus are then successively mutated with the goal
+of triggering abnormal behavior.
+Mutation operators are divided into four sets:
+
+\begin{enumerate}
+  \item \emph{Bit-flipping:}
+    Bit flipping is governed by a \emph{mutation ratio}, the fraction of bits to
+    flip per execution.
+
+  \item \emph{Arithmetic mutation:}
+    Arithmetic mutation reinterprets byte sequences as integers and perturbs them.
+
+  \item \emph{Block-based mutation:}
+    Block-based mutation inserts, deletes, replaces, permutes or resizes byte blocks,
+    and splices blocks across seeds.
+
+  \item \emph{Dictionary-based mutations:}
+    Dictionary-based mutations substitute values with other values of high semantic
+    weight. These usually include numbers like 0, or -1, or format strings for
+    string substitution.
+\end{enumerate}
+
+\subsection{Coverage-Guided Greybox Fuzzing}\label{sec:fuzzing-cgf}
+
+This work will focus primarily on coverage-guided greybox fuzzing, \emph{CFG} for short.
+We will outline the general approach following Böhme et al.~\cite{TODO cite boehme17}.
+
+\subsubsection{Overview}
+
+% TODO add algorithm from boehme17, $2.1
+
+A coverage-guided greybox fuzzer in general uses mutational input generation.
+For this, it keeps a set of test cases $T$ as part of its runtime state.
+This set is initialized from a seed corpus $S$.
+The fuzzer then selects an input $t\in T$ and derives a new input $t^\prime$.
+If the fuzzer deems the execution of the PUT under $t^\prime$ to be interesting, $t^\prime$
+is then added to the test case set $T$.
+
+The fuzzer must therefore solve mainly three problems: selecting an appropriate
+test case, applying appropriate mutations and deciding whether to retain the
+mutated input or not based on PUT behavior.
+
+\subsubsection{Test case selection}
+
+% TODO
+
+\subsubsection{Test case mutation}
+
+% TODO
+
+\subsubsection{Test case retention}
+
+% TODO: Describe different coverage metrics in detail and outline how this connects
+% to instrumentation.
+
+\subsubsection{AFL++}
+
+One famous example of a coverage-guided greybox fuzzer is AFL++~\cite{fioraldi_afl_nodate}.
+It is a mutation-based fuzzer that iteratively improves the seed corpus through
+a series of mutations and selections.
+Mutations include operations like bit flips, substitutions and splicing.
+Newly generated inputs are then evaluated and added to the seed corpus for further
+mutation and selection if they produce new coverage.
+The success of a greybox fuzzer is strongly dependent on a high-quality initial
+corpus and appropriate seed mutation and selection strategies.
+
+% TODO add AFL algorithm (selection, mutation, etc.), maybe with reference to previous,
+% more general fuzzing figure.
+
+\begin{itemize}
+  \item Frame CGF as the dominant modern design, popularized by AFL and refined by
+    AFL++~\cite{fioraldi_afl_nodate} \todo{cite: original AFL (Zalewski)}.
+  \item Core feedback loop, generalizing the excerpt above (describe as
+    algorithm/figure)~\cite{manes_art_2019,fioraldi_afl_nodate}:
+    \begin{itemize}
+      \item pick a seed from the corpus (seed scheduling / energy assignment),
+      \item mutate it into a batch of test cases,
+      \item execute the instrumented target on each test case,
+      \item bug oracle check: crash/hang $\rightarrow$ report,
+      \item coverage check: new coverage $\rightarrow$ add test case to corpus,
+      \item repeat.
+    \end{itemize}
+  \item Evolutionary interpretation: corpus = population, coverage novelty = fitness function,
+    mutation/splicing = genetic operators~\cite{she_neuzz_2019,manes_art_2019}.
+  \item Coverage signal design:
+    \begin{itemize}
+      \item granularities: basic-block vs.\ edge/branch coverage, with bucketed hit
+        counts~\cite{fioraldi_afl_nodate},
+      \item AFL-style fixed-size bitmap indexed by hashed edge IDs: fast but suffers hash
+        collisions that alias distinct edges
+        \todo{cite: CollAFL (Gan et al.\ 2018) for the collision analysis and fix},
+      \item alternatives: hardware branch tracing (Intel PT) avoids compile-time
+        instrumentation~\cite{zhang_ptfuzz_2018},
+      \item relevant later: MOGI's basic-block hit tracker uses the same hash-into-buckets idea
+        (\cref{chap:mogi-setup}).
+    \end{itemize}
+  \item Instrumentation options: compile-time insertion, static binary rewriting, or dynamic
+    translation under emulation for closed-source binaries~\cite{fioraldi_afl_nodate}
+    \todo{cite: QEMU (Bellard 2005) for dynamic binary translation}.
+  \item Bug oracles beyond crashes: sanitizers (e.g.\ AddressSanitizer) surface silent memory
+    corruption, at significant runtime overhead~\cite{zhang_debloating_nodate}
+    \todo{cite: original AddressSanitizer paper (Serebryany et al.\ 2012)}.
+  \item Engineering for throughput: fork-server and persistent modes, snapshotting; scaling across
+    cores is itself nontrivial (program-adaptive parallel fuzzing)~\cite{zhou_kraken_2025}.
+  \item Scheduling refinements: power schedules biasing energy toward rarely exercised paths
+    \todo{cite: AFLFast (Böhme et al.\ 2016)}; learned seed scheduling~\cite{wang_reinforcement_2021}.
+  \item Directed greybox fuzzing: optimize distance to chosen code sites instead of global
+    coverage --- e.g.\ for patch testing or reaching suspected-vulnerable
+    code~\cite{chen_critical_nodate,kwon_optimization-directed_2025}
+    \todo{cite: AFLGo (Böhme et al.\ 2017) as the canonical directed greybox fuzzer}.
+\end{itemize}
+
+\subsection{Strengths and Limitations of Coverage-Guided Fuzzing}\label{sec:fuzzing-limitations}
+
+\begin{itemize}
+  \item Strengths (why CGF won):
+    \begin{itemize}
+      \item simple, robust, almost no per-target manual effort~\cite{manes_art_2019},
+      \item scales linearly with compute; embarrassingly parallel in
+        principle~\cite{zhou_kraken_2025},
+      \item empirically the most productive bug-finding technique of the last
+        decade~\cite{manes_art_2019,fioraldi_afl_nodate}.
+    \end{itemize}
+  \item Limitations --- each one motivates ``smarter'' input generation and frames a design goal of
+    this thesis:
+    \begin{itemize}
+      \item \emph{Coverage plateaus}: random mutation practically never satisfies narrow
+        constraints (magic bytes, checksums, length fields), so campaigns stall on frontier
+        branches~\cite{stephens_driller_2016,she_neuzz_2019}.
+      \item \emph{Coverage is only a proxy}: maximizing edges is not the same as triggering bugs;
+        state- and data-dependent bugs need specific values in specific contexts, not just new
+        edges~\cite{chen_critical_nodate}.
+      \item \emph{Blind mutation wastes the execution budget}: most mutations are irrelevant to
+        control flow; which bytes and operators matter is input- and target-dependent
+        ~\cite{lyu_mopt_nodate,binosi_rainfuzz_2023}.
+      \item \emph{Feedback aliasing}: bitmap hash collisions and coarse hit-count bucketing hide
+        genuinely new behavior \todo{cite: CollAFL}.
+      \item \emph{Statelessness}: the classic loop assumes one self-contained input per fresh
+        execution --- breaks down for stateful/reactive targets (\cref{sec:fuzzing-stateful}).
+      \item \emph{Evaluation is tricky}: campaigns are highly stochastic; sound comparisons need
+        many trials and statistical testing \todo{cite: Klees et al.\ 2018, ``Evaluating Fuzz
+        Testing''} (also needed for \cref{sec:analysis-evaluation}).
+    \end{itemize}
+  \item Research responses (survey briefly, as context for the RL approach):
+    \begin{itemize}
+      \item data-flow/taint guidance to identify influential input bytes
+        (GreyOne)~\cite{gan_greyone_nodate},
+      \item neural surrogates: smooth the coverage function and follow gradients (NEUZZ,
+        MTFuzz)~\cite{she_neuzz_2019,she_mtfuzz_2020}, deep-learning path prediction
+        (NeuFuzz)~\cite{wang_neufuzz_2019},
+      \item hybrid concolic execution (Driller)~\cite{stephens_driller_2016},
+      \item machine learning across all loop stages --- seed selection, mutation, scheduling ---
+        surveyed in~\cite{wang_systematic_2020,qiu_survey_2025}.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Stateful and Protocol Fuzzing}\label{sec:fuzzing-stateful}
+
+\begin{itemize}
+  \item Many high-value targets are reactive servers speaking a protocol (network services,
+    industrial control systems, embedded devices): behavior depends on \emph{session state}
+    accumulated over a message exchange~\cite{ang_quic-fuzz_2025,borcherding_bandits_2023}.
+  \item Consequences for the classic single-input model:
+    \begin{itemize}
+      \item a test case is a \emph{sequence} of messages, not one blob; ordering and protocol
+        context matter,
+      \item deep states are reachable only through valid message prefixes; mutating a late message
+        is useless if an early one breaks the session,
+      \item the same code can behave differently in different states, so pure edge coverage
+        under-represents state coverage~\cite{borcherding_bandits_2023},
+      \item state is invisible: the fuzzer must infer or track it (response codes, annotated state
+        variables) \todo{cite: AFLNet (Pham et al.\ 2020) and SGFuzz (Ba et al.\ 2022) --- the
+        standard stateful greybox fuzzers; both are baselines the thesis should discuss}.
+      \item state-awareness matters in adjacent domains too, e.g.\ black-box web
+        scanning~\cite{doupe_enemy_2012}.
+    \end{itemize}
+  \item Extra decision problem on top of the CGF loop: \emph{which state to fuzz next} ---
+    an exploration/exploitation trade-off, already modeled as a multi-armed bandit in prior
+    work~\cite{borcherding_bandits_2023}; direct bridge to \cref{sec:reinforcement-learning}.
+  \item Practical complications for encrypted/checksummed transports (e.g.\ QUIC): the fuzzer must
+    sit inside the crypto boundary to mutate meaningfully~\cite{ang_quic-fuzz_2025}.
+  \item Position of this thesis: protocol-level actions against a stateful target are exactly the
+    action space handed to the RL agent (\cref{chap:efficientzero-fuzzing}).
+\end{itemize}
+
+\subsection{Emulator-Based Fuzzing}\label{sec:fuzzing-emulation}
+
+\begin{itemize}
+  \item Motivation from embedded/firmware targets: fuzzing on the device is slow and, worse,
+    faults are often \emph{silent} --- without MMU protection or sanitizers, memory corruption
+    frequently does not crash (``what you corrupt is not what you
+    crash'')~\cite{muench_what_2018}.
+  \item Rehosting the target in an emulator restores the missing capabilities~\cite{muench_what_2018}
+    \todo{cite: QEMU (Bellard 2005); Unicorn engine; optionally a rehosting survey (e.g.\ Wright
+    et al.\ 2021 or Fasano et al.\ 2021)}:
+    \begin{itemize}
+      \item full observability: coverage and memory-access instrumentation without source access,
+      \item determinism and replayability of executions,
+      \item fine-grained fault detection via emulator-level checks,
+      \item \emph{snapshots}: capture full machine state once, restore cheaply before every test.
+    \end{itemize}
+  \item Snapshot restore gives an exact, cheap \emph{reset} of the target to a known state ---
+    for stateful targets this is what makes per-episode experimentation tractable, and it is
+    precisely the environment-reset primitive that reinforcement learning assumes
+    (\cref{sec:reinforcement-learning}); realized here by the MOGI framework
+    (\cref{chap:mogi-setup}).
+  \item Cost: emulation overhead reduces raw executions per second versus native execution ---
+    sharpens the need to make every execution count (sample efficiency,
+    \cref{chap:efficientzero}).
+\end{itemize}
