@@ -17,9 +17,10 @@ Formally, a Markov decision process is a 3-tuple $MDP=(S,A,p)$ where
   \item $\mathcal{S}$ is the set of states,
   \item $\mathcal{A}$ is the set of actions where $\mathcal{A}_s\subseteq A$ are actions available in state $s\in\mathcal{S}$,
   \item $p(s^\prime,r|s,a)=\Pr\{S_t=s^\prime, R_t=r|S_{t-1}=s, A_{t-1}=a\}$
-  describes the system dynamics, i.e., the probability of encountering a next
-  state $s^\prime$ and reward $r$ at time step $t$ when taking action $a$ in
-  state $s$ at time step $t-1$
+    describes the system dynamics, i.e., the probability of encountering a next
+    state $s^\prime$ and reward $r$ at time step $t$ when taking action $a$ in
+    state $s$ at time step $t-1$. This satisfies the \emph{Markov property}:
+    $p$ depends only on the current state and not the full history.
 \end{itemize}
 
 An RL agent's goal is to learn a policy $\pi:\mathcal{S}\times\mathcal{A}\rightarrow [0,1]$

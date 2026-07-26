@@ -1,19 +1,13 @@
 # Fdb version 4
-["biber thesis"] 1785029772.12036 "thesis.bcf" "thesis.bbl" "thesis" 1785029774.88783 0
-  "references/boehme17.bib" 1784990545.2794 706 1281b0fdc441c12b91dfd3939a5206ed ""
-  "references/fuzzing.bib" 1784990545.27944 83182 5e71f1ee197d8eb5da29d44fff6cc5f7 ""
-  "references/godefroid90.bib" 1784990545.27944 677 17848bfdde9bda55127ffef6f17d8146 ""
-  "references/misc.bib" 1784990545.27944 0 d41d8cd98f00b204e9800998ecf8427e ""
-  "references/oss-fuzz.bib" 1784990545.27944 720 3b7d0e5db7b96bf90676c5006a07c371 ""
+["biber thesis"] 1785030669.92421 "thesis.bcf" "thesis.bbl" "thesis" 1785034380.48335 0
+  "references/fuzzing.bib" 1785030659.71912 91855 56676c63fc733f582c09416faddf85db ""
   "references/reinforcement-learning.bib" 1784990545.27944 172384 9ef2f31d4ca5f4324c740617bd01d8ef ""
-  "references/toffola17.bib" 1784990545.27944 1863 cb2e219bc9833164d1cb2ba6bf55f898 ""
-  "references/wressnegger15.bib" 1784990545.27944 2490 5bc6e2a4fbe0b71abead503f2766155a ""
-  "thesis.bcf" 1785029774.79662 119871 d6d84e60356cc8800801b4b6a52134c6 "pdflatex"
+  "thesis.bcf" 1785034380.39064 119242 ddee257d8838346f2be4ae1487d4f5b9 "pdflatex"
   (generated)
   "thesis.bbl"
   "thesis.blg"
   (rewritten before read)
-["pdflatex"] 1785029772.97016 "thesis.tex" "thesis.pdf" "thesis" 1785029774.88807 0
+["pdflatex"] 1785034378.64013 "thesis.tex" "thesis.pdf" "thesis" 1785034380.48359 0
   "/nix/store/arhp5gpazidag3p1hpnvhbabis0bd7bd-texlive-combined-full-2025-final-texmfdist/fonts/enc/dvips/lm/lm-ec.enc" 1 2375 baa924870cfb487815765f9094cf3728 ""
   "/nix/store/arhp5gpazidag3p1hpnvhbabis0bd7bd-texlive-combined-full-2025-final-texmfdist/fonts/enc/dvips/lm/lm-mathex.enc" 1 3486 c7eadf5dcc57b3b2d11736679f6636ba ""
   "/nix/store/arhp5gpazidag3p1hpnvhbabis0bd7bd-texlive-combined-full-2025-final-texmfdist/fonts/enc/dvips/lm/lm-mathit.enc" 1 2405 5dcf2c1b967ee25cc46c58cd52244aed ""
@@ -251,8 +245,8 @@
   "/nix/store/h8pcc9fhs0vvm4g3n0gf3j5fv04glilm-texlive-combined-full-2025-final/share/texmf-var/web2c/texmf.cnf" 1 44359 335ed33ca664fbd7af7b2396d6ca8ba8 ""
   "chapters/abstract.tex" 1784990545.27915 187 b08e3ba62a766d45510e775e62784a45 ""
   "chapters/appendix.tex" 1784992750.5643 1054 399375d7071264a66e444720ec62b1fc ""
-  "chapters/background/fuzzing.tex" 1785029768.66562 26007 65a7df1c1b84a4b380fb10a2f14a9d35 ""
-  "chapters/background/reinforcement-learning.tex" 1785027271.82572 9502 7c1cd00ef09b7848f0a3e8912101e8fa ""
+  "chapters/background/fuzzing.tex" 1785034377.63562 26941 434c3df4c5228d1e2dd3d0f9185d7dba ""
+  "chapters/background/reinforcement-learning.tex" 1785030407.27427 9620 4578dc85f72210f1d2ebc127735789bd ""
   "chapters/conclusion.tex" 1784992757.36645 623 6f80b17add0adcbc60c7cd0457bcd7d0 ""
   "chapters/discussion/advantages.tex" 1784992719.68465 1462 33e33d6f2f5878aafdd9ccdc76075965 ""
   "chapters/discussion/disadvantages.tex" 1784992728.60584 1679 ba9844f993cca29a7365eaa55b4d3816 ""
@@ -289,12 +283,12 @@
   "chapters/targets/open62541.tex" 1784992611.65552 1795 2d62b9850dccff2ff968eb5b5f44ec3d ""
   "chapters/targets/overview.tex" 1784992555.45351 1943 699059111460ae993e402d3ed09403f2 ""
   "chapters/targets/sequence.tex" 1784992602.78436 1691 6d55693388779a3db5f831089ee83973 ""
-  "thesis.aux" 1785029774.78262 51938 308a86ccb07fbd54acc47b7dcaa556a4 "pdflatex"
-  "thesis.bbl" 1785029772.95462 242511 8b9d19b21fcc202ce1aad635a2e13bed "biber thesis"
-  "thesis.out" 1785029774.79462 16161 cd33aeab227d554ef1c3bcd113cebd56 "pdflatex"
-  "thesis.run.xml" 1785029774.79845 2647 0b98219aff681c7723affb964e8fda7d "pdflatex"
-  "thesis.tex" 1785000724.24713 6949 ca5b256085a57e0115bb380c5e3f1cbd ""
-  "thesis.toc" 1785029774.79845 9150 5451b15ccf71424d4f4f6987d1e6b4f6 "pdflatex"
+  "thesis.aux" 1785034380.37764 52253 0306529eff66e448a110353d194da602 "pdflatex"
+  "thesis.bbl" 1785030670.7073 242511 8b9d19b21fcc202ce1aad635a2e13bed "biber thesis"
+  "thesis.out" 1785034380.38864 16161 4f795a142c7178f8ad60b22f34c10f11 "pdflatex"
+  "thesis.run.xml" 1785034380.3927 2384 cf5ea5458ba50b4930e9a08d2f4dd20c "pdflatex"
+  "thesis.tex" 1785030666.08222 6698 72dba248fcef2a5468a68c695196ab9a ""
+  "thesis.toc" 1785034380.3927 9150 364422b599560f0938d1f275ec7fb117 "pdflatex"
   (generated)
   "thesis.aux"
   "thesis.bcf"

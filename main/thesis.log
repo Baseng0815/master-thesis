@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/nixos.org) (preloaded format=pdflatex 1980.1.1)  26 JUL 2026 03:36
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/nixos.org) (preloaded format=pdflatex 1980.1.1)  26 JUL 2026 04:52
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1350,7 +1350,7 @@ Package csquotes Info: Checking for multilingual support...
 Package csquotes Info: ... found 'babel' package.
 Package csquotes Info: Adjusting default style.
 Package csquotes Info: Redefining alias 'default' -> 'english'.
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 98
+LaTeX Font Info:    Trying to load font information for T1+lmr on input line 92
 .
 
 (/nix/store/arhp5gpazidag3p1hpnvhbabis0bd7bd-texlive-combined-full-2025-final-t
@@ -1359,31 +1359,31 @@ File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) (./thesis.aux)
 \openout1 = `thesis.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Info: Redefining \microtypecontext on input line 98.
-Package microtype Info: Applying patch `item' on input line 98.
-Package microtype Info: Applying patch `toc' on input line 98.
-Package microtype Info: Applying patch `eqnum' on input line 98.
-Package microtype Info: Applying patch `footnote' on input line 98.
-Package microtype Info: Applying patch `verbatim' on input line 98.
-LaTeX Info: Redefining \microtypesetup on input line 98.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 92.
+LaTeX Font Info:    ... okay on input line 92.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 92.
+LaTeX Font Info:    ... okay on input line 92.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 92.
+LaTeX Font Info:    ... okay on input line 92.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 92.
+LaTeX Font Info:    ... okay on input line 92.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 92.
+LaTeX Font Info:    ... okay on input line 92.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 92.
+LaTeX Font Info:    ... okay on input line 92.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 92.
+LaTeX Font Info:    ... okay on input line 92.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 92.
+LaTeX Font Info:    ... okay on input line 92.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 92.
+LaTeX Font Info:    ... okay on input line 92.
+LaTeX Info: Redefining \microtypecontext on input line 92.
+Package microtype Info: Applying patch `item' on input line 92.
+Package microtype Info: Applying patch `toc' on input line 92.
+Package microtype Info: Applying patch `eqnum' on input line 92.
+Package microtype Info: Applying patch `footnote' on input line 92.
+Package microtype Info: Applying patch `verbatim' on input line 92.
+LaTeX Info: Redefining \microtypesetup on input line 92.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
@@ -1482,7 +1482,7 @@ File: translations-basic-dictionary-english.trsl (english translation file `tra
 nslations-basic-dictionary')
 )
 Package translations Info: loading dictionary `translations-basic-dictionary' f
-or `english'. on input line 98.
+or `english'. on input line 92.
 \c@lstlisting=\count523
 Package biblatex Info: Trying to load language 'english'...
 Package biblatex Info: ... file 'english.lbx' found.
@@ -1507,21 +1507,21 @@ Package biblatex Warning: The following entry could not be found
 (biblatex)                LaTeX afterwards.
 
 )
-Package biblatex Info: Reference section=0 on input line 98.
-Package biblatex Info: Reference segment=0 on input line 98.
-Package hyperref Info: Link coloring OFF on input line 98.
+Package biblatex Info: Reference section=0 on input line 92.
+Package biblatex Info: Reference segment=0 on input line 92.
+Package hyperref Info: Link coloring OFF on input line 92.
  (./thesis.out) (./thesis.out)
 \@outlinefile=\write5
 \openout5 = `thesis.out'.
 
-Package hyperref Info: Option `pageanchor' set `false' on input line 101.
+Package hyperref Info: Option `pageanchor' set `false' on input line 95.
  [1
 
 {/nix/store/h8pcc9fhs0vvm4g3n0gf3j5fv04glilm-texlive-combined-full-2025-final/s
 hare/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/nix/store/arhp5gpazidag3p1h
 pnvhbabis0bd7bd-texlive-combined-full-2025-final-texmfdist/fonts/enc/dvips/lm/l
 m-ec.enc}]
-Package hyperref Info: Option `pageanchor' set `true' on input line 114.
+Package hyperref Info: Option `pageanchor' set `true' on input line 108.
  (./chapters/abstract.tex [1])
 (./thesis.toc
 LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 3
@@ -1619,17 +1619,17 @@ hsy.enc}] [6{/nix/store/arhp5gpazidag3p1hpnvhbabis0bd7bd-texlive-combined-full-
 2025-final-texmfdist/fonts/enc/dvips/lm/lm-rm.enc}] [7]
 
 LaTeX Warning: Citation 'TODO cite original afl' on page 8 undefined on input l
-ine 362.
+ine 373.
 
 
-Overfull \hbox (32.2457pt too wide) in paragraph at lines 362--365
+Overfull \hbox (32.2457pt too wide) in paragraph at lines 373--376
 []\T1/lmr/m/n/10.95 (-20) AFL++ is a main-tained reim-ple-men-ta-tion of the no
 w aged AFL fuzzer [[]].
  []
 
 [8]
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 3
-89.
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 4
+00.
 
 (/nix/store/arhp5gpazidag3p1hpnvhbabis0bd7bd-texlive-combined-full-2025-final-t
 exmfdist/tex/latex/lm/ts1lmr.fd
@@ -1642,12 +1642,12 @@ LaTeX Warning: Marginpar on page 10 moved.
 [10]) (./chapters/background/reinforcement-learning.tex [11{/nix/store/arhp5gpa
 zidag3p1hpnvhbabis0bd7bd-texlive-combined-full-2025-final-texmfdist/fonts/enc/d
 vips/lm/lm-mathex.enc}]
-Overfull \hbox (40.78665pt too wide) in paragraph at lines 89--89
+Overfull \hbox (40.78665pt too wide) in paragraph at lines 90--90
 \T1/lmr/m/n/10.95 (-20) williams1992simple 
  []
 
 
-Overfull \hbox (40.78665pt too wide) in paragraph at lines 89--89
+Overfull \hbox (40.78665pt too wide) in paragraph at lines 90--90
 \T1/lmr/m/n/10.95 (-20) williams1992simple 
  []
 
@@ -1728,8 +1728,8 @@ Chapter 16.
 ) [29
 
 ]
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 2
-03.
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 1
+97.
 
 (/nix/store/arhp5gpazidag3p1hpnvhbabis0bd7bd-texlive-combined-full-2025-final-t
 exmfdist/tex/latex/lm/t1lmtt.fd
@@ -1742,33 +1742,33 @@ Package microtype Info: Loading generic protrusion settings for font family
  [30
 
 ]
-Overfull \hbox (2.83464pt too wide) in paragraph at lines 203--203
+Overfull \hbox (2.83464pt too wide) in paragraph at lines 197--197
 \T1/lmr/m/it/10.95 (-20) of Re-in-force-ment Learn-ing: From Al-go-rithms to Pr
 ac-ti-cal Chal-lenges\T1/lmr/m/n/10.95 (-20) . en. arXiv:2411.18892
  []
 
 
-Overfull \hbox (5.35709pt too wide) in paragraph at lines 203--203
+Overfull \hbox (5.35709pt too wide) in paragraph at lines 197--197
 []\T1/lmr/m/n/10.95 (-20) David Ha and Jür-gen Schmid-hu-ber. ^^P  World Mod-el
 s^^Q. en. In: (Mar. 2018). arXiv:1803.10122
  []
 
 
-Overfull \hbox (22.82542pt too wide) in paragraph at lines 203--203
+Overfull \hbox (22.82542pt too wide) in paragraph at lines 197--197
 []\T1/lmr/m/n/10.95 (-20) Danijar Hafner et al. \T1/lmr/m/it/10.95 (-20) Learn-
 ing La-tent Dy-nam-ics for Plan-ning from Pix-els\T1/lmr/m/n/10.95 (-20) . en. 
 arXiv:1811.04551
  []
 
 
-Overfull \hbox (17.99776pt too wide) in paragraph at lines 203--203
+Overfull \hbox (17.99776pt too wide) in paragraph at lines 197--197
 []\T1/lmr/m/n/10.95 (-20) Danijar Hafner et al. \T1/lmr/m/it/10.95 (-20) Mas-te
 r-ing Di-verse Do-mains through World Mod-els\T1/lmr/m/n/10.95 (-20) . en. arXi
 v:2301.04104
  []
 
 [31]
-Overfull \hbox (33.67621pt too wide) in paragraph at lines 203--203
+Overfull \hbox (33.67621pt too wide) in paragraph at lines 197--197
 []\T1/lmr/m/n/10.95 (-20) Thomas M. Mo-er-land et al. \T1/lmr/m/it/10.95 (-20) 
 Model-based Re-in-force-ment Learn-ing: A Sur-vey\T1/lmr/m/n/10.95 (-20) . en. 
 arXiv:2006.16712
@@ -1792,16 +1792,16 @@ LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
 Package rerunfilecheck Info: File `thesis.out' has not changed.
-(rerunfilecheck)             Checksum: CD33AEAB227D554EF1C3BCD113CEBD56;16161.
+(rerunfilecheck)             Checksum: 4F795A142C7178F8AD60B22F34C10F11;16161.
 Package logreq Info: Writing requests to 'thesis.run.xml'.
 \openout1 = `thesis.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 43842 strings out of 467533
- 907751 string characters out of 5392394
- 1699070 words of memory out of 5000000
- 71530 multiletter control sequences out of 15000+600000
+ 43821 strings out of 467533
+ 906802 string characters out of 5392394
+ 1697845 words of memory out of 5000000
+ 71508 multiletter control sequences out of 15000+600000
  709791 words of font info for 213 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,9n,108p,2141b,2903s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -1828,10 +1828,10 @@ ombined-full-2025-final-texmfdist/fonts/type1/public/lm/lmsy10.pfb></nix/store/
 arhp5gpazidag3p1hpnvhbabis0bd7bd-texlive-combined-full-2025-final-texmfdist/fon
 ts/type1/public/lm/lmsy8.pfb></nix/store/arhp5gpazidag3p1hpnvhbabis0bd7bd-texli
 ve-combined-full-2025-final-texmfdist/fonts/type1/public/lm/lmtt10.pfb>
-Output written on thesis.pdf (44 pages, 415438 bytes).
+Output written on thesis.pdf (44 pages, 416808 bytes).
 PDF statistics:
- 1295 PDF objects out of 1440 (max. 8388607)
- 1203 compressed objects within 13 object streams
- 268 named destinations out of 1000 (max. 500000)
+ 1296 PDF objects out of 1440 (max. 8388607)
+ 1204 compressed objects within 13 object streams
+ 269 named destinations out of 1000 (max. 500000)
  46373 words of extra memory for PDF output out of 51595 (max. 10000000)
 

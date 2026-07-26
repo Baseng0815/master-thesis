@@ -2372,12 +2372,6 @@
   <bcf:bibdata section="0">
     <bcf:datasource type="file" datatype="bibtex" glob="false">references/fuzzing.bib</bcf:datasource>
     <bcf:datasource type="file" datatype="bibtex" glob="false">references/reinforcement-learning.bib</bcf:datasource>
-    <bcf:datasource type="file" datatype="bibtex" glob="false">references/misc.bib</bcf:datasource>
-    <bcf:datasource type="file" datatype="bibtex" glob="false">references/oss-fuzz.bib</bcf:datasource>
-    <bcf:datasource type="file" datatype="bibtex" glob="false">references/boehme17.bib</bcf:datasource>
-    <bcf:datasource type="file" datatype="bibtex" glob="false">references/godefroid90.bib</bcf:datasource>
-    <bcf:datasource type="file" datatype="bibtex" glob="false">references/toffola17.bib</bcf:datasource>
-    <bcf:datasource type="file" datatype="bibtex" glob="false">references/wressnegger15.bib</bcf:datasource>
   </bcf:bibdata>
   <bcf:section number="0">
     <bcf:citekey order="1" intorder="1">manes_art_2019</bcf:citekey>

@@ -297,15 +297,15 @@ This motivates a hybrid approach that makes use of concolic execution~\cite{step
 
 Choosing appropriate mutations is a scheduling problem that most conventional fuzzers try to solve through a fixed, hand-tuned distribution.
 This has the major drawback that useful mutations are highly target-dependent.
-Some fuzzers like MOpt therefore search for a better distribution online using particle swarm
-optimization~\cite{lyu_mopt_nodate}, and Rainfuzz learns a heat map over byte positions with
-a policy-gradient method~\cite{binosi_rainfuzz_2023}.
+Some fuzzers like MOpt~\cite{lyu_mopt_nodate} therefore search for a better distribution online using particle swarm
+optimization, and Rainfuzz~\cite{binosi_rainfuzz_2023} learns a heat map over byte positions with
+a policy-gradient method.
 
 \cref{sec:corpus-determinism}.
 
 \subsubsection{Test case retention}
 
-\textsc{IsInteresting} decided which mutated test cases to keep.
+\textsc{IsInteresting} decides which mutated test cases to keep.
 Its decision is based on coverage information.
 Coverage information is recorded by a lightweight program instrumentation framework during execution.
 The instrumentation can collect coverage at different granularities:
@@ -321,6 +321,17 @@ The instrumentation can collect coverage at different granularities:
     While this contains the most amount of useful information, execution paths
     can grow large and therefore slow down the fuzzer.
 \end{enumerate}
+
+Orthogonal to the granularity is the question of how precisely a hit is counted.
+One bit per coverage element is the cheapest option, but it cannot distinguish how often a block was hit.
+Most coverage-guided fuzzers therefore keep a hit count per element and quantize it into
+buckets of logarithmically scaling size, so that a change in hit counts registers as new behavior once a new bucket is entered.
+
+To decide whether or not a new coverage is interesting, it is compared against
+a global coverage map accumulated over the whole campaign.
+$t^\prime$ is then deemed interesting if it contains coverage not yet contained in the global coverage map.
+In practice, coverage maps are implemented as fixed-size arrays indexed by a hash of the coverage element.
+This enables constant-time coverage comparisons, but may cause aliasing coverage information due to hash collisions. \todo{cite: Gan et al.\ 2018 on coverage map collisions}.
 
 \subsubsection{Instrumentation}
 
