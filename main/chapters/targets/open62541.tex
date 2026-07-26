@@ -1,6 +1,31 @@
 %!TEX root = ../../thesis.tex
 
-\section{open62541}\label{sec:target-open62541}
+\subsection{open62541}\label{sec:target-open62541}
 
-% TODO: Describe open62541 (open-source OPC UA stack) as the real-world
-% target: attack surface, harness, and instrumentation.
+% The stateful real-world target: an OPC~UA server stack, driven by protocol
+% messages. This is where the "stateful" claim in the title is actually cashed in.
+
+% TODO: Describe the target and the harness:
+%   - the server binary that is rehosted, and the attack surface reached through it,
+%   - the session protocol the agent must navigate --- HELLO, OpenSecureChannel,
+%     CreateSession, ActivateSession and the various session and channel requests ---
+%     and why reaching an activated session is a meaningful depth objective:
+%     everything interesting in the protocol lies behind it,
+%   - actions are message templates drawn from the target's corpus, so the agent
+%     learns *which* message to send *when*; the environment rewrites the
+%     session-coupling identifiers from the server's own responses. Be explicit that
+%     this is a deliberate scoping decision: the agent is not learning message bytes,
+%     and therefore this target evaluates protocol-state navigation, not input
+%     synthesis,
+%   - reward: a living reward for each step the server survives and a bonus on
+%     session activation, which also ends the episode.
+%
+% This is the target that connects to the stateful-fuzzing literature of
+% \cref{sec:fuzzing-stateful} and to the state-selection bandits of
+% \cref{sec:rlfuzz-prior-work}, so name the comparable systems (AFLNet, SGFuzz) and
+% say honestly what is and is not comparable about them --- they mutate message
+% contents, which this formulation does not.
+%
+% Also state the scaling gap it exposes: a real stack has far more basic blocks than
+% the hashed bucket array of \cref{sec:platform-coverage} can separate.
+% Carry that into \cref{sec:discussion-threats}.

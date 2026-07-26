@@ -208,6 +208,69 @@
       \verb https://www.scitepress.org/DigitalLibrary/Link.aspx?doi=10.5220/0011625300003411
       \endverb
     \endentry
+    \entry{bohme_coverage-based_2016}{inproceedings}{}{}
+      \name{author}{3}{}{%
+        {{hash=37344062790e172bc8d157eb9a0df894}{%
+           family={Böhme},
+           familyi={B\bibinitperiod},
+           given={Marcel},
+           giveni={M\bibinitperiod}}}%
+        {{hash=edda245a65fd6d7537c1186d73dfbd81}{%
+           family={Pham},
+           familyi={P\bibinitperiod},
+           given={Van-Thuan},
+           giveni={V\bibinithyphendelim T\bibinitperiod}}}%
+        {{hash=af7b2ce2f4ff45a09ca67d2ca0be4687}{%
+           family={Roychoudhury},
+           familyi={R\bibinitperiod},
+           given={Abhik},
+           giveni={A\bibinitperiod}}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \list{location}{1}{%
+        {Vienna Austria}%
+      }
+      \list{publisher}{1}{%
+        {ACM}%
+      }
+      \strng{namehash}{a366808502c474150525d7d9f891fee0}
+      \strng{fullhash}{a366808502c474150525d7d9f891fee0}
+      \strng{fullhashraw}{a366808502c474150525d7d9f891fee0}
+      \strng{bibnamehash}{a366808502c474150525d7d9f891fee0}
+      \strng{authorbibnamehash}{a366808502c474150525d7d9f891fee0}
+      \strng{authornamehash}{a366808502c474150525d7d9f891fee0}
+      \strng{authorfullhash}{a366808502c474150525d7d9f891fee0}
+      \strng{authorfullhashraw}{a366808502c474150525d7d9f891fee0}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the 2016 {ACM} {SIGSAC} {Conference} on {Computer} and {Communications} {Security}}
+      \field{isbn}{978-1-4503-4139-4}
+      \field{month}{10}
+      \field{title}{Coverage-based {Greybox} {Fuzzing} as {Markov} {Chain}}
+      \field{urlday}{20}
+      \field{urlmonth}{7}
+      \field{urlyear}{2026}
+      \field{year}{2016}
+      \field{urldateera}{ce}
+      \field{pages}{1032\bibrangedash 1043}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.1145/2976749.2978428
+      \endverb
+      \verb{file}
+      \verb PDF:/home/bastian/Zotero/storage/XUSETCDC/Böhme et al. - 2016 - Coverage-based Greybox Fuzzing as Markov Chain.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://dl.acm.org/doi/10.1145/2976749.2978428
+      \endverb
+      \verb{url}
+      \verb https://dl.acm.org/doi/10.1145/2976749.2978428
+      \endverb
+    \endentry
     \entry{borcherding_bandits_2023}{inproceedings}{}{}
       \name{author}{4}{}{%
         {{hash=f4d503a5f289df6ab8df5d05843c832b}{%
@@ -723,6 +786,103 @@
       \verb PDF:/home/bastian/Zotero/storage/6YXGWVRH/Gan and Zhang - GreyOne Data Flow Sensitive Fuzzing.pdf:application/pdf
       \endverb
     \endentry
+    \entry{thuraisingham_pulsar_2015}{incollection}{}{}
+      \name{author}{5}{}{%
+        {{hash=3ef661a965acaa727b25948cd37328e8}{%
+           family={Gascon},
+           familyi={G\bibinitperiod},
+           given={Hugo},
+           giveni={H\bibinitperiod}}}%
+        {{hash=9df7b64d77a60e8340331f1ead58166c}{%
+           family={Wressnegger},
+           familyi={W\bibinitperiod},
+           given={Christian},
+           giveni={C\bibinitperiod}}}%
+        {{hash=07d6ceec0300076e74a5efafa6b78cf5}{%
+           family={Yamaguchi},
+           familyi={Y\bibinitperiod},
+           given={Fabian},
+           giveni={F\bibinitperiod}}}%
+        {{hash=fc644b3e88de9799a0007d9e24faa015}{%
+           family={Arp},
+           familyi={A\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod}}}%
+        {{hash=47449209bde605e33642aeb4dcc23bf2}{%
+           family={Rieck},
+           familyi={R\bibinitperiod},
+           given={Konrad},
+           giveni={K\bibinitperiod}}}%
+      }
+      \name{editor}{3}{}{%
+        {{hash=c4a5e883334b14cd2314c2d614aaa892}{%
+           family={Thuraisingham},
+           familyi={T\bibinitperiod},
+           given={Bhavani},
+           giveni={B\bibinitperiod}}}%
+        {{hash=3458cd1c70f73bfd22ae3e41ff50f362}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={XiaoFeng},
+           giveni={X\bibinitperiod}}}%
+        {{hash=25626c1314c0a09d8133158ca41b898e}{%
+           family={Yegneswaran},
+           familyi={Y\bibinitperiod},
+           given={Vinod},
+           giveni={V\bibinitperiod}}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \list{location}{1}{%
+        {Cham}%
+      }
+      \list{publisher}{1}{%
+        {Springer International Publishing}%
+      }
+      \strng{namehash}{2603e529c7c094f09c010f8478c5bf53}
+      \strng{fullhash}{cff859105857c9833fef4e70a854a415}
+      \strng{fullhashraw}{cff859105857c9833fef4e70a854a415}
+      \strng{bibnamehash}{2603e529c7c094f09c010f8478c5bf53}
+      \strng{authorbibnamehash}{2603e529c7c094f09c010f8478c5bf53}
+      \strng{authornamehash}{2603e529c7c094f09c010f8478c5bf53}
+      \strng{authorfullhash}{cff859105857c9833fef4e70a854a415}
+      \strng{authorfullhashraw}{cff859105857c9833fef4e70a854a415}
+      \strng{editorbibnamehash}{f2df7f527caf257a2ade2880b7693304}
+      \strng{editornamehash}{f2df7f527caf257a2ade2880b7693304}
+      \strng{editorfullhash}{f2df7f527caf257a2ade2880b7693304}
+      \strng{editorfullhashraw}{f2df7f527caf257a2ade2880b7693304}
+      \field{sortinit}{G}
+      \field{sortinithash}{32d67eca0634bf53703493fb1090a2e8}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{shorttitle}
+      \field{abstract}{The security of network services and their protocols critically depends on minimizing their attack surface. A single ﬂaw in an implementation can sufﬁce to compromise a service and expose sensitive data to an attacker. The discovery of vulnerabilities in protocol implementations, however, is a challenging task: While for standard protocols this process can be conducted with regular techniques for auditing, the situation becomes difﬁcult for proprietary protocols if neither the program code nor the speciﬁcation of the protocol are easily accessible. As a result, vulnerabilities in closed-source implementations can often remain undiscovered for a longer period of time. In this paper, we present PULSAR, a method for stateful black-box fuzzing of proprietary network protocols. Our method combines concepts from fuzz testing with techniques for automatic protocol reverse engineering and simulation. It proceeds by observing the trafﬁc of a proprietary protocol and inferring a generative model for message formats and protocol states that can not only analyze but also simulate communication. During fuzzing this simulation can effectively explore the protocol state space and thereby enables uncovering vulnerabilities deep inside the protocol implementation. We demonstrate the efﬁcacy of PULSAR in two case studies, where it identiﬁes known as well as unknown vulnerabilities.}
+      \field{booktitle}{Security and {Privacy} in {Communication} {Networks}}
+      \field{isbn}{978-3-319-28864-2 978-3-319-28865-9}
+      \field{note}{Series Title: Lecture Notes of the Institute for Computer Sciences, Social Informatics and Telecommunications Engineering}
+      \field{shorttitle}{Pulsar}
+      \field{title}{Pulsar: {Stateful} {Black}-{Box} {Fuzzing} of {Proprietary} {Network} {Protocols}}
+      \field{urlday}{20}
+      \field{urlmonth}{7}
+      \field{urlyear}{2026}
+      \field{volume}{164}
+      \field{year}{2015}
+      \field{urldateera}{ce}
+      \field{pages}{330\bibrangedash 347}
+      \range{pages}{18}
+      \verb{doi}
+      \verb 10.1007/978-3-319-28865-9_18
+      \endverb
+      \verb{file}
+      \verb PDF:/home/bastian/Zotero/storage/BGUVENLB/Gascon et al. - 2015 - Pulsar Stateful Black-Box Fuzzing of Proprietary Network Protocols.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb http://link.springer.com/10.1007/978-3-319-28865-9_18
+      \endverb
+      \verb{url}
+      \verb http://link.springer.com/10.1007/978-3-319-28865-9_18
+      \endverb
+    \endentry
     \entry{ghasemi_comprehensive_2025}{misc}{}{}
       \name{author}{3}{}{%
         {{hash=e33afd19983d11ac4a0597826981f8a7}{%
@@ -779,6 +939,67 @@
       \verb http://arxiv.org/abs/2411.18892
       \endverb
       \keyw{Computer Science - Artificial Intelligence,Computer Science - Machine Learning}
+    \endentry
+    \entry{godefroid_sage_2012}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=9d2d477c053bf8048a308bb409d1eb99}{%
+           family={Godefroid},
+           familyi={G\bibinitperiod},
+           given={Patrice},
+           giveni={P\bibinitperiod}}}%
+        {{hash=5d0f9351e872e6e11ff8018ea84f08e0}{%
+           family={Levin},
+           familyi={L\bibinitperiod},
+           given={Michael\bibnamedelima Y.},
+           giveni={M\bibinitperiod\bibinitdelim Y\bibinitperiod}}}%
+        {{hash=53107919d48a5b006886d8ec45fffd3a}{%
+           family={Molnar},
+           familyi={M\bibinitperiod},
+           given={David},
+           giveni={D\bibinitperiod}}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \strng{namehash}{72224b94751f1d907ff669cb5d901cff}
+      \strng{fullhash}{72224b94751f1d907ff669cb5d901cff}
+      \strng{fullhashraw}{72224b94751f1d907ff669cb5d901cff}
+      \strng{bibnamehash}{72224b94751f1d907ff669cb5d901cff}
+      \strng{authorbibnamehash}{72224b94751f1d907ff669cb5d901cff}
+      \strng{authornamehash}{72224b94751f1d907ff669cb5d901cff}
+      \strng{authorfullhash}{72224b94751f1d907ff669cb5d901cff}
+      \strng{authorfullhashraw}{72224b94751f1d907ff669cb5d901cff}
+      \field{sortinit}{G}
+      \field{sortinithash}{32d67eca0634bf53703493fb1090a2e8}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{shorttitle}
+      \field{abstract}{SAGE has had a remarkable impact at Microsoft.}
+      \field{issn}{0001-0782, 1557-7317}
+      \field{journaltitle}{Communications of the ACM}
+      \field{month}{3}
+      \field{number}{3}
+      \field{shorttitle}{{SAGE}}
+      \field{title}{{SAGE}: whitebox fuzzing for security testing}
+      \field{urlday}{20}
+      \field{urlmonth}{7}
+      \field{urlyear}{2026}
+      \field{volume}{55}
+      \field{year}{2012}
+      \field{urldateera}{ce}
+      \field{pages}{40\bibrangedash 44}
+      \range{pages}{5}
+      \verb{doi}
+      \verb 10.1145/2093548.2093564
+      \endverb
+      \verb{file}
+      \verb PDF:/home/bastian/Zotero/storage/IA88URLS/Godefroid et al. - 2012 - SAGE whitebox fuzzing for security testing.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://dl.acm.org/doi/10.1145/2093548.2093564
+      \endverb
+      \verb{url}
+      \verb https://dl.acm.org/doi/10.1145/2093548.2093564
+      \endverb
     \endentry
     \entry{ha_world_2018}{article}{}{}
       \name{author}{2}{}{%
@@ -1597,71 +1818,6 @@
       \endverb
       \verb{url}
       \verb http://link.springer.com/10.1007/11871842_29
-      \endverb
-    \endentry
-    \entry{kwon_optimization-directed_2025}{article}{}{}
-      \name{author}{4}{}{%
-        {{hash=88f3a888daa7c249badd5767d13409de}{%
-           family={Kwon},
-           familyi={K\bibinitperiod},
-           given={Jaeseong},
-           giveni={J\bibinitperiod}}}%
-        {{hash=2408fab8d41d61eec2dc03924cb7c8cc}{%
-           family={Jang},
-           familyi={J\bibinitperiod},
-           given={Bongjun},
-           giveni={B\bibinitperiod}}}%
-        {{hash=4149496e2be23fb1d9062e43c62c7271}{%
-           family={Lee},
-           familyi={L\bibinitperiod},
-           given={Juneyoung},
-           giveni={J\bibinitperiod}}}%
-        {{hash=9cc8824aa043ecf828c1ee20f7b71df1}{%
-           family={Heo},
-           familyi={H\bibinitperiod},
-           given={Kihong},
-           giveni={K\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
-      }
-      \strng{namehash}{9bf87f6d4de32e677d54ffffe5847cf9}
-      \strng{fullhash}{9a39a738ba69abe315342bab2f2ca13a}
-      \strng{fullhashraw}{9a39a738ba69abe315342bab2f2ca13a}
-      \strng{bibnamehash}{9bf87f6d4de32e677d54ffffe5847cf9}
-      \strng{authorbibnamehash}{9bf87f6d4de32e677d54ffffe5847cf9}
-      \strng{authornamehash}{9bf87f6d4de32e677d54ffffe5847cf9}
-      \strng{authorfullhash}{9a39a738ba69abe315342bab2f2ca13a}
-      \strng{authorfullhashraw}{9a39a738ba69abe315342bab2f2ca13a}
-      \field{sortinit}{K}
-      \field{sortinithash}{c02bf6bff1c488450c352b40f5d853ab}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{abstract}{Incorrect compiler optimizations can lead to unintended program behavior and security vulnerabilities. However, the enormous size and complexity of modern compilers make it challenging to ensure the correctness of optimizations. The problem becomes more severe as compiler engineers continuously add new optimizations to improve performance and support new language features. In this paper, we propose Optimuzz, a framework to effectively detect incorrect optimization bugs in such continuously changing compilers. The key idea is to combine two complementary techniques: directed grey-box fuzzing and translation validation. We design a novel optimization-directed fuzzing framework that efficiently generates input programs to trigger specific compiler optimizations. Optimuzz then uses existing translation validation tools to verify the correctness of the optimizations on the input programs. We instantiate our approach for two major compilers, LLVM and TurboFan. The results show that Optimuzz can effectively detect miscompilation bugs in these compilers, outperforming state-of-the-art tools. We also applied Optimuzz to the latest version of LLVM and discovered 55 new miscompilation bugs. CCS Concepts: • Software and its engineering → Software testing and debugging; Compilers; Software verification.}
-      \field{issn}{2475-1421}
-      \field{journaltitle}{Proceedings of the ACM on Programming Languages}
-      \field{month}{6}
-      \field{number}{PLDI}
-      \field{title}{Optimization-{Directed} {Compiler} {Fuzzing} for {Continuous} {Translation} {Validation}}
-      \field{urlday}{24}
-      \field{urlmonth}{9}
-      \field{urlyear}{2025}
-      \field{volume}{9}
-      \field{year}{2025}
-      \field{urldateera}{ce}
-      \field{pages}{627\bibrangedash 650}
-      \range{pages}{24}
-      \verb{doi}
-      \verb 10.1145/3729275
-      \endverb
-      \verb{file}
-      \verb PDF:/home/bastian/Zotero/storage/FCJ92CAV/Kwon et al. - 2025 - Optimization-Directed Compiler Fuzzing for Continuous Translation Validation.pdf:application/pdf
-      \endverb
-      \verb{urlraw}
-      \verb https://dl.acm.org/doi/10.1145/3729275
-      \endverb
-      \verb{url}
-      \verb https://dl.acm.org/doi/10.1145/3729275
       \endverb
     \endentry
     \entry{liang_fuzzing_2018}{article}{}{}
@@ -3722,6 +3878,71 @@
       \endverb
       \keyw{Computer Science - Artificial Intelligence,Computer Science - Machine Learning,Computer Science - Multiagent Systems}
     \endentry
+    \entry{toffola_saying_2017}{inproceedings}{}{}
+      \name{author}{3}{}{%
+        {{hash=ccdf0809fb72c49597f310d115a1ace9}{%
+           family={Toffola},
+           familyi={T\bibinitperiod},
+           given={Luca\bibnamedelima Della},
+           giveni={L\bibinitperiod\bibinitdelim D\bibinitperiod}}}%
+        {{hash=50b4ff2cc465b438e1151167e935cc18}{%
+           family={Staicu},
+           familyi={S\bibinitperiod},
+           given={Cristian-Alexandru},
+           giveni={C\bibinithyphendelim A\bibinitperiod}}}%
+        {{hash=862571674423e73a60c8076124bb119a}{%
+           family={Pradel},
+           familyi={P\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod}}}%
+      }
+      \list{language}{1}{%
+        {en}%
+      }
+      \list{location}{1}{%
+        {Urbana, IL}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{b4f7a98b890eefa9121a701ae5980e6d}
+      \strng{fullhash}{b4f7a98b890eefa9121a701ae5980e6d}
+      \strng{fullhashraw}{b4f7a98b890eefa9121a701ae5980e6d}
+      \strng{bibnamehash}{b4f7a98b890eefa9121a701ae5980e6d}
+      \strng{authorbibnamehash}{b4f7a98b890eefa9121a701ae5980e6d}
+      \strng{authornamehash}{b4f7a98b890eefa9121a701ae5980e6d}
+      \strng{authorfullhash}{b4f7a98b890eefa9121a701ae5980e6d}
+      \strng{authorfullhashraw}{b4f7a98b890eefa9121a701ae5980e6d}
+      \field{sortinit}{T}
+      \field{sortinithash}{9af77f0292593c26bde9a56e688eaee9}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{shorttitle}
+      \field{abstract}{Automatically generating unit tests is a powerful approach to exercise complex software. Unfortunately, current techniques often fail to provide relevant input values, such as strings that bypass domain-speciﬁc sanity checks. As a result, state-of-the-art techniques are effective for generic classes, such as collections, but less successful for domain-speciﬁc software. This paper presents TestMiner, the ﬁrst technique for mining a corpus of existing tests for input values to be used by test generators for effectively testing software not in the corpus. The main idea is to extract literals from thousands of tests and to adapt information retrieval techniques to ﬁnd values suitable for a particular domain. Evaluating the approach with 40 Java classes from 18 different projects shows that TestMiner improves test coverage by 21\% over an existing test generator. The approach can be integrated into various test generators in a straightforward way, increasing their effectiveness on previously difﬁcult-to-test classes.}
+      \field{booktitle}{2017 32nd {IEEE}/{ACM} {International} {Conference} on {Automated} {Software} {Engineering} ({ASE})}
+      \field{isbn}{978-1-5386-2684-9}
+      \field{month}{10}
+      \field{shorttitle}{Saying ‘{Hi}!’ is not enough}
+      \field{title}{Saying ‘{Hi}!’ is not enough: {Mining} inputs for effective test generation}
+      \field{urlday}{20}
+      \field{urlmonth}{7}
+      \field{urlyear}{2026}
+      \field{year}{2017}
+      \field{urldateera}{ce}
+      \field{pages}{44\bibrangedash 49}
+      \range{pages}{6}
+      \verb{doi}
+      \verb 10.1109/ASE.2017.8115617
+      \endverb
+      \verb{file}
+      \verb PDF:/home/bastian/Zotero/storage/UPKA7DNE/Toffola et al. - 2017 - Saying ‘Hi!’ is not enough Mining inputs for effective test generation.pdf:application/pdf
+      \endverb
+      \verb{urlraw}
+      \verb http://ieeexplore.ieee.org/document/8115617/
+      \endverb
+      \verb{url}
+      \verb http://ieeexplore.ieee.org/document/8115617/
+      \endverb
+    \endentry
     \entry{wang_syzvegas_2021}{article}{}{}
       \name{author}{6}{}{%
         {{hash=783ef28719e4c4faa14c14bbda016286}{%
@@ -4164,7 +4385,6 @@
       \strng{authornamehash}{e7d9fa6eb35f79516cf023e810c4f395}
       \strng{authorfullhash}{18374109a031a32f87f377caa989d6f0}
       \strng{authorfullhashraw}{18374109a031a32f87f377caa989d6f0}
-      \field{extraname}{1}
       \field{sortinit}{Z}
       \field{sortinithash}{96892c0b0a36bb8557c40c49813d48b3}
       \field{labelnamesource}{author}
@@ -4193,56 +4413,6 @@
       \endverb
       \verb{url}
       \verb https://ieeexplore.ieee.org/document/8399803/
-      \endverb
-    \endentry
-    \entry{zhang_debloating_nodate}{article}{}{}
-      \name{author}{5}{}{%
-        {{hash=584fe8cb46f9a24597f46045f82d1d8d}{%
-           family={Zhang},
-           familyi={Z\bibinitperiod},
-           given={Yuchen},
-           giveni={Y\bibinitperiod}}}%
-        {{hash=91e46974b5edefedf4d0a7404b9a7882}{%
-           family={Pang},
-           familyi={P\bibinitperiod},
-           given={Chengbin},
-           giveni={C\bibinitperiod}}}%
-        {{hash=d374c88db0acbab70f79b41c89a3bb28}{%
-           family={Portokalidis},
-           familyi={P\bibinitperiod},
-           given={Georgios},
-           giveni={G\bibinitperiod}}}%
-        {{hash=4fec0dd8b202691c95b252f4ed050e74}{%
-           family={Triandopoulos},
-           familyi={T\bibinitperiod},
-           given={Nikos},
-           giveni={N\bibinitperiod}}}%
-        {{hash=05ed36bcb6a44b5b9e4d52219469373d}{%
-           family={Xu},
-           familyi={X\bibinitperiod},
-           given={Jun},
-           giveni={J\bibinitperiod}}}%
-      }
-      \list{language}{1}{%
-        {en}%
-      }
-      \strng{namehash}{ab5af30385f96909b44d02c97b79929a}
-      \strng{fullhash}{34241dbf0232a0f5924e5cbca0769e7c}
-      \strng{fullhashraw}{34241dbf0232a0f5924e5cbca0769e7c}
-      \strng{bibnamehash}{ab5af30385f96909b44d02c97b79929a}
-      \strng{authorbibnamehash}{ab5af30385f96909b44d02c97b79929a}
-      \strng{authornamehash}{ab5af30385f96909b44d02c97b79929a}
-      \strng{authorfullhash}{34241dbf0232a0f5924e5cbca0769e7c}
-      \strng{authorfullhashraw}{34241dbf0232a0f5924e5cbca0769e7c}
-      \field{extraname}{2}
-      \field{sortinit}{Z}
-      \field{sortinithash}{96892c0b0a36bb8557c40c49813d48b3}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{abstract}{Address Sanitizer (ASan) is a powerful memory error detector. It can detect various errors ranging from spatial issues like out-of-bound accesses to temporal issues like use-afterfree. However, ASan has the major drawback of high runtime overhead. With every functionality enabled, ASan incurs an overhead of more than 1x.}
-      \field{title}{Debloating {Address} {Sanitizer}}
-      \verb{file}
-      \verb PDF:/home/bastian/Zotero/storage/AE9WS9XV/Zhang et al. - Debloating Address Sanitizer.pdf:application/pdf
       \endverb
     \endentry
     \entry{zhao_alphuzz_2022}{inproceedings}{}{}
@@ -4531,10 +4701,7 @@
       \endverb
     \endentry
   \enddatalist
-  \missing{TODO cite boehme17}
-  \missing{TODO cite godefroid12}
-  \missing{TODO toffola17}
-  \missing{TODO wressnegger15}
+  \missing{TODO cite original afl}
 \endrefsection
 \endinput
 

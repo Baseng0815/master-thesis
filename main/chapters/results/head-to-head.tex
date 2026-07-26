@@ -1,0 +1,33 @@
+%!TEX root = ../../thesis.tex
+
+\section{Head-to-Head: cJSON under Both Formulations}\label{sec:results-head-to-head}
+
+% Answers RQ2 (\cref{sec:introduction-rqs}). This is the section the two-formulation
+% structure of the thesis exists to make possible --- give it the prominence that
+% implies.
+
+% TODO: The comparison: the same target (\cref{sec:target-cjson}), the same emulator,
+% the same coverage instrumentation, the same learner and the same frozen
+% configuration, differing only in the action space --- one input symbol per step
+% (\cref{chap:input-actions}) versus one corpus operation per step
+% (\cref{chap:corpus-actions}).
+%
+% Name the confounds honestly and up front, because they bound what the comparison can
+% conclude:
+%   - the harness differs (per-byte re-parse versus persistent-mode whole-record
+%     read), so an execution does not mean the same thing on both sides,
+%   - the action alphabets differ (a restricted JSON-relevant set versus byte-level
+%     operators), so one formulation carries more grammar knowledge than the other,
+%   - one agent decision costs one execution on one side and up to a sweep width on
+%     the other.
+% Report on both currencies of \cref{sec:methodology-currencies} for exactly this
+% reason, and state which comparisons survive each confound.
+%
+% What to compare: coverage against executions and against wall-clock, sample
+% efficiency to a fixed coverage level, stability across the seed pool, and the shape
+% of what each one finds --- deep-but-narrow versus broad-but-shallow is a more
+% informative difference than a single coverage number.
+%
+% Close with the design lesson, which is the transferable contribution: what the
+% action-space choice costs and buys, and which formulation to reach for under which
+% conditions. That conclusion feeds \cref{sec:discussion-advantages,sec:discussion-disadvantages}.

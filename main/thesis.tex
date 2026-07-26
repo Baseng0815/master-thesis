@@ -72,6 +72,10 @@
 \addbibresource{references/reinforcement-learning.bib}
 \addbibresource{references/misc.bib}
 \addbibresource{references/oss-fuzz.bib}
+\addbibresource{references/boehme17.bib}
+\addbibresource{references/godefroid90.bib}
+\addbibresource{references/toffola17.bib}
+\addbibresource{references/wressnegger15.bib}
 
 % ----- Hyperlinks & cross-references (load last) ----------------------------
 \usepackage[hidelinks,pdfusetitle]{hyperref}
@@ -122,27 +126,74 @@
 \pagenumbering{arabic}
 
 % ----- Main matter ----------------------------------------------------------
-\chapter{Introduction}\label{chap:introduction}
-\input{chapters/introduction/fuzzing}
-\input{chapters/introduction/reinforcement-learning}
-\input{chapters/introduction/reinforcement-fuzzing}
+% Document order is defined here and only here. The three groups below correspond to
+% background / approach / evaluation; uncomment the \part lines to make that split
+% explicit in the printed document.
+
+% \part{Background}
+\input{chapters/introduction}
+
+\chapter{Background}\label{chap:background}
+\input{chapters/background/fuzzing}
+\input{chapters/background/reinforcement-learning}
 
 \input{chapters/efficientzero}
-\input{chapters/efficientzero-fuzzing}
 
+\chapter{Related Work}\label{chap:related-work}
+\input{chapters/related-work}
+
+% \part{Approach}
+\input{chapters/platform}
+\input{chapters/fuzzing-mdp}
+
+\chapter{Input-Level Action Spaces}\label{chap:input-actions}
+% Keep the section order identical to \cref{chap:corpus-actions} --- the two chapters
+% are meant to be read as a diff.
+\input{chapters/fuzzing-input-actions/overview}
+\input{chapters/fuzzing-input-actions/action-space}
+\input{chapters/fuzzing-input-actions/observation}
+\input{chapters/fuzzing-input-actions/reward}
+\input{chapters/fuzzing-input-actions/determinism}
+\input{chapters/fuzzing-input-actions/prior-work}
+
+\chapter{Corpus-Level Action Spaces}\label{chap:corpus-actions}
+\input{chapters/fuzzing-corpus-actions/overview}
+\input{chapters/fuzzing-corpus-actions/action-space}
+\input{chapters/fuzzing-corpus-actions/observation}
+\input{chapters/fuzzing-corpus-actions/reward}
+\input{chapters/fuzzing-corpus-actions/determinism}
+\input{chapters/fuzzing-corpus-actions/prior-work}
+
+\input{chapters/implementation}
+
+% \part{Evaluation}
 \chapter{Targets}\label{chap:targets}
+\input{chapters/targets/overview}
+
+\section{Diagnostic Microbenchmarks}\label{sec:targets-microbenchmarks}
 \input{chapters/targets/bandit}
 \input{chapters/targets/contextual-bandit}
 \input{chapters/targets/sequence}
+\input{chapters/targets/branches}
+
+\section{Realistic Targets}\label{sec:targets-realistic}
+\input{chapters/targets/cjson}
 \input{chapters/targets/open62541}
 
-\input{chapters/mogi-setup}
+\input{chapters/methodology}
 
-\chapter{Analysis}\label{chap:analysis}
-\input{chapters/analysis/challenge}
-\input{chapters/analysis/evaluation}
-\input{chapters/analysis/advantages}
-\input{chapters/analysis/disadvantages}
+\chapter{Results}\label{chap:results}
+\input{chapters/results/input-actions}
+\input{chapters/results/corpus-actions}
+\input{chapters/results/head-to-head}
+\input{chapters/results/ablations}
+
+\input{chapters/failure-modes}
+
+\chapter{Discussion}\label{chap:discussion}
+\input{chapters/discussion/advantages}
+\input{chapters/discussion/disadvantages}
+\input{chapters/discussion/threats}
 
 \input{chapters/conclusion}
 \input{chapters/future-work}
@@ -151,7 +202,7 @@
 % \nocite{*}  % uncomment to list all references.bib entries while drafting
 \printbibliography[heading=bibintoc]
 
-% \appendix
-% \input{chapters/appendix}
+\appendix
+\input{chapters/appendix}
 
 \end{document}

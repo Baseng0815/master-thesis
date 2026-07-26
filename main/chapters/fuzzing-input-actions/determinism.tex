@@ -1,0 +1,14 @@
+%!TEX root = ../../thesis.tex
+
+\section{Determinism and the Planning Contract}\label{sec:input-determinism}
+
+% TODO: Short section --- and its shortness is the point, so say that explicitly.
+% Feeding one symbol per step contains no randomness at all, so constraint C4 of
+% \cref{sec:mdp-constraints} is satisfied for free: the transition is exactly
+% "append this symbol, run the guest, read the coverage". Combined with the platform
+% determinism established in \cref{sec:platform-determinism}, the MDP the planner
+% models is deterministic end to end.
+%
+% Contrast forward: the corpus formulation has to work for the same property, at the
+% cost of an exhaustive operator sweep (\cref{sec:corpus-determinism}). That contrast
+% is one of the main findings of the comparison, so plant it here.

@@ -1,0 +1,39 @@
+%!TEX root = ../../thesis.tex
+
+\section{Ablations}\label{sec:results-ablations}
+
+% Answers RQ3 (\cref{sec:introduction-rqs}). Every ablation is paired on the
+% pre-registered seed pool (\cref{sec:methodology-seeds}).
+
+% TODO: Lead with the ablation that decides the thesis's central claim, then the rest.
+%
+% 1. Planning versus learned value: one MCTS simulation against the full budget.
+%    If a single simulation nearly matches full search, the contribution is a learned
+%    value function over coverage, NOT planning for fuzzing --- and that must be said
+%    in those words. No claim about planning is made anywhere in this thesis without
+%    this result. Run it on branches (\cref{sec:target-branches}) as well as sequence:
+%    branches is the target built to need lookahead.
+%
+% 2. Reward design: absolute per-execution coverage against marginal new coverage
+%    (\cref{sec:corpus-reward}); living reward only, against living plus terminal
+%    coverage, against added novelty (\cref{sec:input-reward}). Prior work found the
+%    history-based reward failed and the memoryless one worked; report whether that
+%    replicates under a planner.
+%
+% 3. Observation design: cumulative and new coverage against each alone; action
+%    history only; zero-based against raw.
+%
+% 4. Algorithm components: value prefix, the self-supervised consistency loss,
+%    reanalyze fraction, prioritized replay. These test whether EfficientZero's
+%    sample-efficiency machinery earns its keep in this domain rather than on Atari.
+%
+% 5. Search and capacity: simulation count, root noise, temperature, model size,
+%    absorbing depth.
+%
+% 6. Corpus-specific factors (learned position, learned selection, learned retention)
+%    are reported in \cref{sec:results-corpus-actions} where their context is.
+%
+% Close with a variance decomposition: how much outcome variance is attributable to
+% the seed, the hyperparameter and the target. "Seed dominates" is a genuine finding,
+% and isolating whether collapse tracks initialization or sampling distinguishes a
+% bad-basin problem from an exploration problem (\cref{chap:failure-modes}).

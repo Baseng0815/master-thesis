@@ -1,0 +1,28 @@
+%!TEX root = ../../thesis.tex
+
+\subsection{Branches}\label{sec:target-branches}
+
+% TODO: The branching-maze target, and the strongest argument in the thesis for
+% planning rather than greedy value maximization --- give it that framing.
+%
+% Structure: the input space is a DAG of rooms rather than one linear passcode. Each
+% room opens a few distinct-letter doors, wrong letters kill the process, and several
+% leaves are goals of differing value. The layout stresses several capabilities at
+% once, and each deserves a sentence:
+%   - the global optimum lies several decision-heavy steps deep,
+%   - a trivially repeatable "just survive" corridor competes with it,
+%   - a shallow but well-rewarded sled is an early local optimum,
+%   - goals branch off the correct deep path, so a greedy climber stops short,
+%   - a merge room is reachable by two distinct prefixes, testing generalization
+%     across convergent paths,
+%   - dead ends sit directly on the deep branch.
+%
+% Reward mirrors sequence (\cref{sec:target-sequence}): a living reward per surviving
+% step and a terminal payout per distinct block, sized so that the goal sleds rank the
+% goals. Include the maze as a figure --- this target is unreadable in prose alone.
+%
+% State the claim it is built to test: a greedy or coverage-guided climber takes the
+% sled or the corridor, while a planner with a learned model should look past both.
+% If the planner does not beat the climber here, the planning claim of RQ3
+% (\cref{sec:introduction-rqs}) fails on the target designed to make it easiest ---
+% which is why this result is reported whichever way it comes out.

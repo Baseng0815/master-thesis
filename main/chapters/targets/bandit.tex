@@ -1,6 +1,19 @@
 %!TEX root = ../../thesis.tex
 
-\section{Bandit}\label{sec:target-bandit}
+\subsection{Bandit}\label{sec:target-bandit}
 
-% TODO: Describe the (multi-armed) bandit toy target: purpose, structure,
-% and what behaviour it is meant to validate.
+% Implemented by the high_and_low example: the guest reads bytes from stdin and takes
+% a high-coverage branch for a small set of byte values and a low-coverage branch for
+% everything else. Each step feeds one action byte and the reward is the number of
+% basic blocks hit while consuming it.
+
+% TODO: Describe the target as the minimal instance of the framing in
+% \cref{sec:rl-exploration}: the optimal action is the same in every state, so the
+% problem is a multi-armed bandit and no planning is required. Say what it validates:
+%   - that the coverage signal of \cref{sec:platform-coverage} separates branches at
+%     all, measurably,
+%   - that the environment plumbing --- action delivery, execution, snapshot reset ---
+%     works end to end,
+%   - a floor result: any learner that cannot solve this is broken, so a positive
+%     result here is a precondition, not evidence.
+% Keep it short and say plainly that it carries no weight for the research questions.

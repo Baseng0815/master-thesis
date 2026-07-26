@@ -1,0 +1,25 @@
+%!TEX root = ../../thesis.tex
+
+\section{Where the Approach Helps}\label{sec:discussion-advantages}
+
+% TODO: Interpretation, not a re-listing of \cref{chap:results}. Every claim here must
+% point at a specific result, and claims the results do not support must not appear.
+%
+% Candidate arguments, each to be kept only if the evidence carries it:
+%   - deep, sequentially dependent constraints: where a coverage-guided climber stalls
+%     because no single mutation improves coverage, a learned value function that
+%     carries credit across steps does not (\cref{sec:results-input-actions}),
+%   - sample efficiency where an execution is expensive: under emulation, spending
+%     compute per decision to spend fewer executions is the right trade, and that is
+%     the regime this domain sits in (\cref{sec:rl-sample-efficiency}),
+%   - amortized planning: the operator sweep buys many executions per decision, so
+%     the planner's cost is paid down rather than paid per input
+%     (\cref{sec:results-corpus-actions}),
+%   - protocol-state navigation without a hand-written state machine
+%     (\cref{sec:target-open62541}).
+%
+% State the scope of each claim: which target, which baseline, which currency. An
+% advantage demonstrated only where the reward was designed
+% (\cref{sec:targets-microbenchmarks}) is a claim about credit assignment, not about
+% fuzzing --- keep that distinction visible here rather than only in
+% \cref{sec:discussion-threats}.

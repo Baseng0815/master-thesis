@@ -1,0 +1,60 @@
+%!TEX root = ../thesis.tex
+
+\chapter{Failure Modes and Diagnosis}\label{chap:failure-modes}
+
+% Claimed as a contribution (\cref{sec:introduction-contributions}): a taxonomy of how
+% model-based RL fails on fuzzing-shaped reward landscapes, and the instrumentation
+% that tells the modes apart. Frame it that way throughout --- as a methodology for
+% diagnosis, evidenced by the failures encountered, not as an account of debugging.
+
+\section{Overview}\label{sec:failure-overview}
+
+% TODO: Set up the chapter: on these targets a run does not degrade gracefully, it
+% collapses --- which is why \cref{sec:methodology-seeds} treats the outcome as
+% bimodal. Give the taxonomy as a table: mode, mechanism, the diagnostic signature
+% that identifies it, and the mitigation. Then one section per mode, each following
+% that same order: symptom, mechanism, evidence, mitigation, residual risk.
+
+\section{Policy Collapse and the Echo Chamber}\label{sec:failure-echo-chamber}
+
+% TODO: The prior narrows, search then samples from the narrowed prior, and the
+% resulting targets reinforce it. Distinguish it from healthy convergence --- that
+% distinction is the hard part and the reason the diagnostic exists. Evidence: the
+% per-position argmax matrix over training, MCTS visit-count entropy per depth, and
+% the divergence between the search policy and the network prior. If search merely
+% echoes the prior, it has stopped improving it.
+
+\section{Dead-Branch Value Fantasy}\label{sec:failure-dead-branch}
+
+% TODO: The model assigns value to branches that terminate, so the planner walks into
+% them; the mechanism interacts with how termination and absorbing states are handled
+% and with the episode horizon. Evidence: model introspection along a fixed action
+% path, and value calibration against realized return. Mitigation and its cost, plus
+% the connection to the horizon bound argued in
+% \cref{sec:input-reward,sec:corpus-reward}.
+
+\section{Value-Prefix and Support Pathologies}\label{sec:failure-value-prefix}
+
+% TODO: Failures traced to the categorical value representation rather than to the
+% policy: a support whose bins are too coarse for the reward gap makes the heads
+% action-blind, and an inverted or saturated value prefix silently destroys the
+% multi-step signal. This is the empirical justification for deriving the support from
+% the reward structure in \cref{sec:methodology-hyperparameters} --- the derivation is
+% not a formality, it is a fix for an observed failure.
+
+\section{Reward Hacking}\label{sec:failure-reward-hacking}
+
+% TODO: Coverage as a reward is game-able, and it was gamed: process teardown emitted
+% a coverage burst, so dying became profitable. Present it as a first-class finding
+% about coverage-as-reward rather than an implementation bug --- any coverage-rewarded
+% agent can find teardown paths, and this is the concrete demonstration. Give the fix
+% (gate novelty on survival, structure the terminal payout) and then the honest
+% caveat: the fix is target-specific reward engineering, which is precisely the
+% external-validity problem of \cref{sec:discussion-threats}.
+
+\section{Diagnosing a Collapsed Run}\label{sec:failure-procedure}
+
+% TODO: The transferable payload of this chapter: a procedure. Given a collapsed run,
+% which probe to read first, which signature distinguishes which mode, and what to
+% change. State which modes the procedure cannot yet distinguish --- the honest limit
+% of the method is part of the contribution.

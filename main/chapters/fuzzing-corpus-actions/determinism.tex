@@ -1,0 +1,31 @@
+%!TEX root = ../../thesis.tex
+
+\section{Determinism and the Planning Contract}\label{sec:corpus-determinism}
+
+% TODO: The central design section of this chapter --- give it the space that implies.
+%
+% The problem: real mutation operators are stochastic, and a stochastic transition
+% breaks constraint C4 of \cref{sec:mdp-constraints}, because MCTS plans over a
+% learned deterministic latent model.
+%
+% The resolution: make each operator a deterministic *enumeration* and sweep it over
+% the chosen position --- every resulting seed is executed, and the results are
+% collapsed into one successor state by a reduce function. State the operators used
+% and the sweep width each induces.
+%
+% Consequences, all worth stating separately:
+%   - the transition becomes deterministic, so the planner's model is well posed,
+%   - one agent decision now buys up to a sweep-width's worth of target executions,
+%     which directly attacks the objection that MCTS overhead cannot be amortized at
+%     fuzzing throughput (\cref{sec:rlfuzz-difficulties}) --- quantify it against the
+%     throughput numbers of \cref{sec:platform-throughput},
+%   - it does NOT multiply training data: the whole sweep still yields one transition
+%     for the learner,
+%   - therefore the reduce function silently defines what the operator *means* to the
+%     agent, and must be chosen deliberately rather than defaulted into.
+%
+% Frame the whole section as the price of choosing EfficientZero over a model-free
+% learner: \cite{bottinger_deep_2018} deliberately *kept* mutation stochastic because
+% Q-learning handles stochastic MDPs natively. The same design pressure produces
+% opposite decisions. That is the clearest illustration in the thesis of the algorithm
+% dictating the fuzzer's design.

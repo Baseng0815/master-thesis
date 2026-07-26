@@ -83,6 +83,10 @@
       <file>references/reinforcement-learning.bib</file>
       <file>references/misc.bib</file>
       <file>references/oss-fuzz.bib</file>
+      <file>references/boehme17.bib</file>
+      <file>references/godefroid90.bib</file>
+      <file>references/toffola17.bib</file>
+      <file>references/wressnegger15.bib</file>
     </requires>
   </external>
 </requests>

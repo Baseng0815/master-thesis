@@ -1,0 +1,32 @@
+%!TEX root = ../../thesis.tex
+
+\section{Action Space}\label{sec:corpus-action-space}
+
+% TODO: The composite action and its encoding --- the section where constraints C1,
+% C2 and C5 of \cref{sec:mdp-constraints} actually bite.
+%
+% The factors, and why each is a decision rather than a heuristic:
+%   - retain in {0..N} u {discard}: what to do with the PREVIOUS step's mutant,
+%   - select in {0..N}: which corpus slot to mutate next,
+%   - position in {0..L} and operator in the operator set.
+%
+% Argue the ordering: retain acts on the previous mutant because its coverage is
+% already in the observation, so every eviction --- the only destructive decision --- is
+% informed rather than blind. Note the pass-through case retain == select, which
+% yields a hill-climbing lineage, and its cost (a lineage occupies a slot and
+% overwrites its own parent).
+%
+% Encoding: pack the tuple into one integer of size (N+1) * N * L * |ops|. Give the
+% configuration actually used and the resulting branching factor. Then discuss the
+% alternative that was NOT taken and why:
+%   - flat encoding keeps the policy a single softmax, so joint actions are
+%     unrelated categories and nothing generalizes across factors,
+%   - factored heads with sampled search (Sampled MuZero) would fix that but require
+%     changing the policy model, the prior layout and the identity assertion in the
+%     MCTS; deferred until the product outgrows enumeration,
+%   - a subtlety worth stating once: the encoding *dimension* is additive (a
+%     concatenation of one-hots) while the number of distinct joint actions --- the
+%     policy width and the branching factor --- is the product. They are different
+%     numbers about the same action.
+%   - the flat encoding also represents the retain == select diagonal directly, which
+%     independent factored heads cannot.

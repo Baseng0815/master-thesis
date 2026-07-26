@@ -1,0 +1,26 @@
+%!TEX root = ../../thesis.tex
+
+\section{Observation}\label{sec:corpus-observation}
+
+% TODO: The observation has to be rich enough that both the selection and the
+% eviction decision are informed --- an eviction head over N slots is blind without
+% per-slot information. Components:
+%   - the raw bytes of the focus seed (needed to choose a position),
+%   - the staging seed (the previous mutant) with its coverage and its marginal gain
+%     against the corpus union: the retention signal,
+%   - the global corpus coverage map, so "did this add new coverage" is computable
+%     from the observation alone,
+%   - one feature row per slot --- compressed coverage fingerprint, marginal, age,
+%     times selected --- so both the selection and the eviction head can rank slots.
+%
+% Two properties to justify explicitly:
+%   - slot identity must be preserved: because actions *index* slots, a
+%     permutation-invariant encoder would be wrong; row i must mean "slot i",
+%   - the staging seed is transient state, not an (N+1)-th selectable member.
+%
+% Give the resulting vector width and set it against constraint C3 of
+% \cref{sec:mdp-constraints}. Then confront the finding from
+% \cite{bottinger_deep_2018} that a *smaller* state generalized better (a 32-byte
+% window beat an 80-byte one): this observation is at the opposite extreme, which is
+% the argument for keeping per-slot rows featurized rather than raw-byte wide. This
+% is a genuine open risk, not a settled design --- say so.

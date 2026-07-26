@@ -1,0 +1,29 @@
+%!TEX root = ../../thesis.tex
+
+\section{Reward and Episode Structure}\label{sec:input-reward}
+
+% TODO: Reward first, episode second, then the interaction between them.
+%
+% Reward: the living reward for surviving a step, the terminal coverage burst, and
+% the novelty bonus --- what each one is for, and the scale each is given. Show the
+% arithmetic that ties the reward magnitudes to the categorical value support
+% (the +-1 step-reward gap must span more than one bin or the value and value-prefix
+% heads go action-blind); this is the worked example of a hyperparameter *derived*
+% from problem structure rather than tuned, and \cref{sec:methodology-hyperparameters}
+% refers back to it.
+%
+% Episode: fixed input length for cjson, early death on a wrong byte for
+% sequence/branches, session activation for open62541. Reset is the snapshot restore
+% of \cref{sec:platform-snapshots}. Give the horizon actually used and say why it is
+% bounded tightly (long or absorbing horizons feed the dead-branch failure mode of
+% \cref{sec:failure-dead-branch}).
+%
+% Interaction: rewards on these targets are hand-shaped, and that is exactly what
+% \cref{sec:discussion-threats} identifies as the strongest objection to the result.
+% Say so here rather than letting the reader discover it --- and separate the targets
+% whose reward was designed (sequence, branches) from those where it is raw coverage
+% (cjson, open62541).
+%
+% Reward hacking belongs here as a designed-against failure, not an anecdote: the
+% teardown burst made dying profitable, which is why the novelty bonus is gated on
+% survival. Cross-reference \cref{sec:failure-reward-hacking}.

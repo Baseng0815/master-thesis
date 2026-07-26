@@ -1,0 +1,23 @@
+%!TEX root = ../../thesis.tex
+
+\section{Overview}\label{sec:input-overview}
+
+% NOTE: This chapter and \cref{chap:corpus-actions} use the SAME six sections in the
+% SAME order, so the two formulations can be read as a diff. Keep them aligned when
+% editing: Overview / Action Space / Observation / Reward and Episode Structure /
+% Determinism / Relation to Prior Work.
+
+% TODO: State the formulation in one paragraph: an action is one symbol of the input
+% the program consumes --- a byte on stdin for the byte-fed targets, a protocol
+% message for open62541 --- and an episode builds one test case left to right. Give
+% the step loop as an algorithm, mirroring the layout of the corpus loop in
+% \cref{sec:corpus-action-space} so the two algorithms can be compared line by line.
+%
+% Running example for this chapter: sequence (\cref{sec:target-sequence}), because
+% episode-step position equals prefix depth, which makes every claim about credit
+% assignment directly observable.
+%
+% Say up front what this formulation gives up: there is no corpus, no seed reuse and
+% no retention decision --- everything the agent has learned lives in the network
+% weights rather than in a population of inputs. That is the deliberate contrast with
+% \cref{chap:corpus-actions}.

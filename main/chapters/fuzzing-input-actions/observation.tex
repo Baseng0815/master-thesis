@@ -1,0 +1,15 @@
+%!TEX root = ../../thesis.tex
+
+\section{Observation}\label{sec:input-observation}
+
+% TODO: What the agent sees after each step, and why. Components to justify
+% individually (each one is an ablation in \cref{sec:results-ablations}):
+%   - cumulative coverage over the episode versus coverage new to the current step,
+%   - zero-based versus raw coverage (whether start-up blocks are folded in),
+%   - action history,
+%   - the resulting vector width, and how it follows from the bucket count of
+%     \cref{sec:platform-coverage}.
+%
+% Be explicit about partial observability: a hashed block-hit vector is a heavily
+% aliased view of the guest's true state (\cref{sec:rl-mdp}), so the environment is
+% strictly a POMDP presented to the agent as an MDP. State what that costs.

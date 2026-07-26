@@ -2,5 +2,25 @@
 
 \chapter{Future Work}\label{chap:future-work}
 
-% TODO: Outline follow-up directions (other targets, alternative RL
-% algorithms, reward shaping, scaling up training).
+% TODO: Follow-up directions, each tied to a limitation established in
+% \cref{sec:discussion-disadvantages} or \cref{sec:discussion-threats} rather than
+% listed generically. Candidates:
+%
+%   - Factored action heads with sampled search, lifting the enumerable-branching
+%     -factor constraint C5 (\cref{sec:mdp-constraints}) and letting the policy
+%     generalize across action factors instead of treating joint actions as unrelated
+%     categories (\cref{sec:corpus-action-space}).
+%   - Variable-length inputs: a fixed observation window over a variable-length seed
+%     decouples "the network needs fixed dimensions" from "seeds must be fixed
+%     length", and re-enables insertion and deletion operators.
+%   - Coverage representation that scales: edge rather than block coverage, and a
+%     collision-aware or learned compression instead of a fixed hashed bucket array
+%     (\cref{sec:platform-coverage}).
+%   - Reward without shaping: the results depend on hand-designed rewards on the
+%     diagnostic targets; intrinsic or novelty-based objectives that need no
+%     per-target engineering are the natural next question.
+%   - Hybrid deployment: run the agent alongside a conventional fuzzer rather than
+%     instead of one, which is how most prior RL fuzzers deal with the throughput gap.
+%   - Reliability: collapse is the dominant failure (\cref{chap:failure-modes}), so
+%     making runs reliably converge is worth more than making converged runs better.
+%   - Broader targets, and a crash-finding rather than coverage-maximizing objective.

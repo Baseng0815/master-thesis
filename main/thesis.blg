@@ -1,31 +1,41 @@
 [0] Config.pm:324> INFO - This is Biber 2.21 (beta)
 [0] Config.pm:327> INFO - Logfile is 'thesis.blg'
-[33] biber:342> INFO - === Mo Jul 20, 2026, 14:36:12
-[43] Biber.pm:421> INFO - Reading 'thesis.bcf'
-[82] Biber.pm:1002> INFO - Found 65 citekeys in bib section 0
-[90] Biber.pm:4487> INFO - Processing section 0
-[97] Biber.pm:4678> INFO - Looking for bibtex file 'references/fuzzing.bib' for section 0
-[100] bibtex.pm:1713> INFO - LaTeX decoding ...
-[133] bibtex.pm:1519> INFO - Found BibTeX data source 'references/fuzzing.bib'
-[282] Biber.pm:4678> INFO - Looking for bibtex file 'references/reinforcement-learning.bib' for section 0
-[285] bibtex.pm:1713> INFO - LaTeX decoding ...
-[347] bibtex.pm:1519> INFO - Found BibTeX data source 'references/reinforcement-learning.bib'
-[546] Biber.pm:4678> INFO - Looking for bibtex file 'references/misc.bib' for section 0
-[546] Biber.pm:4678> INFO - Looking for bibtex file 'references/oss-fuzz.bib' for section 0
-[547] bibtex.pm:1713> INFO - LaTeX decoding ...
-[548] bibtex.pm:1519> INFO - Found BibTeX data source 'references/oss-fuzz.bib'
-[595] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
-[596] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[596] Biber.pm:4307> INFO - Sorting list 'nyt/global//global/global/global' of type 'entry' with template 'nyt' and locale 'en-US'
-[596] Biber.pm:4313> INFO - No sort tailoring available for locale 'en-US'
-[630] bbl.pm:676> INFO - Writing 'thesis.bbl' with encoding 'UTF-8'
-[653] bbl.pm:779> INFO - Output to thesis.bbl
-[653] Biber.pm:132> WARN - ISBN '978-3-030-63617-3 978-3-030-63618-0' in entry 'christakis_banditfuzz_2020' is invalid - run biber with '--validate_datamodel' for details.
-[653] Biber.pm:132> WARN - ISBN '978-3-540-45375-8 978-3-540-46056-5' in entry 'hutchison_bandit_2006' is invalid - run biber with '--validate_datamodel' for details.
-[653] Biber.pm:132> WARN - ISBN '978-3-540-75537-1 978-3-540-75538-8' in entry 'hutchison_efficient_2007' is invalid - run biber with '--validate_datamodel' for details.
-[653] Biber.pm:132> WARN - Data source 'references/misc.bib' is empty, ignoring
-[653] Biber.pm:132> WARN - I didn't find a database entry for 'TODO cite godefroid12' (section 0)
-[653] Biber.pm:132> WARN - I didn't find a database entry for 'TODO toffola17' (section 0)
-[653] Biber.pm:132> WARN - I didn't find a database entry for 'TODO wressnegger15' (section 0)
-[653] Biber.pm:132> WARN - I didn't find a database entry for 'TODO cite boehme17' (section 0)
-[653] Biber.pm:134> INFO - WARNINGS: 8
+[24] biber:342> INFO - === So Jul 26, 2026, 03:36:12
+[32] Biber.pm:421> INFO - Reading 'thesis.bcf'
+[65] Biber.pm:1002> INFO - Found 64 citekeys in bib section 0
+[71] Biber.pm:4487> INFO - Processing section 0
+[76] Biber.pm:4678> INFO - Looking for bibtex file 'references/fuzzing.bib' for section 0
+[77] bibtex.pm:1713> INFO - LaTeX decoding ...
+[101] bibtex.pm:1519> INFO - Found BibTeX data source 'references/fuzzing.bib'
+[219] Biber.pm:4678> INFO - Looking for bibtex file 'references/reinforcement-learning.bib' for section 0
+[221] bibtex.pm:1713> INFO - LaTeX decoding ...
+[268] bibtex.pm:1519> INFO - Found BibTeX data source 'references/reinforcement-learning.bib'
+[421] Biber.pm:4678> INFO - Looking for bibtex file 'references/misc.bib' for section 0
+[421] Biber.pm:4678> INFO - Looking for bibtex file 'references/oss-fuzz.bib' for section 0
+[421] bibtex.pm:1713> INFO - LaTeX decoding ...
+[422] bibtex.pm:1519> INFO - Found BibTeX data source 'references/oss-fuzz.bib'
+[426] Biber.pm:4678> INFO - Looking for bibtex file 'references/boehme17.bib' for section 0
+[426] bibtex.pm:1713> INFO - LaTeX decoding ...
+[427] bibtex.pm:1519> INFO - Found BibTeX data source 'references/boehme17.bib'
+[430] Biber.pm:4678> INFO - Looking for bibtex file 'references/godefroid90.bib' for section 0
+[430] bibtex.pm:1713> INFO - LaTeX decoding ...
+[431] bibtex.pm:1519> INFO - Found BibTeX data source 'references/godefroid90.bib'
+[434] Biber.pm:4678> INFO - Looking for bibtex file 'references/toffola17.bib' for section 0
+[434] bibtex.pm:1713> INFO - LaTeX decoding ...
+[435] bibtex.pm:1519> INFO - Found BibTeX data source 'references/toffola17.bib'
+[438] Biber.pm:4678> INFO - Looking for bibtex file 'references/wressnegger15.bib' for section 0
+[438] bibtex.pm:1713> INFO - LaTeX decoding ...
+[439] bibtex.pm:1519> INFO - Found BibTeX data source 'references/wressnegger15.bib'
+[486] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[486] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[486] Biber.pm:4307> INFO - Sorting list 'nyt/global//global/global/global' of type 'entry' with template 'nyt' and locale 'en-US'
+[486] Biber.pm:4313> INFO - No sort tailoring available for locale 'en-US'
+[512] bbl.pm:676> INFO - Writing 'thesis.bbl' with encoding 'UTF-8'
+[529] bbl.pm:779> INFO - Output to thesis.bbl
+[529] Biber.pm:132> WARN - ISBN '978-3-030-63617-3 978-3-030-63618-0' in entry 'christakis_banditfuzz_2020' is invalid - run biber with '--validate_datamodel' for details.
+[529] Biber.pm:132> WARN - ISBN '978-3-540-45375-8 978-3-540-46056-5' in entry 'hutchison_bandit_2006' is invalid - run biber with '--validate_datamodel' for details.
+[529] Biber.pm:132> WARN - ISBN '978-3-540-75537-1 978-3-540-75538-8' in entry 'hutchison_efficient_2007' is invalid - run biber with '--validate_datamodel' for details.
+[529] Biber.pm:132> WARN - Data source 'references/misc.bib' is empty, ignoring
+[529] Biber.pm:132> WARN - ISBN '978-3-319-28864-2 978-3-319-28865-9' in entry 'thuraisingham_pulsar_2015' is invalid - run biber with '--validate_datamodel' for details.
+[529] Biber.pm:132> WARN - I didn't find a database entry for 'TODO cite original afl' (section 0)
+[529] Biber.pm:134> INFO - WARNINGS: 6

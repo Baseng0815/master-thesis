@@ -1,0 +1,49 @@
+%!TEX root = ../../thesis.tex
+
+\section{Threats to Validity}\label{sec:discussion-threats}
+
+% TODO: Ordered by how hard each will be pressed in a defence. State each threat in
+% its strongest form first, then the mitigation, then the residual risk. A threat that
+% is not mitigated is stated anyway.
+%
+% 1. External validity --- the diagnostic targets are not fuzzing. Their rewards are
+%    hand-engineered, including shaping that makes the final step learnable at all.
+%    A result there does not transfer to targets whose reward cannot be shaped.
+%    Mitigation: real-world weight rests only on the raw-coverage targets
+%    (\cref{sec:targets-realistic}), and the configuration is frozen and transferred
+%    unchanged (\cref{sec:methodology-hyperparameters}). Residual risk: if the method
+%    works only where the reward was designed, that is the headline, and it should be
+%    said in the abstract.
+%
+% 2. Baseline fairness and compute currency. Uniform random against a deep lock is a
+%    strawman; the honest comparison is the coverage-guided climber, and the honest
+%    accounting reports both executions and wall-clock
+%    (\cref{sec:methodology-baselines,sec:methodology-currencies}).
+%
+% 3. Attribution --- is it planning, or a learned value function over coverage? On a
+%    deterministic target the win may be representation learning rather than
+%    lookahead. The one-simulation ablation settles it
+%    (\cref{sec:results-ablations}); no planning claim is made without it.
+%
+% 4. Exploratory versus confirmatory. The development history generated the
+%    hypotheses; headline claims are re-run on the pre-registered pool with the final
+%    code (\cref{sec:methodology-preregistration}). Results from before and after
+%    correctness fixes are never compared.
+%
+% 5. Internal validity --- the determinism the variance analysis depends on. Point at
+%    the evidence in \cref{sec:platform-determinism} and state the residual
+%    (non-deterministic accumulation on GPU, thread scheduling).
+%
+% 6. Construct validity --- coverage is a proxy for bugs, not a bug oracle. This
+%    thesis optimizes and measures coverage; no claim about bugs found is made beyond
+%    what the oracle of \cref{sec:fuzzing-definitions} actually detected. Note also
+%    that the coverage signal is block-level and hash-aliased, so "new coverage" is
+%    itself approximate.
+%
+% 7. Scaling. The observation width, the fixed episode length and the fixed-size
+%    inputs are all bounded by design decisions that a real target would violate.
+%
+% The two that will be pressed together: (1) and (3) --- "you engineered a reward for
+% a toy target and used an expensive planner to climb it; what did the method add over
+% a simple coverage-guided approach, and does any of it survive on a target you did
+% not design?" Have the answer to that composite question ready in one paragraph.

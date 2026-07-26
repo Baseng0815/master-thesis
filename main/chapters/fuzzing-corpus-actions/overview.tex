@@ -1,0 +1,23 @@
+%!TEX root = ../../thesis.tex
+
+\section{Overview}\label{sec:corpus-overview}
+
+% NOTE: Keep the six sections of this chapter aligned with
+% \cref{chap:input-actions} --- same headings, same order --- so the two formulations
+% read as a diff.
+
+% TODO: State the formulation: the agent operates the greybox fuzzing loop itself.
+% It maintains a fixed-size seed corpus and each step is one composite action
+% (retain, select, position, operator) applied in the order retain -> select ->
+% mutate. Give the step loop as an algorithm, laid out like the one in
+% \cref{sec:input-overview}.
+%
+% Running example for this chapter: cjson under the corpus environment
+% (\cref{sec:target-cjson}), which is also the target \cref{sec:results-head-to-head}
+% uses to compare the two formulations directly.
+%
+% Motivate the formulation from \cref{sec:fuzzing-cgf}: selection, mutation and
+% retention are the three problems every coverage-guided greybox fuzzer solves with
+% hand-tuned heuristics. Here all three are learned decisions. That, rather than the
+% mutation operators, is the novel part --- \cite{bottinger_deep_2018} learned the
+% mutation and left selection random and retention absent.

@@ -1,0 +1,30 @@
+%!TEX root = ../../thesis.tex
+
+\section{Corpus-Level Action Spaces}\label{sec:results-corpus-actions}
+
+% Contributes to RQ2 and RQ4 (\cref{sec:introduction-rqs}).
+% Formulation: \cref{chap:corpus-actions}.
+
+% TODO: Report in this order:
+%
+%   1. Does the environment carry signal at all? The sweep and reduce machinery should
+%      show a measurable coverage separation between structured and malformed seeds
+%      before any learning claim is made. Report that separation as a precondition.
+%   2. Learning result on cjson (\cref{sec:target-cjson}): coverage against
+%      executions, against the coverage-guided climber and the random floor.
+%   3. Are the *learned* decisions doing work? This is the novel claim of the
+%      formulation, so isolate each factor:
+%      - selection: does the agent's slot choice beat uniform slot choice?
+%      - retention: does learned eviction beat a coverage-novelty admission rule?
+%        Note the prediction from \cref{sec:corpus-reward} --- retention credit only
+%        materializes if the payoff fits inside the horizon --- and test it,
+%      - position: does the learned position factor beat a random position? Prior work
+%        found it does not; if that replicates, say so, and note that dropping it
+%        shrinks the branching factor substantially.
+%   4. Amortization: executions per agent decision achieved in practice, against the
+%      throughput figures of \cref{sec:platform-throughput}. This is the concrete
+%      answer to the "MCTS is too slow for fuzzing" objection.
+%
+% A negative result on the learned corpus decisions is a publishable finding here, not
+% a failure --- it would say the fuzzing loop's heuristics are hard to beat with this
+% action space, which is exactly what prior work reported.

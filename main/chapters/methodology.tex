@@ -1,0 +1,123 @@
+%!TEX root = ../thesis.tex
+
+\chapter{Experimental Methodology}\label{chap:methodology}
+
+% Everything about HOW results are produced and judged lives here, so that
+% \cref{chap:results} can be pure findings. Written before the results are read, and
+% not revised to fit them --- say so.
+
+\section{Experimental Setup}\label{sec:methodology-setup}
+
+% TODO: The run configuration that \cref{chap:platform} deliberately left out:
+% hardware, backend, software versions, what a single run costs in wall-clock, and
+% how campaigns are launched and terminated. Enough for someone else to repeat it.
+
+\section{Metrics}\label{sec:methodology-metrics}
+
+% TODO: Define every metric before it appears in a plot, grouped by what it is for.
+%
+% Headline metrics:
+%   - maximum prefix depth reached per episode, over environment steps --- the most
+%     legible learning curve on the diagnostic targets,
+%   - solve rate over training, from a greedy noise-free evaluation rollout rather
+%     than inferred from noisy training returns,
+%   - first-passage time per depth and executions to first and to stable solve ---
+%     the sample-efficiency headline,
+%   - coverage versus executions, the standard fuzzing axis, for every approach on
+%     the same plot,
+%   - return and episode length.
+%
+% Mechanism metrics (these answer *why*, and are what the probe suite of
+% \cref{sec:impl-probes} exists for):
+%   - per-depth value and value-prefix ranking of the correct action,
+%   - policy prior versus depth over training, and the policy-collapse matrix,
+%   - MCTS visit-count entropy per depth,
+%   - policy improvement: divergence between the MCTS visit-count policy and the
+%     network prior at the root --- is search improving on the prior or echoing it?
+%   - value calibration: predicted root value against realized return.
+
+\section{Baselines}\label{sec:methodology-baselines}
+
+% TODO: Three reference points, always plotted on the same axes:
+%   - uniform random action selection: the floor,
+%   - a coverage-guided greedy climber that keeps coverage-increasing prefixes but has
+%     no learned model: the CONTROL that isolates whether the model matters or only
+%     the coverage reward. This, not uniform random, is the honest baseline --- a
+%     random baseline against a deep combination lock is a strawman, and an
+%     AFL-style climber walks such a lock byte by byte,
+%   - an oracle policy: the ceiling.
+%
+% State which baseline each claim is made against, and never make a claim against the
+% floor alone.
+
+\section{Currencies: Executions versus Wall-Clock}\label{sec:methodology-currencies}
+
+% TODO: Name the accounting problem explicitly and commit to a rule. MCTS spends many
+% model evaluations per action plus training time, while a conventional fuzzer spends
+% almost nothing per execution. Executions-to-solve flatters this approach;
+% wall-clock flatters the fuzzer. Report BOTH for every headline claim and state which
+% currency each claim rests on. Include the compute split (emulation, inference,
+% training) from \cref{sec:platform-throughput}.
+%
+% Note where the corpus formulation changes this accounting: the operator sweep of
+% \cref{sec:corpus-determinism} buys many executions per agent decision, so the two
+% formulations sit at different points on the same trade-off.
+
+\section{Multi-Seed Protocol}\label{sec:methodology-seeds}
+
+% TODO: The reliability protocol, and the statistical framing it forces.
+%
+% Framing first: the outcome is bimodal, not Gaussian. A run either learns the task or
+% collapses, so this is a mixture of two populations and a mean lands in a valley
+% where no run lives. Report solve rate with a Wilson score interval, report
+% conditional-on-success metrics separately ("of the runs that solved, the median
+% executions to solve was ..."), and plot medians with quantile bands or all seeds
+% individually --- never mean and standard deviation.
+%
+% Because the environment is deterministic (\cref{sec:platform-determinism}), all
+% run-to-run variance is algorithmic: initialization, search noise, replay sampling.
+% This is a reliability study of the learner, and stating that makes the variance
+% analysis of \cref{sec:results-ablations} interpretable rather than apologetic.
+%
+% Protocol: a pre-registered seed pool fixed before any results are looked at;
+% at least ten seeds for headline configurations, around five paired seeds for
+% load-bearing ablations, three for peripheral ones and labelled indicative. Compare
+% paired at fixed seeds --- McNemar or a paired bootstrap for rates, Wilcoxon signed
+% rank for continuous metrics --- and report effect sizes rather than p-values alone.
+% If an effect falls inside the seed band, report insensitivity: that is a result.
+%
+% Distinguish "ever reached" from "still solving at the end of training": late
+% collapse wipes out earlier success, so state when the reported model was snapshotted.
+
+\section{Hyperparameter Justification}\label{sec:methodology-hyperparameters}
+
+% TODO: The question to answer is not "is this optimal" but "are the conclusions an
+% artifact of this choice". Tier every hyperparameter and justify it accordingly:
+%   - inherited or incidental: cite the source, one sentence,
+%   - adapted by necessity: derived from problem structure. The value support is the
+%     worked example --- the reward gap must span more than one bin or the heads go
+%     action-blind (\cref{sec:input-reward}); show the arithmetic,
+%   - sensitivity-analyzed: the few parameters the result hinges on, with a small
+%     multi-seed sweep showing a stable basin.
+%
+% State that no joint grid search was run and why (runs cost hours; seed variance can
+% swamp the parameter effect, so single-seed sweeps mislead). For the learning rate,
+% use the evidence already in hand rather than inheritance: a rate that destabilized
+% training through invalid replay priorities is a stronger justification than a
+% citation. Any reported sweep uses at least three seeds per point.
+%
+% Finally, the move that answers "you tuned to your result": the configuration is
+% frozen after development on \cref{sec:target-sequence} and transferred UNCHANGED to
+% every other target. Report the frozen configuration once, as a table, and say when
+% it was frozen. There is no train/test split over environments; cross-target
+% transfer is the substitute.
+
+\section{Exploratory and Confirmatory Results}\label{sec:methodology-preregistration}
+
+% TODO: Separate the two, explicitly. The development history was exploratory and
+% hypothesis-generating; anything discovered by that search is contaminated as a
+% tested claim, and with dozens of diagnostic series some will look significant by
+% chance. Every headline claim in \cref{chap:results} is re-run fresh, on the
+% pre-registered seed pool, with the frozen configuration and the final code, and
+% reported as confirmatory. Results from before a correctness fix are never mixed with
+% results from after it.

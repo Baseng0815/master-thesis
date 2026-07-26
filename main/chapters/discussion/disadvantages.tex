@@ -1,0 +1,27 @@
+%!TEX root = ../../thesis.tex
+
+\section{Costs and Limitations}\label{sec:discussion-disadvantages}
+
+% TODO: The counterweight to \cref{sec:discussion-advantages}, argued just as
+% concretely and with numbers wherever they exist.
+%
+%   - Throughput: a conventional fuzzer executes orders of magnitude more inputs per
+%     second. Give the actual gap from \cref{sec:platform-throughput} and state what
+%     coverage the approach would have to reach per execution to break even.
+%   - Reliability: collapse is a real and frequent outcome
+%     (\cref{chap:failure-modes}), and a fuzzer that fails on a fraction of runs is a
+%     hard sell against a technique that is boringly robust.
+%   - Reward engineering: the strongest results are on targets whose reward was
+%     shaped. That effort does not transfer, and it is exactly the manual per-target
+%     work that made coverage-guided fuzzing win in the first place
+%     (\cref{sec:fuzzing-limitations}).
+%   - Action-space constraints: no masking, a flat categorical action and an
+%     enumerated branching factor (\cref{sec:mdp-constraints}) rule out variable-length
+%     inputs and phase-dependent legal actions without changing the learner.
+%   - Observation scaling: a fixed hashed coverage vector aliases blocks and does not
+%     grow with the target. A real stack has far more blocks than buckets.
+%   - Engineering complexity: an emulator, a learner and a probe stack against a
+%     fuzzer that is a single binary --- a cost worth stating plainly.
+%
+% Close by separating limitations of *this implementation* from limitations of the
+% *approach*. Only the latter belong in \cref{chap:future-work} as open problems.

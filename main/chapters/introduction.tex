@@ -1,0 +1,66 @@
+%!TEX root = ../thesis.tex
+
+\chapter{Introduction}\label{chap:introduction}
+
+% Short framing chapter (~5 pages). The substance lives in \cref{chap:background}
+% (fuzzing, RL) and \cref{chap:related-work} (RL for fuzzing); this chapter only
+% states what the thesis asks, what it contributes, and how it is organized.
+
+\section{Motivation}\label{sec:introduction-motivation}
+
+% TODO: Condense the argument that is developed at length in \cref{chap:background}:
+%   - coverage-guided greybox fuzzing is the dominant technique but plateaus
+%     (\cref{sec:fuzzing-limitations}),
+%   - stateful/reactive targets break its one-input-per-execution model
+%     (\cref{sec:fuzzing-stateful}),
+%   - emulation restores observability and a cheap exact reset, at the cost of
+%     throughput (\cref{sec:fuzzing-emulation}) --- which makes sample efficiency,
+%     not executions per second, the binding constraint,
+%   - hence a sample-efficient, model-based RL agent (EfficientZero) rather than
+%     the model-free learners used by prior RL fuzzers.
+
+\section{Problem Statement and Research Questions}\label{sec:introduction-rqs}
+
+% TODO: State the problem in one paragraph, then the research questions. These are
+% currently drafted as prose bullets in \cref{sec:rlfuzz-gap}; promote them here as a
+% numbered list and cite them by number from \cref{chap:results} onward, so every
+% result answers a named question.
+%
+% Proposed numbering (each RQ maps to one results section):
+%   RQ1  Can EfficientZero learn useful policies on fuzzing-shaped reward
+%        landscapes (sparse, decaying, heavily aliased observations)?
+%        -> \cref{sec:results-input-actions}
+%   RQ2  How should the fuzzing action space be modelled --- as the input the
+%        program consumes, or as operations on a seed corpus?  What does each
+%        formulation cost and buy?
+%        -> \cref{sec:results-head-to-head}
+%   RQ3  Does planning with a learned model help, or is the benefit attributable
+%        to the learned value function alone?
+%        -> \cref{sec:results-ablations} (sims=1 vs.\ full MCTS)
+%   RQ4  Does the approach transfer from diagnostic microbenchmarks
+%        (\cref{sec:targets-microbenchmarks}) to targets whose reward was not
+%        designed for it (\cref{sec:targets-realistic})?
+%        -> \cref{sec:results-corpus-actions,sec:discussion-threats}
+
+\section{Contributions}\label{sec:introduction-contributions}
+
+% TODO: Enumerate, one sentence each:
+%   1. Two MDP formulations of emulator-based greybox fuzzing that satisfy the
+%      planning contract of a MuZero-family learner (\cref{chap:fuzzing-mdp}),
+%      and a controlled comparison of the two on a shared target
+%      (\cref{sec:results-head-to-head}).
+%   2. An implementation: a reusable EfficientZero in Rust on burn, and its
+%      integration with the MOGI emulator as a fuzzing driver
+%      (\cref{chap:implementation}).
+%   3. A diagnostic methodology for model-based RL collapse in this setting ---
+%      probes, failure taxonomy, and the evidence that distinguishes the modes
+%      (\cref{chap:failure-modes}).
+%   4. An empirical evaluation with a pre-registered multi-seed protocol,
+%      reporting both executions and wall-clock (\cref{chap:methodology,chap:results}).
+
+\section{Outline}\label{sec:introduction-outline}
+
+% TODO: One short paragraph walking the reader through the parts:
+%   background (\cref{chap:background,chap:efficientzero,chap:related-work}),
+%   approach (\cref{chap:platform,chap:fuzzing-mdp,chap:input-actions,chap:corpus-actions,chap:implementation}),
+%   evaluation (\cref{chap:targets,chap:methodology,chap:results,chap:failure-modes,chap:discussion}).

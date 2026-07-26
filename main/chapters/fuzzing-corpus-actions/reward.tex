@@ -1,0 +1,28 @@
+%!TEX root = ../../thesis.tex
+
+\section{Reward and Episode Structure}\label{sec:corpus-reward}
+
+% TODO: The reward choice here is a direct replication question, so frame it that way.
+%
+% Two candidates:
+%   - marginal new coverage against the corpus union --- the intuitive "novelty"
+%     reward,
+%   - absolute per-execution coverage, memoryless.
+% \cite{bottinger_deep_2018} tested both: the coverage-history variant did not beat a
+% random baseline, and only the memoryless variant worked. That is evidence against
+% the intuitive choice, and it resonates with the collapse history of this project
+% around coverage-delta signals (\cref{chap:failure-modes}). State which one is used,
+% state that the other is wired behind the same trait, and make the comparison a
+% first-class A/B in \cref{sec:results-ablations} rather than a footnote.
+%
+% Where novelty lives instead: in the reducer that collapses the sweep and in the
+% observation's staging marginal --- i.e.\ it informs the value head without being the
+% policy gradient. Explain why that separation is deliberate.
+%
+% Episode: a bounded iteration budget; reset re-seeds the corpus and restores the
+% emulator snapshot (\cref{sec:platform-snapshots}). The horizon is bounded tightly
+% for the same reason as in \cref{sec:input-reward}. Note the credit-assignment
+% problem this creates: a retained seed pays off only in *later* steps, as a fertile
+% base, so the value head must carry that credit forward and the payoff has to fit
+% inside the horizon. If it does not, retention is unlearnable by construction ---
+% that is a falsifiable prediction the evaluation should check.

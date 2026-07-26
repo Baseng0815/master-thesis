@@ -1,0 +1,36 @@
+%!TEX root = ../../thesis.tex
+
+\section{Overview}\label{sec:targets-overview}
+
+% TODO: Open with the ladder and the table; the per-target sections then only add
+% detail. The table is the most useful single page of this chapter --- one row per
+% target, with columns:
+%
+%   target | capability isolated | formulation | reward source | role in evaluation
+%
+% Suggested contents (adjust to what is actually run):
+%   high_and_low | single-step coverage choice        | input  | coverage    | sanity
+%   <contextual> | state-dependent optimal action     | input  | coverage    | sanity
+%   sequence     | deep credit assignment (16 deps)   | input  | designed    | diagnostic
+%   branches     | planning past rewarding decoys     | input  | designed    | diagnostic
+%   cjson        | grammar structure, raw coverage    | both   | raw         | headline
+%   open62541    | protocol state, real stack         | input  | raw         | headline
+%
+% Then state the distinction the chapter is organized around, because it is the
+% thesis's main defence against the "you designed the reward you then climbed"
+% objection (\cref{sec:discussion-threats}):
+%
+%   - \cref{sec:targets-microbenchmarks}: rewards are hand-shaped and progress is
+%     directly legible. These are instruments for diagnosis, not evidence about
+%     fuzzing.
+%   - \cref{sec:targets-realistic}: the reward is raw coverage and was not designed
+%     around the agent. Real-world claims rest on these, and only on these.
+%
+% Say which formulation each target is evaluated under, and note that cjson is
+% deliberately run under both --- that is what makes
+% \cref{sec:results-head-to-head} a controlled comparison.
+%
+% Also list what every target shares, so it is not repeated six times: the coverage
+% instrumentation of \cref{sec:platform-coverage}, the snapshot reset of
+% \cref{sec:platform-snapshots}, and the frozen configuration of
+% \cref{sec:methodology-hyperparameters}.

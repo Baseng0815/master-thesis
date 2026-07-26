@@ -1,0 +1,19 @@
+%!TEX root = ../../thesis.tex
+
+\section{Action Space}\label{sec:input-action-space}
+
+% TODO: The action set is the input alphabet, so \verb|Action::size()| is the alphabet
+% size and constraint C1 of \cref{sec:mdp-constraints} is satisfied trivially --- no
+% packing is needed. Cover:
+%   - the alphabet per target: full byte range, the restricted JSON-relevant alphabet
+%     used for cjson, the 26 letters of sequence/branches, and the protocol-message
+%     templates of open62541,
+%   - why restricting the alphabet is legitimate and what it costs (it is a form of
+%     grammar knowledge --- see the generation-based discussion in
+%     \cref{sec:fuzzing-input-generation}),
+%   - the branching factor that results, versus the corpus formulation's
+%     (\cref{sec:corpus-action-space}), and what that means for the MCTS budget,
+%   - for open62541: an action is a message template whose session-coupling fields
+%     the environment rewrites from the server's responses, so the agent learns
+%     *which* message to send *when*, not the bytes --- state this scoping clearly,
+%     it bounds what the open62541 result can claim.

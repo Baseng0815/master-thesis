@@ -1,0 +1,54 @@
+%!TEX root = ../thesis.tex
+
+\chapter{Implementation}\label{chap:implementation}
+
+% This chapter exists because the software is a contribution in its own right and had
+% nowhere to live: \cref{chap:efficientzero} is the algorithm as published,
+% \cref{chap:platform} is the emulator, and neither covers the code written for this
+% thesis. Keep it descriptive and short --- design rationale belongs to
+% \cref{chap:fuzzing-mdp,chap:input-actions,chap:corpus-actions}.
+
+\section{An EfficientZero Implementation in Rust}\label{sec:impl-efficientzero}
+
+% TODO: The reusable crate: module map (model, mcts, learner, driver, abstraction),
+% the choice of the burn framework and the backends it gives (ndarray, CUDA, wgpu),
+% and the parts of \cref{chap:efficientzero} that are and are not implemented.
+% State deviations from the reference implementation explicitly --- an examiner will
+% ask whether the algorithm evaluated here is the published one.
+
+\section{The Environment Abstraction}\label{sec:impl-abstraction}
+
+% TODO: The traits a fuzzing target implements (Environment, Action, Observation,
+% StepResult) and how a target binary becomes an environment. Show one worked
+% instantiation end to end --- the shortest one --- so the reader can see the whole
+% path from an action index to an emulated execution and back to a reward. This is
+% where the constraints of \cref{sec:mdp-constraints} are enforced in code.
+
+\section{The Generic Corpus Module}\label{sec:impl-corpus}
+
+% TODO: The target-agnostic implementation of the corpus loop of
+% \cref{chap:corpus-actions}: the state machine, the swappable strategies (mutation
+% operators, reduce, reward), the action packing, and the observation encoder.
+% Emphasize that it contains no emulator code and is unit-tested as pure logic ---
+% including the round-trip property of the action packing over the whole action space.
+
+\section{Experiment and Diagnostic Infrastructure}\label{sec:impl-probes}
+
+% TODO: The probe architecture: hooks on the learner, a background writer, one SQLite
+% database per campaign, and the plotting scripts. List the probes and what each one
+% can reveal (loss and return scalars, policy-collapse matrix, MCTS visit-count
+% entropy, model introspection along a fixed action path, PER priority diagnostics,
+% action-execution trie).
+%
+% Present this as instrumentation designed to answer a question, not as logging:
+% it is what makes the failure taxonomy of \cref{chap:failure-modes} diagnosable
+% rather than anecdotal, and it is claimed as a contribution in
+% \cref{sec:introduction-contributions}.
+
+\section{Reproducibility}\label{sec:impl-reproducibility}
+
+% TODO: Seed handling (one master seed deriving all substreams; the seed and the
+% commit hash recorded with every run), the pinned toolchain, and an honest statement
+% of how far bit-for-bit reproduction actually holds --- GPU non-determinism and
+% worker scheduling may break it, and any residue counts as algorithmic variance in
+% \cref{sec:methodology-seeds}.

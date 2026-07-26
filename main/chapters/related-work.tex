@@ -1,10 +1,9 @@
-%!TEX root = ../../thesis.tex
+%!TEX root = ../thesis.tex
 
-\section{Reinforcement Learning for Fuzzing}\label{sec:reinforcement-fuzzing}
 
 % Drafting outline: bullet points to be fleshed out into prose.
 
-\subsection{Fuzzing as a Reinforcement Learning Problem}\label{sec:rlfuzz-framing}
+\section{Fuzzing as a Reinforcement Learning Problem}\label{sec:rlfuzz-framing}
 
 \begin{itemize}
   \item Why the fit is natural: fuzzing is sequential decision making under uncertainty over an
@@ -12,7 +11,7 @@
     interface of \cref{sec:rl-mdp}; first formalized as an MDP by Böttinger et
     al.~\cite{bottinger_deep_2018}.
   \item The generic correspondence (present as a table; concrete instantiation for this thesis in
-    \cref{chap:efficientzero-fuzzing}):
+    \cref{chap:fuzzing-mdp}):
     \begin{itemize}
       \item \emph{environment} $=$ the target program (plus harness/emulator),
       \item \emph{state/observation} $=$ execution feedback: coverage information, program or
@@ -25,7 +24,7 @@
     \end{itemize}
 \end{itemize}
 
-\subsection{Prior Work}\label{sec:rlfuzz-prior-work}
+\section{Prior Work}\label{sec:rlfuzz-prior-work}
 
 \begin{itemize}
   \item Organize the survey by \emph{which decision in the fuzzing loop} is learned
@@ -60,7 +59,7 @@
     testing~\cite{zhou_autonomous_2021}.
 \end{itemize}
 
-\subsection{Recurring Difficulties}\label{sec:rlfuzz-difficulties}
+\section{Recurring Difficulties}\label{sec:rlfuzz-difficulties}
 
 \begin{itemize}
   \item \emph{Reward design}: coverage rewards are sparse and non-stationary --- each edge pays
@@ -80,10 +79,10 @@
     in~\cite{borcherding_bandits_2023}; deep-RL evaluation pitfalls compound
     this~\cite{henderson_deep_2019}.
   \item Honest framing for the thesis: these difficulties define the burden of proof for the
-    approach evaluated in \cref{chap:analysis}.
+    approach evaluated in \cref{chap:results}.
 \end{itemize}
 
-\subsection{The Gap Addressed by This Thesis}\label{sec:rlfuzz-gap}
+\section{The Gap Addressed by This Thesis}\label{sec:rlfuzz-gap}
 
 \begin{itemize}
   \item Common shape of prior work: a \emph{model-free} learner (Q-learning, PPO, bandits) tunes
@@ -95,21 +94,21 @@
         model + MCTS~\cite{ye_mastering_2021,schrittwieser_mastering_2020}) as the decision maker,
       \item acting \emph{directly} at the protocol level against a \emph{stateful} target ---
         the agent drives the session, rather than advising a random mutator
-        (\cref{chap:efficientzero-fuzzing}),
-      \item on targets rehosted in an emulator (MOGI, \cref{chap:mogi-setup}), whose snapshots
+        (\cref{chap:input-actions}),
+      \item on targets rehosted in an emulator (MOGI, \cref{chap:platform}), whose snapshots
         provide the exact, cheap episode resets and basic-block coverage observations the MDP
         framing requires (\cref{sec:fuzzing-emulation}),
       \item rationale: the learned model lets planning happen in latent space, amortizing
         expensive real executions --- directly attacking the sample-cost and throughput
         objections above (\cref{sec:rl-sample-efficiency}).
     \end{itemize}
-  \item Research questions to state explicitly here (evaluated in \cref{chap:analysis}):
+  \item Research questions --- promoted to \cref{sec:introduction-rqs} as numbered RQs; keep this list as the motivating form and answer them in \cref{chap:results}:
     \begin{itemize}
       \item Can EfficientZero learn useful policies on fuzzing-shaped reward landscapes
         (sparse, decaying, heavily aliased observations)?
       \item How does the approach scale from toy targets (\cref{chap:targets}) up to a real
         protocol implementation (open62541, \cref{sec:target-open62541})?
       \item Where does planning with a learned model help or fail compared to classic greybox
-        baselines (\cref{sec:analysis-advantages,sec:analysis-disadvantages})?
+        baselines (\cref{sec:discussion-advantages,sec:discussion-disadvantages})?
     \end{itemize}
 \end{itemize}

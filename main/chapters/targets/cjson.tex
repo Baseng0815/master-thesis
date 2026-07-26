@@ -1,0 +1,30 @@
+%!TEX root = ../../thesis.tex
+
+\subsection{cJSON}\label{sec:target-cjson}
+
+% TODO: The first target whose reward is not designed around the agent, and the only
+% one run under both formulations --- state both facts in the opening paragraph.
+%
+% The target: the cJSON parser, driven through the emulator by a harness that reads a
+% fixed-size record and parses it. Describe the two harness styles actually used and
+% why they differ:
+%   - the input-level environment re-parses the accumulated prefix after every byte
+%     (cJSON has no streaming API), so each step yields both a coverage observation of
+%     the current parse state and a validity verdict,
+%   - the corpus environment uses a persistent-mode loop that reads one whole record
+%     per execution and never exits, which is what keeps the boot snapshot restorable
+%     across a sweep.
+% Note that the harness is part of the experimental apparatus: a target is a program
+% *plus* a harness, and the harness differs between the two formulations by necessity.
+% Any coverage comparison between them must account for that
+% (\cref{sec:results-head-to-head}).
+%
+% What it tests: whether coverage alone carries enough signal to drive a parser into
+% its grammar --- valid JSON reaches deep parser branches, malformed input bails out
+% early. Report the measured coverage separation between valid and malformed input as
+% evidence that the signal exists at all, independent of any learning result.
+%
+% Action alphabet: the restricted JSON-relevant set for the input-level formulation
+% (\cref{sec:input-action-space}) versus byte-level operators for the corpus
+% formulation (\cref{sec:corpus-action-space}). This asymmetry is the main confound in
+% the head-to-head and must be named here.

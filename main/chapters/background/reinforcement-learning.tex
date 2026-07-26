@@ -11,7 +11,7 @@ Reinforcement learning (RL) is an extremely general framework for approaching pr
 in which an agent strives to maximize a reward signal through a selection of actions
 in certain states~\cite{sutton_reinforcement_2020}.
 These kinds of problems can be modeled as finite Markov decision processes (MDPs).
-A Markov decision process is a 3-tuple $MDP=(S,A,p)$ where
+Formally, a Markov decision process is a 3-tuple $MDP=(S,A,p)$ where
 
 \begin{itemize}
   \item $\mathcal{S}$ is the set of states,
@@ -44,7 +44,7 @@ the cumulative reward.
   \item Partial observability: agent often sees an \emph{observation}, not the full state
     (POMDP setting)~\cite{sutton_reinforcement_2020} --- relevant later: a coverage vector is a
     very partial view of the emulated program's true state
-    (\cref{chap:efficientzero-fuzzing}).
+    (\cref{sec:input-observation}).
 \end{itemize}
 
 \subsection{Exploration versus Exploitation}\label{sec:rl-exploration}
@@ -120,7 +120,7 @@ or expert knowledge.
   \item Broad algorithm surveys~\cite{ghasemi_comprehensive_2025}.
   \item Practical caveats of deep RL: high variance across seeds, hyperparameter sensitivity,
     reproducibility concerns~\cite{henderson_deep_2019} --- informs the evaluation methodology in
-    \cref{sec:analysis-evaluation}.
+    \cref{chap:methodology}.
 \end{itemize}
 
 \subsection{Model-Free versus Model-Based RL}\label{sec:rl-model-based}
@@ -162,5 +162,5 @@ or expert knowledge.
     fuzzing use case sits squarely in the low-sample regime that EfficientZero targets
     ~\cite{ye_mastering_2021}.
   \item This is the central argument for choosing a model-based, planning-heavy algorithm over the
-    model-free methods used by most prior RL fuzzers (\cref{sec:reinforcement-fuzzing}).
+    model-free methods used by most prior RL fuzzers (\cref{chap:related-work}).
 \end{itemize}

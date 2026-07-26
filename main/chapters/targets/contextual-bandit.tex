@@ -1,6 +1,19 @@
 %!TEX root = ../../thesis.tex
 
-\section{Contextual Bandit}\label{sec:target-contextual-bandit}
+\subsection{Contextual Bandit}\label{sec:target-contextual-bandit}
 
-% TODO: Describe the contextual-bandit target and how it extends the plain
-% bandit setting (state-dependent optimal actions).
+% OPEN ITEM: unlike the other five, this rung of the ladder has no target binary in
+% the companion repository yet. Either implement it or drop the section --- do not
+% leave it as an unbacked claim about the ladder.
+%
+% Candidates, cheapest first:
+%   - a two-state variant of high_and_low in which the rewarding byte set depends on
+%     a state bit the guest exposes through coverage,
+%   - the first room of the branches target used in isolation.
+
+% TODO (once the target exists): Describe how it extends \cref{sec:target-bandit}:
+% the optimal action becomes state-dependent, so the agent must read the context out
+% of the coverage observation rather than memorize one arm. What it validates: that
+% the observation of \cref{sec:input-observation} actually carries state information,
+% as opposed to the agent succeeding on a single fixed answer. This is the last rung
+% before credit assignment across steps enters (\cref{sec:target-sequence}).

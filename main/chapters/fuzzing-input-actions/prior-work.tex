@@ -1,0 +1,17 @@
+%!TEX root = ../../thesis.tex
+
+\section{Relation to Prior Work}\label{sec:input-prior-work}
+
+% TODO: Position this formulation against the survey in \cref{chap:related-work}.
+% Points to make:
+%   - closest in spirit to the protocol/state-selection line: the agent drives the
+%     session rather than advising a random mutator \cite{borcherding_bandits_2023},
+%     and to the stateful greybox fuzzers those papers baseline against (AFLNet,
+%     SGFuzz),
+%   - differs from \cite{bottinger_deep_2018} in what an action *is*: a rewrite rule
+%     applied to an existing seed there, an input symbol here,
+%   - differs from the whole prior line in the learner: model-based planning rather
+%     than a model-free learner tuning one knob of a conventional fuzzer,
+%   - the honest limitation: generating an input symbol by symbol is not what a
+%     production fuzzer does, which is precisely the motivation for
+%     \cref{chap:corpus-actions}.
