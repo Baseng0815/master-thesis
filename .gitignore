@@ -1,0 +1,119 @@
+# ============================================================================
+# Generated files.
+#
+# Everything listed here is reproducible from source with `make` (see
+# main/Makefile) and does not belong in the repository. `make clear` removes
+# the same set locally.
+#
+# Note: .gitignore comments must be on their own line -- a trailing '#' is
+# taken as part of the pattern, not as a comment.
+# ============================================================================
+
+## Core LaTeX auxiliary files
+*.aux
+*.log
+*.toc
+*.fot
+*.fmt
+
+# hyperref bookmarks
+*.out
+# hyperref backref
+*.brf
+
+# \listoffigures / \listoftables (both currently commented out in thesis.tex)
+*.lof
+*.lot
+
+## Intermediate documents
+*.dvi
+*.xdv
+# graphicx, when it converts an included image
+*-converted-to.*
+
+## Bibliography: biblatex with the biber backend
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+*-blx.aux
+*-blx.bib
+
+# Left behind when a biber run aborts on a truncated .bcf. latexmk does not
+# clean these up itself; `make clear` removes them explicitly.
+*.bbl-SAVE-ERROR
+*.bcf-SAVE-ERROR
+
+## latexmk
+*.fdb_latexmk
+*.fls
+latex.out/
+
+## Editor <-> PDF source correlation
+*.synctex
+*.synctex.gz
+*.synctex(busy)
+*.synctex.gz(busy)
+*.pdfsync
+main/thesis.pdf
+
+## Packages loaded in thesis.tex
+# todonotes, via \listoftodos
+*.tdo
+# listings, via \lstlistoflistings
+*.lol
+# algorithm, via \listofalgorithms
+*.loa
+# theorem environments
+*.thm
+# xcolor
+*.xcp
+
+## Likely once figures are generated
+# TikZ / PGF externalization
+*.auxlock
+*.md5
+*.dpth
+# gnuplot output from pgfplots
+*.gnuplot
+*.table
+
+## Index and glossary, if ever used
+*.idx
+*.ilg
+*.ind
+*.glg
+*.glo
+*.gls
+*.glsdefs
+*.acn
+*.acr
+*.nlo
+*.nls
+
+## Editor and OS noise
+*~
+*.bak
+*.bak[0-9]*
+*.sav
+*.swp
+.DS_Store
+Thumbs.db
+# AUCTeX
+auto/
+.texpadtmp/
+
+# ============================================================================
+# The built PDF is deliberately NOT ignored.
+#
+# main/thesis.pdf is currently tracked, which keeps a readable copy of the
+# thesis available straight from the repository -- convenient for handing to a
+# supervisor without a local TeX installation. Uncomment the rule below to stop
+# tracking it (and see the README/commit message for `git rm --cached`).
+#
+# Do NOT add a blanket `*.pdf` rule: \graphicspath points at figures/, so
+# vector figures will be committed as PDFs and a blanket rule would silently
+# exclude them. Ignore the build output by name instead.
+#
+# main/thesis.pdf
+# ============================================================================
