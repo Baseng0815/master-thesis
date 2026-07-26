@@ -412,54 +412,29 @@ It is noteworthy that a fixed schedule is picked before the start of the campaig
 
 AFL's mutation pipeline has two stages~\cite{fioraldi_afl_nodate}.
 The \emph{deterministic} stage applies single, reproducible mutations systematically along
-the input: walking bit flips, arithmetic increments and decrements over byte, word and
+the input.
+These include bit flips, arithmetic increments and decrements over byte, word and
 double-word windows, and substitution of a fixed set of \enquote{interesting} constants
 such as $0$, $-1$ or \texttt{INT\_MAX}.
-The \emph{havoc} stage stacks a random number of randomly chosen operators, and unlike the
-deterministic stage it may also change the length of the input by inserting or deleting
+The \emph{havoc} stage stacks a random number of randomly chosen mutations, and unlike the
+deterministic stage may also change the length of the input by inserting or deleting
 byte blocks.
 A later \emph{splicing} stage merges two queue entries and applies havoc to the result.
-These correspond one-to-one to the four operator classes of
-\cref{sec:fuzzing-input-generation}, with the interesting-constant substitution playing the
-role of a dictionary-based mutation.
 
-AFL++ adds three further mutators that can be combined with the above and with each other.
+AFL++ adds three further mutations that can be combined with the above.
 \emph{MOpt}~\cite{lyu_mopt_nodate} replaces the fixed operator distribution with one
-searched online by particle swarm optimization: a \emph{pilot} mode measures how effective
-each operator is on the current target and assigns probabilities accordingly, and a
-\emph{core} mode then samples from them.
-AFL++ implements both modes, allows interleaving them with the standard stages, and patched
-MOpt so that it composes with the input-to-state mutator described next.
-That mutator implements RedQueen's \emph{input-to-state} (I2S)
-correspondence\todo{cite: RedQueen (Aschermann et al.\ NDSS 2019)}: a comparison is I2S
-when at least one of its operands derives directly from the input, in which case the
-fuzzer can locate the responsible bytes and substitute the value the comparison is actually
-testing for.
-This attacks the magic-byte and checksum roadblock of \cref{sec:fuzzing-cgf} head-on,
-without the symbolic execution or taint tracking that the hybrid approaches require.
-AFL++ sources the operands from its \emph{CmpLog} instrumentation --- a table shared between
-fuzzer and target that records the operands of each comparison's most recent executions ---
-rather than from RedQueen's breakpoints, and refines the \emph{colorization} step, which
-randomizes input bytes while preserving coverage in order to reveal which bytes feed a
-given comparison, to also accept mutations that keep execution speed within a factor of two
-of the original.
-It further lowers the probability of fuzzing a comparison that has repeatedly failed to
-produce an interesting input, so that comparisons which only look like I2S do not absorb
-the budget indefinitely.
+searched online by particle swarm optimization.
+Another module consists of RedQueen's \emph{input-to-state} (I2S)
+correspondence\todo{cite: RedQueen (Aschermann et al.\ NDSS 2019)}.
+By tracking values used in comparison operations and comparing them with input values,
+it can locate the responsible bytes in the input and substitute the value the comparison is testing for.
+This allows overcoming magic byte and checksum checks without the overhead of concolic execution.
 
-The third addition is the \emph{Custom Mutator API}, and it matters here for a reason
-beyond AFL++ itself.
-It allows an external module, written in any C-ABI-compatible language or prototyped in
-Python, to take over parts of the loop: \texttt{afl\_custom\_fuzz} replaces the mutation of
-a whole input, \texttt{afl\_custom\_havoc\_mutation} contributes a single operator to the
-havoc stage with a tunable inclusion probability (\SI{6}{\percent} by default),
-\texttt{afl\_custom\_post\_process} repairs checksums or converts a structured
-representation into the target's wire format, and further callbacks hook queue entry
-selection and trimming.
-The API is the standard seam through which a learned component is attached to a production
-fuzzer without forking it; Rainfuzz, for instance, runs its policy-gradient-trained heat
-map over byte positions alongside AFL++ through exactly this
-interface~\cite{binosi_rainfuzz_2023}.
+Another addition is a custom mutator API.
+It allows external modules to take over parts of the loop through the \texttt{AFL\_CUSTOM\_MUTATOR\_LIBRARY} or \texttt{AFL\_PYTHON\_MODULE}
+environment variables.
+Rainfuzz, for instance, runs its policy-gradient-trained heat map over byte
+positions alongside AFL++ through this interface~\cite{binosi_rainfuzz_2023}.
 
 \subsubsection{Test case retention}
 
