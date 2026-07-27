@@ -1,0 +1,32 @@
+%!TEX root = ../thesis.tex
+% Second example MDP for \cref{sec:rl-mdp}: the recycling robot of Sutton and Barto
+% (Example 3.3), redrawn in the (a,r,p) edge convention of \cref{fig:mdp-example}.
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[
+      >={Stealth[round]},
+      every state/.style={draw,minimum size=1.1cm,inner sep=1pt},
+      every edge/.style={draw,->,font=\small},
+      every loop/.style={->,looseness=8},
+    ]
+    \node[state] (high) at (0,0)   {$\mathtt{high}$};
+    \node[state] (low)  at (7.6,0) {$\mathtt{low}$};
+
+    \path
+      (high) edge[loop above] node[above] {$(\mathtt{search},r_{\mathrm{s}},\alpha)$}      (high)
+      (high) edge[loop below] node[below] {$(\mathtt{wait},r_{\mathrm{w}},1)$}             (high)
+      (low)  edge[loop above] node[above] {$(\mathtt{search},r_{\mathrm{s}},\beta)$}       (low)
+      (low)  edge[loop below] node[below] {$(\mathtt{wait},r_{\mathrm{w}},1)$}             (low)
+      (high) edge[bend left=32] node[above] {$(\mathtt{search},r_{\mathrm{s}},1-\alpha)$}  (low)
+      (low)  edge node[above] {$(\mathtt{recharge},0,1)$}                                  (high)
+      (low)  edge[bend left=32] node[below] {$(\mathtt{search},-3,1-\beta)$}               (high);
+  \end{tikzpicture}
+  \caption[Example MDP: the recycling robot]{%
+    The recycling robot of Sutton and Barto~\cite{sutton_reinforcement_2020}.
+    Its state space consists of the charge level of its battery, $\mathcal{S}=\{\mathtt{high},\mathtt{low}\}$,
+    and its action space consists of $\mathcal{S}=\{\mathtt{search},\mathtt{wait},\mathtt{recharge}\}$.
+    Its battery state transition is probabilistic and depends on $\alpha$ and $\beta$.
+    $r_s$ and $r_w$ are the rewards for search and waiting.
+  }
+  \label{fig:mdp-recycling-robot}
+\end{figure}

@@ -34,6 +34,11 @@
 \usepackage{subcaption}
 \usepackage{float}
 
+% ----- Diagrams -------------------------------------------------------------
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,automata,positioning}
+\tikzset{terminal/.style={double,double distance=1.2pt}}
+
 % ----- Tables ---------------------------------------------------------------
 \usepackage{booktabs}
 \usepackage{array}
@@ -70,6 +75,7 @@
 \usepackage[backend=biber,style=numeric,sorting=nyt]{biblatex}
 \addbibresource{references/fuzzing.bib}
 \addbibresource{references/reinforcement-learning.bib}
+\addbibresource{references/pomdp.bib}
 
 % ----- Hyperlinks & cross-references (load last) ----------------------------
 \usepackage[hidelinks,pdfusetitle]{hyperref}

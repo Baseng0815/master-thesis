@@ -11,7 +11,7 @@ Reinforcement learning (RL) is an extremely general framework for approaching pr
 in which an agent strives to maximize a reward signal through a selection of actions
 in certain states~\cite{sutton_reinforcement_2020}.
 These kinds of problems can be modeled as finite Markov decision processes (MDPs).
-Formally, a Markov decision process is a 3-tuple $MDP=(S,A,p)$ where
+Formally, a Markov decision process is a 3-tuple $MDP=(\mathcal{S},\mathcal{A},p)$ where
 
 \begin{itemize}
   \item $\mathcal{S}$ is the set of states,
@@ -25,143 +25,114 @@ Formally, a Markov decision process is a 3-tuple $MDP=(S,A,p)$ where
 
 An RL agent's goal is to learn a policy $\pi:\mathcal{S}\times\mathcal{A}\rightarrow [0,1]$
 mapping each state $s$ to probabilities of taking each possible action $a$ to maximize
-the cumulative reward.
-% --- End excerpt (notation cleanup when fleshing out: unify $S$ vs.\ $\mathcal{S}$
-%     in the tuple; consider extending to $(\mathcal{S},\mathcal{A},p,\gamma)$) ---
+the cumulative reward.\\
+
+A common way to visualize MDPs is via a directed graph: nodes model the state
+space $S$ while edges $(s_i,s_j)$ labeled with an action-reward-probability
+tuple $(a,r,p)\in\mathcal{A}\times\mathcal{R}\times[0,1]$ model potential
+transitions.
+
+A standard example introduced in~\textcite{sutton_reinforcement_2020} is that of a \emph{recycling robot} (\cref{fig:mdp-recycling-robot}).
+The robot collects empty cans and, at each decision point, either actively searches
+for one, waits for someone to hand it a can, or returns to its charging station.
+Its state is the charge level of its battery, $\mathcal{S}=\{\mathtt{high},\mathtt{low}\}$.
+
+\input{figures/mdp-recycling-robot}
+
+A simple greedy approach is to always select the $\mathtt{search}$ action since it
+pays the highest rewards in expectation.
+This approach encurs the penalty of searching while the battery is in the $\mathtt{low}$.
+An agent must therefore recognize the state he is in and choose its action accordingly.
+While this example is easily solved, MDPs with larger state and action spaces present
+a much harder problem.
+
+\subsubsection{Partially Observable Markov Decision Processes}\label{sec:rl-pomdp}
+
+In the previous formulation of MDPs, the true state of the environment is available
+to the agent.
+In reality, this is often not the case.
+An agent perceives its environment as a lossy function of the underlying state.
+The recycling robot of \cref{fig:mdp-recycling-robot}, for instance, might perceive
+its charge level as a noisy voltage measurement.
+Observing the environment may therefore introduce uncertainty.
+The Markov property then still holds for the underlying state, but not for what the agent sees.
+
+This situation is modeled through a \emph{partially observable Markov decision process}
+(POMDP)~\cite{ASTROM1965174}\todo{cite: Kaelbling, Littman \& Cassandra (1998) as the
+standard reference --- references/kaelbling.tex currently holds a copy of the Åström entry}, which
+extends the original 3-tuple MDP $(\mathcal{S},\mathcal{A},p)$ to a 5-tuple POMDP=$(\mathcal{S},\mathcal{A},p,\Omega,o)$, by adding
 
 \begin{itemize}
-  \item Distinguish from supervised learning: no labeled correct actions, only evaluative
-    (and possibly delayed) feedback; trial-and-error credit assignment
-    ~\cite{sutton_reinforcement_2020}; idea traces back to early AI~\cite{minsky_steps_1961};
-    add \cite{puterman_markov_2009} as the standard MDP reference next to the excerpt.
-  \item Extend the excerpt's formalism~\cite{sutton_reinforcement_2020}:
-    \begin{itemize}
-      \item Markov property: transition depends only on current state and action,
-      \item episodic vs.\ continuing tasks; discount factor $\gamma$ and discounted return
-        $G_t = \sum_k \gamma^k r_{t+k}$,
-      \item state value $V^\pi$, action value $Q^\pi$; Bellman (optimality) equations;
-        optimal policy $\pi^*$.
-    \end{itemize}
-  \item Partial observability: agent often sees an \emph{observation}, not the full state
-    (POMDP setting)~\cite{sutton_reinforcement_2020} --- relevant later: a coverage vector is a
-    very partial view of the emulated program's true state
-    (\cref{sec:input-observation}).
+  \item $\Omega$, the set of observations the agent can receive, and
+  \item $o(\omega|s^\prime,a)=\Pr\{O_t=\omega|S_t=s^\prime,A_{t-1}=a\}$, the observation
+    function, giving the probability of perceiving $\omega$ after a transition into
+    $s^\prime$ under action $a$.
 \end{itemize}
 
-\subsection{Exploration versus Exploitation}\label{sec:rl-exploration}
+The environment still evolves as an MDP over $\mathcal{S}$ according to $p$.
+However, the agent must act on observation $O_t$ instead of on the true state $S_t$.
+An ordinary MDP is the special case $\Omega=\mathcal{S}$ with $o=\text{id}(\cdot)$.
+
+POMDPs introduce the problem of \emph{state aliasing}.
+If two states that require different actions map to the same observation, then no deterministic
+memoryless policy $\pi:\Omega\times\mathcal{A}\rightarrow[0,1]$ can act correctly in both,
+and the best achievable memoryless policy can be arbitrarily worse than a policy that is
+allowed to consult the
+history~\todo{cite: Singh, Jaakkola \& Jordan (1994), ``Learning Without State-Estimation
+in Partially Observable Markovian Decision Processes''}
+
+What is Markov in a POMDP is not the observation but the entire interaction history
+$H_t=O_0,A_0,O_1,A_1,\dots,O_t$.
+The classical remedy is to summarize that history in a \emph{belief state}
+$b_t(s)=\Pr\{S_t=s|H_t\}$, a probability distribution over $\mathcal{S}$ that is updated
+recursively via Bayes' rule from $b_{t-1}$, $a_{t-1}$ and $o_t$.
+The belief state is a sufficient statistic of the history: acting optimally on $b_t$ is
+as good as acting optimally on $H_t$, which turns the POMDP into an ordinary --- but
+continuous-state --- MDP over the belief simplex~\cite{puterman_markov_2009}.
+This reduction is mostly of theoretical value here, since it presupposes a known model
+$(p,o)$ and an explicit state space, and solving the resulting belief MDP exactly is
+intractable for all but very small
+problems~\todo{cite: Papadimitriou \& Tsitsiklis (1987) for PSPACE-completeness of
+finite-horizon POMDP planning}.
+
+Deep reinforcement learning therefore takes a pragmatic route: rather than computing a
+belief state, the agent constructs an \emph{agent state} $S_t$ that is some compressed
+function of the history, maintained by a state-update function
+$S_{t+1}=u(S_t,A_t,O_{t+1})$, and treats that agent state as if it were
+Markov~\cite[Sec.~17.3]{sutton_reinforcement_2020}.
+The design of $u$ is what distinguishes the common approaches:
 
 \begin{itemize}
-  \item Fundamental dilemma: exploit the best-known action or explore to find better
-    ones~\cite{sutton_reinforcement_2020}.
-  \item Minimal setting: multi-armed bandit (single state); $\varepsilon$-greedy and
-    optimism-in-the-face-of-uncertainty / UCB-style strategies
-    ~\cite{sutton_reinforcement_2020,hutchison_bandit_2006}.
-  \item Contextual bandit as intermediate step between bandit and full MDP ---
-    mirrors the ladder of evaluation targets in \cref{chap:targets}
-    (\cref{sec:target-bandit,sec:target-contextual-bandit,sec:target-sequence}).
-  \item Foreshadow: fuzzing has exactly this structure --- keep hammering a productive protocol
-    state vs.\ probe untested ones~\cite{borcherding_bandits_2023}.
+  \item \emph{Fixed-length history.} The simplest choice retains the last $k$ observations.
+    The DQN agent of \textcite{mnih_human-level_2015} stacks four consecutive Atari frames
+    so that quantities such as velocity, invisible in a single frame, become recoverable.
+    This removes only the aliasing that a $k$-step window resolves.
+  \item \emph{Recurrence.} Letting $u$ be a recurrent network gives an unbounded, learned
+    summary of the history. \textcite{hausknecht_deep_2017} replace DQN's first fully
+    connected layer with an LSTM and show that the resulting agent copes with observations
+    that are individually uninformative, and further work adds explicit external memory to
+    the same end~\cite{wayne_unsupervised_2018}.
+  \item \emph{Learned latent state.} Model-based agents learn $u$ jointly with a dynamics
+    model, so that the latent state is trained to be exactly as informative as prediction
+    requires~\cite{ha_world_2018,hafner_learning_2019}.
+    MuZero and its sample-efficient successor EfficientZero take this furthest: their latent
+    state carries no reconstruction objective at all and is shaped only by the reward, value
+    and policy targets it must
+    support~\cite{schrittwieser_mastering_2020,ye_mastering_2021}.
+    \Cref{chap:efficientzero} develops this in detail.
 \end{itemize}
 
-\subsection{Algorithm Families}\label{sec:rl-algorithms}
+None of these constructions guarantees that the agent state is Markov; they merely make it
+informative enough for control.
+This caveat is directly relevant to the formulation developed in
+\cref{chap:fuzzing-mdp}.
+The true state of a program under emulation is its entire machine state --- registers,
+memory, and whatever session state the target has accumulated --- and is far too large to
+expose to a learner.
+What the agent receives instead is a fixed-width coverage vector derived from hashed
+basic-block hits (\cref{sec:platform-coverage}), which aliases distinct machine states onto
+identical observations both by hash collision and by construction.
+The fuzzing environments of this thesis are thus POMDPs presented to the agent as MDPs, a
+deliberate approximation whose cost is discussed in
+\cref{sec:input-observation,sec:corpus-observation}.
 
-% --- Verbatim excerpt from the proposal (own text; citation keys remapped).
-%     Key changes vs.\ proposal: williams1992simple (REINFORCE) is not in references/*.bib yet
-%     (todo below); mnih2013playing (arXiv DQN) mapped to the Nature version
-%     mnih_human-level_2015; hafner2023mastering mapped to hafner_mastering_2024.
-%     Small fixes for fleshing out: "make use modern-day" -> "make use of modern-day";
-%     $Q:\mathcal{S}\rightarrow\mathcal{R}$ should arguably be
-%     $Q:\mathcal{S}\times\mathcal{A}\rightarrow\mathbb{R}$. ---
-Algorithms for finding an optimal $\pi^*$ can be divided into three classes:
-value-based, policy-based and actor-critic.
-
-Value-based methods try to learn a value function $Q:\mathcal{S}\rightarrow \mathcal{R}$
-mapping states to their expected cumulative reward so that in each step, the
-action that maximizes the expected reward can be taken.
-These include well-known methods such as Q-learning, TD($\lambda$) or SARSA.
-
-Policy-based methods try to directly construct an optimal policy $\pi^*$ without the
-use of a value function.
-They have various advantages.
-For example, they can easily handle continuous action spaces and ensure stochasticity
-which is important for state space exploration.
-A well-known classical policy-based algorithm is
-REINFORCE\todo{cite: Williams 1992, ``Simple statistical gradient-following algorithms
-for connectionist reinforcement learning'' (was williams1992simple in the proposal)}.
-
-Actor-critic methods synthesize value- and policy-based methods by including information
-about a state's value in the policy learning process.
-
-Since classical, tabular methods don't work well with large state spaces,
-state-of-the-art methods make use modern-day deep learning advancements.
-Examples include the family of Deep-Q Network (DQN)
-algorithms~\cite{mnih_human-level_2015,hessel_rainbow_2017} approximating the $Q$
-function by neural networks, policy-based gradient-descent methods like
-Proximal Policy Optimization (PPO)~\cite{schulman_proximal_2017} and actor-critic
-methods like A3C~\cite{mnih_asynchronous_2016}.
-Impressive results range from the master-level Go program
-AlphaGo~\cite{silver_mastering_2016} and its more generalized successors
-AlphaZero~\cite{silver_mastering_2017} and MuZero~\cite{schrittwieser_mastering_2020}
-to Dreamerv3~\cite{hafner_mastering_2024} that is able to learn how to acquire
-diamonds in the popular video game \textit{Minecraft} without any human input
-or expert knowledge.
-% --- End excerpt ---
-
-% Complementary bullets not covered by the excerpt:
-\begin{itemize}
-  \item Foundational citations to attach to the excerpt's method names:
-    temporal-difference learning~\cite{sutton_learning_1988}; Q-learning
-    \todo{cite: Watkins \& Dayan 1992, ``Q-learning''}.
-  \item Further DQN refinements between DQN and Rainbow: double DQN~\cite{hasselt_deep_2015},
-    dueling networks~\cite{wang_dueling_2016}, prioritized experience
-    replay~\cite{schaul_prioritized_2016} (PER returns in EfficientZero,
-    \cref{chap:efficientzero}).
-  \item Further policy-gradient/actor-critic methods: TRPO~\cite{schulman_trust_2017},
-    SAC~\cite{haarnoja_soft_2018}.
-  \item Broad algorithm surveys~\cite{ghasemi_comprehensive_2025}.
-  \item Practical caveats of deep RL: high variance across seeds, hyperparameter sensitivity,
-    reproducibility concerns~\cite{henderson_deep_2019} --- informs the evaluation methodology in
-    \cref{chap:methodology}.
-\end{itemize}
-
-\subsection{Model-Free versus Model-Based RL}\label{sec:rl-model-based}
-
-\begin{itemize}
-  \item Model-free: learn policy/values directly from transitions; conceptually simple, but
-    notoriously sample-hungry --- millions to billions of environment steps
-    ~\cite{mnih_human-level_2015,moerland_model-based_2022}.
-  \item Model-based: additionally learn a \emph{dynamics model} of the environment and use it for
-    planning or imagined training --- the main lever for sample
-    efficiency~\cite{moerland_model-based_2022,kaiser_model-based_2024}.
-  \item World-model line: learn compressed latent dynamics, train the policy inside the
-    model~\cite{ha_world_2018,hafner_learning_2019,hafner_mastering_2024}.
-  \item Planning-with-search line:
-    \begin{itemize}
-      \item Monte-Carlo tree search (MCTS)~\cite{hutchison_efficient_2007}, UCT: bandit-based
-        selection inside the tree~\cite{hutchison_bandit_2006}, modern
-        review~\cite{swiechowski_monte_2023},
-      \item AlphaGo: MCTS + learned value/policy networks, with known rules
-        ~\cite{silver_mastering_2016}; AlphaGo Zero: self-play only
-        ~\cite{silver_mastering_2017-1}; AlphaZero: generalized across
-        games~\cite{silver_general_2018},
-      \item MuZero: replaces the known simulator with a \emph{learned latent model} --- planning
-        without knowing the rules~\cite{schrittwieser_mastering_2020},
-      \item EfficientZero: MuZero made sample-efficient (self-supervised consistency, value
-        prefix, model-based off-policy correction); strong Atari performance from only 100k
-        steps ($\approx$ 2 hours) of experience~\cite{ye_mastering_2021} --- treated in depth in
-        \cref{chap:efficientzero}.
-    \end{itemize}
-\end{itemize}
-
-\subsection{Sample Efficiency}\label{sec:rl-sample-efficiency}
-
-\begin{itemize}
-  \item Define: performance achieved per environment interaction; the binding constraint whenever
-    a step is expensive~\cite{moerland_model-based_2022,ye_mastering_2021}.
-  \item In this thesis each environment step is a program execution under emulation
-    (\cref{sec:fuzzing-emulation}) --- orders of magnitude slower than a simulator frame, so the
-    fuzzing use case sits squarely in the low-sample regime that EfficientZero targets
-    ~\cite{ye_mastering_2021}.
-  \item This is the central argument for choosing a model-based, planning-heavy algorithm over the
-    model-free methods used by most prior RL fuzzers (\cref{chap:related-work}).
-\end{itemize}
