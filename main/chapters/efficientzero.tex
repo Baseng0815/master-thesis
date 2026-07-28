@@ -2,5 +2,564 @@
 
 \chapter{EfficientZero}\label{chap:efficientzero}
 
-% TODO: Present EfficientZero \cite{ye_mastering_2021}: MuZero lineage,
-% the three sample-efficiency improvements, architecture, and training loop.
+% This chapter is the algorithm AS PUBLISHED \cite{ye_mastering_2021} and its
+% MuZero foundation \cite{schrittwieser_mastering_2020} --- theory only. Nothing
+% about fuzzing (\cref{chap:fuzzing-mdp}) and nothing about the Rust
+% implementation (\cref{chap:implementation}) belongs here.
+
+EfficientZero~\cite{ye_mastering_2021} is a model-based deep reinforcement
+learning algorithm and a member of the AlphaGo family of algorithms.
+It combines a learned latent-space model of the environment with Monte-Carlo
+tree search to simulate the outcome of a sequence of actions.
+EfficientZero was the first algorithm to exceed average human performance on
+Atari games with only two hours of real-time game experience, reaching
+\SI{194.3}{\percent} mean human performance on the Atari 100k
+benchmark~\cite{ye_mastering_2021}.
+
+\section{From AlphaGo to EfficientZero}\label{sec:ez-lineage}
+
+AlphaGo~\cite{silver_mastering_2016} released in 2016 and was the first program to defeat a
+professional human player at the game of Go, a challenging task due to Go's extremely large state space
+It combines Monte-Carlo tree search with two deep neural networks: a policy
+network that proposes promising moves and narrows the search, and a value
+network that evaluates board positions.
+The networks were first trained by supervised learning on a database of human
+expert games and then refined through self-play.
+AlphaGo is therefore tied to Go since it requires human game records for
+pretraining and a perfect simulator of the game rules.
+
+AlphaGo Zero~\cite{silver_mastering_2017-1} removes the dependency on human
+data.
+It learns exclusively from self-play, using a single network with a policy and a value head.
+The training loop is an instance of GIP (\cref{sec:rl-dp}): MCTS improves
+the policy and the improved policy is used to generate new games to train the
+networks to predict the output of MCTS.
+AlphaGo Zero defeated the published AlphaGo by 100 games to 0.
+
+AlphaZero~\cite{silver_general_2018} rids itself entirely of the Go-specific dependencies.
+The resulting algorithm is general enough to be trained not only on Go, but
+also on other board games like chess and shogi and defeated the strongest
+existing programs in each of the three games.
+AlphaZero still requires a perfect simulator for MCTS.
+
+MuZero~\cite{schrittwieser_mastering_2020} removes the dependency on the simulator.
+Instead of planning with the true environment dynamics, MuZero learns a model
+of the environment and plans inside it.
+Unlike previous approaches, the model is not trained to predict actual observations,
+but encodes observations through a representation network and plans in a latent space.
+This makes the approach applicable to domains whose rules are unknown, and
+MuZero matched AlphaZero's performance in board games while simultaneously
+setting a new state of the art on the Atari benchmark.
+
+EfficientZero~\cite{ye_mastering_2021} improves the sample efficiency of MuZero.
+It targets the Atari 100k benchmark~\cite{kaiser_model-based_2024}, a benchmark
+set that wraps many classic Atari games and allows an agent to interact with each
+game for only \num{100000} steps which is equal to roughly two hours of real-time play.
+It achieves this through three additions to MuZero, described in
+\cref{sec:ez-improvements}.
+A successor, EfficientZero V2~\cite{wang_efficientzero_2024}, extends the
+approach to continuous action spaces and further benchmarks.
+
+\section{General Architecture}\label{sec:ez-architecture}
+
+EfficientZero inherits MuZero's overall architecture.
+The agent consists of three jointly trained networks that together form a
+latent model of the environment, a Monte-Carlo tree search that plans inside
+this model, and a training loop that continually improves the networks from
+the agent's own experience.
+The search is the component that turns a mediocre network policy into a better
+acting policy; the training loop distills that improvement back into the
+network.
+\todo[inline]{Figure: architecture overview --- self-play workers, replay
+buffer, learner, parameter flow back to the workers.}
+
+\subsection{The Learned Model}\label{sec:ez-model}
+
+The model consists of three functions with learned parameters
+$\theta$~\cite{schrittwieser_mastering_2020}, here given in MuZero's
+notation:\footnote{The EfficientZero paper names the same components
+$\mathcal{H}$, $\mathcal{G}$, and splits the prediction function into separate
+reward, policy, and value heads $\mathcal{R}$, $\mathcal{P}$,
+$\mathcal{V}$~\cite{ye_mastering_2021}. This thesis uses MuZero's $h$, $g$,
+$f$ throughout.}
+
+\begin{align}\label{eq:ez-model}
+  s^0 &= h_\theta(o_1,\dots,o_t), \nonumber\\
+  r^k, s^k &= g_\theta(s^{k-1}, a^k),\\
+  p^k, v^k &= f_\theta(s^k). \nonumber
+\end{align}
+
+The \emph{representation function} $h_\theta$ encodes the observation history
+into a \emph{latent state} $s^0$.
+The \emph{dynamics function} $g_\theta$ advances the latent state: given a
+latent state and an action, it produces the next latent state and a prediction
+$r^k$ of the immediate reward.
+The \emph{prediction function} $f_\theta$ maps a latent state to a policy
+prior $p^k$ --- a probability distribution over actions --- and a value
+estimate $v^k$, analogous to the two heads of AlphaZero's network.
+Superscripts count \emph{imagined} steps: applying $g_\theta$ recursively to
+$s^0$ with an action sequence $a^1,\dots,a^K$ yields a trajectory
+$s^1,\dots,s^K$ of hypothetical futures, each of which $f_\theta$ can
+evaluate --- without touching the real environment.
+Actions enter $g_\theta$ in encoded form; for discrete action spaces the
+action index is one-hot encoded and concatenated to the latent state.
+
+The defining property of this model is what it is \emph{not} trained to do:
+the latent state is never decoded back into an observation, and no loss term
+asks it to reconstruct one.
+The model is only required to be \emph{value equivalent} --- to predict
+exactly the three quantities the planner consumes: reward, value, and
+policy~\cite{schrittwieser_mastering_2020}.
+The latent state is therefore free to discard every aspect of the observation
+that is irrelevant for decision making, which is what allows planning to
+remain tractable in domains with rich observations.
+
+\subsection{The Self-Play and Training Loop}\label{sec:ez-loop}
+
+The networks are trained in a closed loop of acting and learning that runs, in
+practice, concurrently~\cite{schrittwieser_mastering_2020}.
+
+\emph{Self-play} workers interact with the real environment.
+At every time step $t$, a worker encodes the current observation history into
+$s^0 = h_\theta(o_1,\dots,o_t)$ and runs the tree search of \cref{sec:ez-mcts}
+from this root.
+The search returns a distribution $\pi_t$ over actions and a root value
+estimate $\nu_t$; the worker samples its real action from $\pi_t$.
+The resulting trajectories --- observations, actions, observed rewards $u_t$,
+and the search statistics $\pi_t$ and $\nu_t$ --- are stored in a replay
+buffer.
+
+The \emph{learner} samples positions from the replay buffer and updates
+$\theta$ by the procedure of \cref{sec:ez-training}: it unrolls the model a
+fixed number of steps along the stored actions and trains every prediction
+against a target derived from what actually happened.
+Updated parameters flow back to the self-play workers, closing the loop.
+
+The scheme is an instance of generalized policy iteration
+(\cref{sec:rl-dp}): the search acts as the policy-improvement operator ---
+$\pi_t$ is reliably better than the raw prior $p^0$ it started
+from~\cite{grill_monte-carlo_2020} --- and learning from the stored search
+results is the evaluation-and-distillation step that consolidates the
+improvement.
+
+\section{Monte-Carlo Tree Search}\label{sec:ez-mcts}
+
+Monte-Carlo tree search was introduced in \cref{sec:rl-exploration} as the
+generalization of the UCB rule (\cref{eq:ucb}) from bandits to sequential
+decisions: every node of a growing search tree is treated as its own bandit
+problem~\cite{hutchison_bandit_2006,hutchison_efficient_2007}.
+Classical MCTS repeats four phases --- selection, expansion, simulation, and
+backpropagation --- where the simulation phase estimates a leaf's value by
+playing random rollouts to the end of the
+episode~\cite{swiechowski_monte_2023}.
+
+The variant used by AlphaZero, MuZero, and EfficientZero differs from the
+classical algorithm in two ways.
+First, there are no rollouts: a leaf is evaluated by a single forward pass of
+the prediction network, as in AlphaGo Zero.
+Second --- specific to MuZero and EfficientZero --- the tree does not touch
+the real environment at all.
+Only the root corresponds to a real observation; every other node is a latent
+state imagined by the dynamics function.
+The environment is queried exactly once per time step, with the single action
+the finished search selects.
+
+Each edge $(s,a)$ of the tree stores a set of statistics
+\[
+  \{N(s,a),\;Q(s,a),\;P(s,a),\;R(s,a)\},
+\]
+the visit count, the mean action value, the prior probability assigned by the
+policy network, and the predicted reward.
+One \emph{simulation} descends from the root to a leaf, expands it, and
+propagates the result back up; a search consists of a fixed budget of such
+simulations (\num{50} per move in EfficientZero's Atari
+setting~\cite{ye_mastering_2021}, \num{800} in MuZero's board-game
+setting~\cite{schrittwieser_mastering_2020}).
+\todo[inline]{Figure: one simulation traced through selection, expansion, and
+backup on a small tree.}
+
+\subsection{Selection}\label{sec:ez-mcts-selection}
+
+Starting at the root $s^0$, the search descends by repeatedly choosing the
+action that maximizes a variant of the pUCT
+rule~\cite{schrittwieser_mastering_2020}:
+
+\begin{equation}\label{eq:ez-puct}
+  a^k = \argmax_a\left[
+    \bar{Q}(s,a)
+    + P(s,a)
+      \cdot\frac{\sqrt{\sum_b N(s,b)}}{1+N(s,a)}
+      \cdot\left(c_1+\log\frac{\sum_b N(s,b)+c_2+1}{c_2}\right)
+  \right],
+\end{equation}
+
+with constants $c_1 = 1.25$ and $c_2 = 19652$ controlling the weight of the
+exploration term.
+The structure mirrors \cref{eq:ucb} --- an exploitation term plus an
+exploration bonus that shrinks with the edge's visit count --- with one
+decisive addition: the bonus is scaled by the prior $P(s,a)$.
+The policy network thereby steers the search toward moves it already considers
+promising before a single visit has been spent, which is what lets a small
+simulation budget explore an action space that plain UCT would have to sweep
+uniformly.
+
+Because latent rewards and values are unbounded --- unlike the $[0,1]$ range
+of game outcomes AlphaZero was designed for --- the $Q$ values entering
+\cref{eq:ez-puct} are normalized with the minimum and maximum values observed
+in the tree so far:
+
+\begin{equation}\label{eq:ez-qnorm}
+  \bar{Q}(s,a)
+  = \frac{Q(s,a)-\min_{(s',a')\in\mathit{Tree}} Q(s',a')}
+         {\max_{(s',a')\in\mathit{Tree}} Q(s',a')-\min_{(s',a')\in\mathit{Tree}} Q(s',a')}.
+\end{equation}
+
+\subsection{Expansion and Evaluation}\label{sec:ez-mcts-expansion}
+
+When the descent reaches an edge without a child node, the leaf is expanded.
+The dynamics function computes the new latent state and its reward,
+$r^l, s^l = g_\theta(s^{l-1}, a^l)$, and the prediction function evaluates it,
+$p^l, v^l = f_\theta(s^l)$.
+The new node's edges are initialized with the prior $p^l$ and zero visits, and
+$v^l$ becomes the leaf value for the backup phase.
+This single pair of forward passes replaces the rollout of classical MCTS ---
+evaluation is a learned function, not a sampled game continuation.
+
+\subsection{Backup}\label{sec:ez-mcts-backup}
+
+The leaf value is propagated back along the search path
+$s^0, a^1, s^1, \dots, a^l, s^l$.
+For every edge on the path, the backed-up value is the discounted sum of the
+rewards accumulated below it, bootstrapped with the leaf estimate:
+
+\begin{equation}\label{eq:ez-backup}
+  G^k=\sum_{\tau=0}^{l-1-k}\gamma^{\tau}\,r^{k+1+\tau}\;+\;\gamma^{l-k}\,v^l,
+\end{equation}
+
+and each edge's statistics are updated as a running mean and count:
+
+\begin{equation}\label{eq:ez-backup-update}
+  Q(s^{k-1},a^k) \leftarrow \frac{N(s^{k-1},a^k)\cdot Q(s^{k-1},a^k)+G^k}{N(s^{k-1},a^k)+1},
+  \qquad
+  N(s^{k-1},a^k) \leftarrow N(s^{k-1},a^k)+1.
+\end{equation}
+
+The min-max bounds of \cref{eq:ez-qnorm} are updated along the way.
+Note that \cref{eq:ez-backup} is an $n$-step return computed entirely inside
+the model: the rewards are predictions of $g_\theta$, and the bootstrap is a
+prediction of $f_\theta$.
+
+\subsection{Acting: From Visit Counts to a Move}\label{sec:ez-mcts-acting}
+
+After the simulation budget is exhausted, the root's visit counts summarize
+the search's conclusion, and the acting policy is derived from them:
+
+\begin{equation}\label{eq:ez-visit-policy}
+  \pi_t(a)=\frac{N(a)^{1/T}}{\sum_b N(b)^{1/T}},
+\end{equation}
+
+where the temperature $T$ interpolates between sampling proportionally to
+visit counts ($T=1$) and greedily playing the most-visited action
+($T\rightarrow 0$).
+The temperature is decayed over the course of training: early on, the agent
+explores; later, it commits~\cite{schrittwieser_mastering_2020}.
+
+Exploration at the root is additionally guaranteed by perturbing the root
+priors with Dirichlet noise before the search begins,
+
+\begin{equation}\label{eq:ez-dirichlet}
+  P(s^0,a) \leftarrow (1-\rho)\,P(s^0,a)+\rho\,\eta_a,
+  \qquad \eta\sim\operatorname{Dir}(\xi),
+\end{equation}
+
+so that every root action retains a nonzero chance of being tried even when
+the prior has collapsed onto a single move~\cite{silver_mastering_2017-1}.
+
+The distribution $\pi_t$ is not only sampled for acting --- it is stored, and
+becomes the policy training target of \cref{sec:ez-training}.
+This is the sense in which search is the policy-improvement operator of the
+whole scheme: $\pi_t$ concentrates on actions that the search, with the
+benefit of lookahead, found to be better than the raw prior suggested, and can
+be formally interpreted as a step of regularized policy
+optimization~\cite{grill_monte-carlo_2020}.
+
+\section{Training}\label{sec:ez-training}
+
+Training connects the model's imagination to reality.
+The learner samples a position $t$ from a stored trajectory, encodes
+$s^0=h_\theta(o_1,\dots,o_t)$, and unrolls the dynamics function $K$ steps
+(typically $K=5$) along the \emph{actually executed} actions
+$a_{t+1},\dots,a_{t+K}$.
+Every quantity the model predicts along this unroll is matched against a
+target computed from the stored trajectory~\cite{schrittwieser_mastering_2020}.
+
+\subsection{Targets}\label{sec:ez-targets}
+
+Each of the three prediction heads has its own target.
+
+\paragraph{Policy}
+The policy prediction $p^k$ is trained toward $\pi_{t+k}$, the stored root
+visit distribution of the search that was executed at time $t+k$.
+The network thus learns to propose what the search would conclude ---
+compressing lookahead into a single forward pass.
+
+\paragraph{Reward}
+The reward prediction $r^k$ is trained toward $u_{t+k}$, the reward actually
+observed in the environment.
+
+\paragraph{Value}
+The value prediction $v^k$ is trained toward an $n$-step bootstrapped return
+
+\begin{equation}\label{eq:ez-value-target}
+  z_t=\sum_{i=0}^{n-1}\gamma^{i}\,u_{t+i+1}+\gamma^{n}\,\nu_{t+n},
+\end{equation}
+
+which mixes $n$ observed rewards with the stored search value $\nu_{t+n}$ as
+the bootstrap --- the same construction as the $n$-step targets of
+\cref{sec:rl-td}, with the search value taking the role of the value
+estimate.
+Two ingredients of this target age poorly: the rewards $u$ were collected by
+an old policy, and the bootstrap $\nu_{t+n}$ was computed by an old network.
+Both problems worsen as the replay buffer grows older relative to the current
+policy, and both are addressed by EfficientZero's off-policy correction
+(\cref{sec:ez-off-policy}) and by reanalyze (\cref{sec:ez-reanalyze}).
+
+\subsection{The Loss Function}\label{sec:ez-loss}
+
+All predictions along the unroll are trained jointly:
+
+\begin{equation}\label{eq:ez-loss}
+  l_t(\theta)=\sum_{k=0}^{K}
+    \Big[\,
+      l^p\!\left(\pi_{t+k},\,p^k\right)
+      + l^v\!\left(z_{t+k},\,v^k\right)
+      + l^r\!\left(u_{t+k},\,r^k\right)
+    \Big]
+    + c\,\lVert\theta\rVert^2,
+\end{equation}
+
+with an L2 regularization term $c\lVert\theta\rVert^2$.
+Gradients flow through the entire unroll: the dynamics function is trained not
+to reproduce any particular latent state, but to produce states from which
+$f_\theta$ makes good predictions $k$ steps later.
+Two technical measures stabilize this: the loss of each unroll step is scaled
+down by $1/K$, and the gradient flowing into each application of $g_\theta$ is
+halved, so that early unroll steps do not accumulate disproportionate
+gradient~\cite{schrittwieser_mastering_2020}.
+
+Value and reward are not regressed as scalars.
+Following the distributional perspective of
+\textcite{bellemare_distributional_2017}, both are represented as categorical
+distributions over a fixed discrete support, trained with cross-entropy.
+A scalar target $x$ is first passed through the invertible transform
+
+\begin{equation}\label{eq:ez-transform}
+  \phi(x)=\operatorname{sign}(x)\left(\sqrt{\lvert x\rvert+1}-1\right)+\varepsilon x,
+  \qquad \varepsilon=10^{-3},
+\end{equation}
+
+which compresses large magnitudes, and then projected onto the two nearest
+support atoms; predictions are decoded by the inverse
+procedure~\cite{schrittwieser_mastering_2020}.
+This turns value regression into classification, which is markedly more stable
+when reward scales vary --- effectively an implicit form of gradient clipping.
+The hyperparameter values used in this thesis, including support sizes, are
+collected in \cref{sec:methodology-hyperparameters}.
+
+\subsection{Prioritized Experience Replay}\label{sec:ez-per}
+
+Positions are not sampled uniformly from the replay buffer.
+Following prioritized experience replay~\cite{schaul_prioritized_2016}, each
+stored position $i$ carries a priority proportional to how wrong the value
+estimate was when it was last visited,
+$p_i=\lvert\nu_i-z_i\rvert$, and is sampled with probability
+
+\begin{equation}\label{eq:ez-per}
+  P(i)=\frac{p_i^{\alpha}}{\sum_j p_j^{\alpha}},
+\end{equation}
+
+where the exponent $\alpha$ interpolates between uniform sampling
+($\alpha=0$) and pure greedy prioritization.
+The induced bias is compensated with importance-sampling weights
+$w_i=\left(\frac{1}{N}\cdot\frac{1}{P(i)}\right)^{\beta}$, normalized by their
+maximum, that scale down the loss of over-sampled
+positions~\cite{schaul_prioritized_2016}.
+In the low-data regime, prioritization matters: with few trajectories
+available, spending updates on positions the network already predicts well is
+a waste the algorithm cannot afford.
+
+\subsection{Reanalyze}\label{sec:ez-reanalyze}
+
+A sample-efficient agent must revisit its scarce experience many times --- but
+the targets stored with a trajectory freeze the knowledge the agent had when
+the trajectory was collected.
+\emph{Reanalyze}~\cite{schrittwieser_mastering_2020} refreshes them: before a
+buffered position is used for training, the search is re-run on its stored
+observation with the \emph{current} network parameters, and the resulting
+visit distribution and root value replace the stale $\pi_t$ and $\nu_t$.
+Old data thereby yields fresh targets, and the same trajectory can contribute
+meaningful gradient long after the policy that generated it has been
+superseded.
+The fraction of each training batch whose targets are recomputed in this way
+--- the \emph{reanalyze fraction} --- is a central knob of the algorithm's
+sample efficiency: EfficientZero reanalyzes nearly every
+sample~\cite{ye_mastering_2021}.
+
+\section{EfficientZero's Improvements}\label{sec:ez-improvements}
+
+MuZero's training signal becomes thin exactly when data is scarce.
+The EfficientZero paper~\cite{ye_mastering_2021} names three weaknesses: the
+latent model receives no direct supervision beyond scalar rewards, values, and
+policies; per-step reward prediction is brittle under aleatoric uncertainty
+about \emph{when} a reward occurs; and $n$-step value targets computed from
+old trajectories are off-policy.
+EfficientZero answers each with one mechanism, described in the paper's own
+terms below.
+
+\subsection{Self-Supervised Consistency Loss}\label{sec:ez-consistency}
+
+In MuZero, the only gradient reaching the dynamics function comes from the
+scalar heads: reward, value, and policy.
+If rewards are sparse, almost nothing constrains the latent trajectory ---
+with limited data, $g_\theta$ can drift into states that no longer correspond
+to anything the representation function would produce, and planning quality
+collapses with it.
+
+EfficientZero adds a self-supervised training signal that supervises the
+latent state directly.
+The imagined next state $\hat{s}_{t+1}=g_\theta(s_t,a_{t+1})$ and the encoded
+real next state $s_{t+1}=h_\theta(o_1,\dots,o_{t+1})$ should be the same
+vector --- the environment provides $o_{t+1}$ for free, so this consistency
+can be enforced without any label.
+The mechanism is borrowed from SimSiam~\cite{chen_exploring_2020}, a siamese
+self-supervised method~\cite{bromley_signature_nodate}: both states are passed
+through a projection network, the imagined branch additionally through a
+prediction head, and the two outputs are pulled together with a negative
+cosine similarity,
+
+\begin{equation}\label{eq:ez-consistency}
+  \mathcal{L}_{\text{consistency}}
+  = -\operatorname{cossim}\!\Big(
+      \operatorname{sg}\big(P_1(s_{t+1})\big),\;
+      P_2\big(P_1(\hat{s}_{t+1})\big)
+    \Big),
+\end{equation}
+
+where $P_1$ is the projector, $P_2$ the predictor, and $\operatorname{sg}$ the
+stop-gradient operator.
+The asymmetry --- stop-gradient on the real branch, predictor on the imagined
+branch --- is what prevents the trivial solution of mapping every observation
+to the same latent point~\cite{chen_exploring_2020}.
+The loss is applied at every unroll step, giving the dynamics function a dense
+vector-valued training signal where MuZero had scalars.
+The idea is closely related to SPR~\cite{schwarzer_data-efficient_2021}, which
+uses the momentum-encoder variant BYOL~\cite{grill_bootstrap_2020} for the
+same purpose in a model-free agent.
+
+\subsection{End-to-End Value-Prefix Prediction}\label{sec:ez-value-prefix}
+
+MuZero's dynamics function must predict the reward of every single imagined
+step.
+This is harder than it appears: it requires knowing not only \emph{that} a
+reward is coming, but \emph{exactly when}.
+In many environments that timing is aleatorically uncertain --- the underlying
+information simply is not present in the observation history, a form of the
+state-aliasing problem of \cref{sec:rl-pomdp}.
+A model forced to predict per-step rewards under such uncertainty produces
+errors that compound over the unroll, and the search sums these erroneous
+rewards in every backup (\cref{eq:ez-backup}).
+
+EfficientZero sidesteps the timing problem: it stops predicting individual
+rewards and instead predicts the \emph{value prefix} --- the discounted reward
+sum accumulated since the start of the unroll,
+
+\begin{equation}\label{eq:ez-value-prefix}
+  x_{t,k}=\sum_{i=0}^{k-1}\gamma^{i}\,u_{t+i+1}.
+\end{equation}
+
+The value prefix is predicted \emph{end to end} from the whole latent
+trajectory: an LSTM consumes the imagined states $\hat{s}_{t+1},\dots,\hat{s}_{t+k}$
+and outputs $\hat{x}_{t,k}$ directly~\cite{ye_mastering_2021}.
+A model that is unsure whether a reward arrives at step 3 or step 4 can still
+predict the prefix at step 5 with confidence --- the quantity the search
+actually needs, since \cref{eq:ez-backup,eq:ez-value-target} only ever consume
+rewards in summed form.
+Where the search requires an individual edge reward, it is recovered as the
+difference of consecutive prefixes.
+Like value and reward in \cref{sec:ez-loss}, the value prefix is represented
+categorically and trained with cross-entropy.
+
+\subsection{Model-Based Off-Policy Correction}\label{sec:ez-off-policy}
+
+The value target of \cref{eq:ez-value-target} sums $n$ rewards that were
+collected by whatever policy was acting when the trajectory was recorded.
+For fresh data this is nearly on-policy; for old data it is not --- the
+current policy would have acted differently, and the sampled rewards estimate
+the return of the \emph{old} policy.
+This off-policy bias of multi-step targets is a classical problem, and general
+corrections such as Retrace~\cite{munos_safe_2016} exist; but they discount
+the very reward information the low-data regime needs.
+
+EfficientZero corrects the target using its model.
+The bootstrap horizon is made age-dependent: a trajectory that is $\tau$
+updates old uses a shortened horizon $l\leq n$, shrinking as the data grows
+staler, so that fewer stale real rewards enter the target.
+The missing tail is replaced by imagination: at the cutoff state, an MCTS with
+the \emph{current} model and parameters is run, and its root value
+$\nu^{\text{MCTS}}_{t+l}$ serves as the bootstrap,
+
+\begin{equation}\label{eq:ez-corrected-target}
+  z_t=\sum_{i=0}^{l-1}\gamma^{i}\,u_{t+i+1}+\gamma^{l}\,\nu^{\text{MCTS}}_{t+l}.
+\end{equation}
+
+The correction thus trades stale real experience for current imagined
+experience --- justified exactly because, by \cref{sec:ez-consistency}, the
+model is trained to be trustworthy.
+This is the concrete sense in which a learned model buys ``a richer update per
+execution'' (\cref{sec:fuzzing-emulation}): every stored transition keeps
+contributing an approximately on-policy training signal for as long as it
+remains in the buffer.
+
+\section{Assumptions and Interface}\label{sec:ez-assumptions}
+
+The published algorithm makes several assumptions about its environment.
+They are stated here as properties of the algorithm; \cref{sec:mdp-constraints}
+translates them into concrete requirements on the fuzzing environments of this
+thesis.
+
+\paragraph{Flat, discrete, enumerable actions}
+The action space is a single categorical set $\{0,\dots,\lvert\mathcal{A}\rvert-1\}$.
+The policy head is one softmax of width $\lvert\mathcal{A}\rvert$, the search
+initializes every root child with a prior, and actions are one-hot encoded for
+the dynamics function.
+There is no mechanism for structured or parameterized actions in the original
+algorithm --- extensions exist for continuous and large action
+spaces~\cite{wang_efficientzero_2024}\todo{cite: Sampled MuZero (Hubert et
+al., 2021)} --- and no general action-masking mechanism: inside the tree the
+model cannot know which imagined actions would be illegal, so legality
+information can enter at the root at
+most~\cite{schrittwieser_mastering_2020}.
+In the general regime every action must be executable in every state.
+
+\paragraph{Fixed-size observations}
+The representation function is a neural network with a fixed input shape;
+observations must be encoded as fixed-size tensors, whatever the natural size
+of the underlying state.
+
+\paragraph{Deterministic latent planning}
+The dynamics function is a deterministic mapping
+$(s^{k-1},a^k)\mapsto(r^k,s^k)$.
+The planner therefore assumes the environment is deterministic (or nearly so):
+in a stochastic environment the single imagined successor state averages over
+outcomes that may require different actions, and plan quality
+degrades.\todo{cite: Stochastic MuZero (Antonoglou et al., 2022)}
+
+\paragraph{Scope of the sample-efficiency evidence}
+EfficientZero's headline results are established on Atari
+100k~\cite{ye_mastering_2021,kaiser_model-based_2024}: image observations,
+dense-ish rewards, and action spaces of at most 18 discrete actions.
+The algorithm's machinery is not specific to this setting, but its published
+evidence is.
+Whether the sample-efficiency advantage transfers to reward landscapes as
+sparse and irregular as coverage-guided fuzzing is an empirical question ---
+the one \cref{chap:targets,chap:results} set out to answer.
