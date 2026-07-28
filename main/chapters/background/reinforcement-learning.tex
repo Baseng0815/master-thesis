@@ -58,8 +58,7 @@ Observing the environment may therefore introduce uncertainty.
 The Markov property then still holds for the underlying state, but not for what the agent sees.
 
 This situation is modeled through a \emph{partially observable Markov decision process}
-(POMDP)~\cite{ASTROM1965174}\todo{cite: Kaelbling, Littman \& Cassandra (1998) as the
-standard reference --- references/kaelbling.tex currently holds a copy of the Åström entry}, which
+(POMDP)~\cite{ASTROM1965174,kaelbling_planning_1998}, which
 extends the original 3-tuple MDP $(\mathcal{S},\mathcal{A},p)$ to a 5-tuple POMDP=$(\mathcal{S},\mathcal{A},p,\Omega,o)$, by adding
 
 \begin{itemize}
@@ -77,62 +76,20 @@ POMDPs introduce the problem of \emph{state aliasing}.
 If two states that require different actions map to the same observation, then no deterministic
 memoryless policy $\pi:\Omega\times\mathcal{A}\rightarrow[0,1]$ can act correctly in both,
 and the best achievable memoryless policy can be arbitrarily worse than a policy that is
-allowed to consult the
-history~\todo{cite: Singh, Jaakkola \& Jordan (1994), ``Learning Without State-Estimation
-in Partially Observable Markovian Decision Processes''}
+allowed to consult the history~\cite{SINGH1994284}.
 
-What is Markov in a POMDP is not the observation but the entire interaction history
-$H_t=O_0,A_0,O_1,A_1,\dots,O_t$.
-The classical remedy is to summarize that history in a \emph{belief state}
-$b_t(s)=\Pr\{S_t=s|H_t\}$, a probability distribution over $\mathcal{S}$ that is updated
-recursively via Bayes' rule from $b_{t-1}$, $a_{t-1}$ and $o_t$.
-The belief state is a sufficient statistic of the history: acting optimally on $b_t$ is
-as good as acting optimally on $H_t$, which turns the POMDP into an ordinary --- but
-continuous-state --- MDP over the belief simplex~\cite{puterman_markov_2009}.
+A POMDP can be made Markovian by treating not the actual observations, but the
+entire observation-action history $H_t=O_0,A_0,O_1,A_1,\dots,O_t$ as the state space.
+Another classical solution is to summarize the observation-action history in a probability distribution 
+and treat this distribution as the actual state.
+This state is called a \emph{belief state} $b_t(s)=\Pr\{S_t=s|H_t\}$ and suffices
+to allow the agent to act optimally~\cite{puterman_markov_2009}.
+Practically speaking, the belief-state approach is restricted in that it presupposes
+the existence of a known model $(p,o)$. Solving the resulting belief MDP is also intractable
+for all but the simplest problems.
+
 This reduction is mostly of theoretical value here, since it presupposes a known model
 $(p,o)$ and an explicit state space, and solving the resulting belief MDP exactly is
-intractable for all but very small
-problems~\todo{cite: Papadimitriou \& Tsitsiklis (1987) for PSPACE-completeness of
-finite-horizon POMDP planning}.
+intractable for all but very small problems~\cite{papadimitriou_complexity_1987}.
 
-Deep reinforcement learning therefore takes a pragmatic route: rather than computing a
-belief state, the agent constructs an \emph{agent state} $S_t$ that is some compressed
-function of the history, maintained by a state-update function
-$S_{t+1}=u(S_t,A_t,O_{t+1})$, and treats that agent state as if it were
-Markov~\cite[Sec.~17.3]{sutton_reinforcement_2020}.
-The design of $u$ is what distinguishes the common approaches:
-
-\begin{itemize}
-  \item \emph{Fixed-length history.} The simplest choice retains the last $k$ observations.
-    The DQN agent of \textcite{mnih_human-level_2015} stacks four consecutive Atari frames
-    so that quantities such as velocity, invisible in a single frame, become recoverable.
-    This removes only the aliasing that a $k$-step window resolves.
-  \item \emph{Recurrence.} Letting $u$ be a recurrent network gives an unbounded, learned
-    summary of the history. \textcite{hausknecht_deep_2017} replace DQN's first fully
-    connected layer with an LSTM and show that the resulting agent copes with observations
-    that are individually uninformative, and further work adds explicit external memory to
-    the same end~\cite{wayne_unsupervised_2018}.
-  \item \emph{Learned latent state.} Model-based agents learn $u$ jointly with a dynamics
-    model, so that the latent state is trained to be exactly as informative as prediction
-    requires~\cite{ha_world_2018,hafner_learning_2019}.
-    MuZero and its sample-efficient successor EfficientZero take this furthest: their latent
-    state carries no reconstruction objective at all and is shaped only by the reward, value
-    and policy targets it must
-    support~\cite{schrittwieser_mastering_2020,ye_mastering_2021}.
-    \Cref{chap:efficientzero} develops this in detail.
-\end{itemize}
-
-None of these constructions guarantees that the agent state is Markov; they merely make it
-informative enough for control.
-This caveat is directly relevant to the formulation developed in
-\cref{chap:fuzzing-mdp}.
-The true state of a program under emulation is its entire machine state --- registers,
-memory, and whatever session state the target has accumulated --- and is far too large to
-expose to a learner.
-What the agent receives instead is a fixed-width coverage vector derived from hashed
-basic-block hits (\cref{sec:platform-coverage}), which aliases distinct machine states onto
-identical observations both by hash collision and by construction.
-The fuzzing environments of this thesis are thus POMDPs presented to the agent as MDPs, a
-deliberate approximation whose cost is discussed in
-\cref{sec:input-observation,sec:corpus-observation}.
-
+\subsection{The Exploration-Exploitation Tradeoff}

@@ -866,3 +866,23 @@
 	year = {2018},
 	pages = {679--696},
 }
+
+
+@inproceedings{lemieux_fairfuzz_2018,
+	address = {Montpellier France},
+	title = {{FairFuzz}: a targeted mutation strategy for increasing greybox fuzz testing coverage},
+	isbn = {978-1-4503-5937-5},
+	shorttitle = {{FairFuzz}},
+	url = {https://dl.acm.org/doi/10.1145/3238147.3238176},
+	doi = {10.1145/3238147.3238176},
+	abstract = {In recent years, fuzz testing has proven itself to be one of the most effective techniques for finding correctness bugs and security vulnerabilities in practice. One particular fuzz testing tool, American Fuzzy Lop (AFL), has become popular thanks to its ease-of-use and bug-finding power. However, AFL remains limited in the bugs it can find since it simply does not cover large regions of code. If it does not cover parts of the code, it will not find bugs there. We propose a two-pronged approach to increase the coverage achieved by AFL. First, the approach automatically identifies branches exercised by few AFL-produced inputs (rare branches), which often guard code that is empirically hard to cover by naïvely mutating inputs. The second part of the approach is a novel mutation mask creation algorithm, which allows mutations to be biased towards producing inputs hitting a given rare branch. This mask is dynamically computed during fuzz testing and can be adapted to other testing targets. We implement this approach on top of AFL in a tool named FairFuzz. We conduct evaluation on real-world programs against state-of-the-art versions of AFL. We find that on these programs FairFuzz achieves high branch coverage at a faster rate that stateof-the-art versions of AFL. In addition, on programs with nested conditional structure, it achieves sustained increases in branch coverage after 24 hours (average 10.6\% increase). In qualitative analysis, we find that FairFuzz has an increased capacity to automatically discover keywords.},
+	language = {en},
+	urldate = {2026-07-26},
+	booktitle = {Proceedings of the 33rd {ACM}/{IEEE} {International} {Conference} on {Automated} {Software} {Engineering}},
+	publisher = {ACM},
+	author = {Lemieux, Caroline and Sen, Koushik},
+	month = sep,
+	year = {2018},
+	pages = {475--485},
+	file = {PDF:/home/bastian/Zotero/storage/H9CMAN2Y/Lemieux and Sen - 2018 - FairFuzz a targeted mutation strategy for increasing greybox fuzz testing coverage.pdf:application/pdf},
+}
