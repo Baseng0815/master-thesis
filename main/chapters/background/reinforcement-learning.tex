@@ -260,78 +260,71 @@ A simple TD algorithm, TD(0), updates the estimate $V(S_t)$ as follows:
 where $\alpha\in(0,1]$ is a step size and the \emph{TD error} $\delta_t$ measures how much the
 sampled outcome deviates from the current estimate.
 
-Monte Carlo methods form the bootstrap-free alternative, updating toward the full observed return
-$G_t$ at the end of each episode.
+Monte Carlo methods form the bootstrap-free alternative by simulating a whole
+episode updating toward the full observed return $G_t$ at the end.
 The TD($\lambda$) family interpolates between the two extremes via \emph{eligibility traces},
 with TD(0) and Monte Carlo as the limit cases $\lambda=0$ and
 $\lambda=1$~\cite{sutton_learning_1988}.
 
-For control, state values are replaced by action values $Q(s,a)$, and GPI is instantiated with an
-exploratory behavior policy such as the $\varepsilon$-greedy rule of \cref{sec:rl-exploration}.
-
 \paragraph{SARSA}
-SARSA is \emph{on-policy}:
-it evaluates the policy it is executing, updating toward the action $A_{t+1}$ that is actually
-taken next:
+SARSA is similar to TD learning, but learns an action-value function $Q(s,a)$ instead of
+a value function $V(s)$. The update rule makes use of the action that the agent
+actually performed, making SARSA an \emph{on-policy} algorithm since it follows
+the currently active policy $\pi$:
+
 \begin{equation}\label{eq:sarsa}
   Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\left[R_{t+1}+\gamma Q(S_{t+1},A_{t+1})-Q(S_t,A_t)\right].
 \end{equation}
 
 \paragraph{Q-learning}
-Q-learning is \emph{off-policy}:
-its target maximizes over the successor actions,
+Q-learning can be interpreted as an \emph{off-policy} SARSA:
+its target maximizes over the successor actions, making the update rule
+independent from the actually taken action:
+
 \begin{equation}\label{eq:q-learning}
   Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\left[R_{t+1}+\gamma\max_{a}Q(S_{t+1},a)-Q(S_t,A_t)\right],
 \end{equation}
-so it estimates $q_*$ directly, regardless of the (sufficiently exploratory) behavior policy that
-generates the data.\todo{cite Watkins 1989 / Watkins \& Dayan 1992 (add via Zotero)}
-
-All methods discussed so far are tabular:
-they maintain one entry per state or state-action pair, which presumes a state space small enough
-to enumerate --- an assumption the next section drops.
 
 \subsubsection{Function approximation}\label{sec:rl-fa}
 
+The three algorithms presented above are tabular: they maintain one entry per state or state-action pair,
+requiring a state space small enough to enumerate.
 Realistic state spaces are far too large for tables.
-The coverage observations used in this thesis alone span more states than any table could
-enumerate (\cref{chap:fuzzing-mdp}), and tabular methods additionally cannot generalize:
-what was learned about one state says nothing about arbitrarily similar ones.
+Additionally, tabular methods cannot generalize to new, yet unseen states.
 Function approximation addresses both problems by replacing the table with a parameterized
-function $\hat{v}(s;\mathbf{w})$ or $\hat{q}(s,a;\mathbf{w})$ whose parameter vector $\mathbf{w}$
-is adjusted by (semi-)gradient descent on the TD error, so that an update for one state
-generalizes to similar states~\cite{sutton_reinforcement_2020}.
-Historically the approximators were linear in hand-crafted features; today they are deep neural
-networks, giving rise to the field of \emph{deep reinforcement learning}.
-The combination is powerful but fragile:
-bootstrapping, off-policy learning, and function approximation together --- the \emph{deadly
-triad} --- can make training diverge~\cite{sutton_reinforcement_2020}.
+function $\hat{v}(s;\theta)$ or $\hat{q}(s,a;\theta)$ whose parameter vector $\theta$
+can be learned, for example by (semi-)gradient descent on the TD error.
 
-The landmark model-free deep RL method is the deep Q-network (DQN), which stabilized Q-learning
-(\cref{eq:q-learning}) with two mechanisms --- an \emph{experience replay} buffer that
-decorrelates consecutive samples, and a periodically frozen \emph{target network} --- and reached
-human-level play on Atari games from raw pixels~\cite{mnih_human-level_2015}.
-Policy-gradient methods such as PPO form the other large model-free family, optimizing a
-parameterized policy directly instead of deriving it from value
-estimates~\cite{schulman_proximal_2017}.
+Historically, the approximators were linear in hand-crafted features.
+Today, they are deep neural networks, giving rise to the field of \emph{deep reinforcement learning}.
+The combination is powerful, but introduces new issues concerning stability:
+bootstrapping, off-policy learning, and function approximation together can
+make training diverge~\cite{sutton_reinforcement_2020}.
+
+The two large families of model-free deep reinforcement learning algorithms are
+the deep Q-network (DQN)~\cite{mnih_human-level_2015} and policy gradient
+methods such as proximal policy optimization
+(PPO)~\cite{schulman_proximal_2017}. DQN uses the standard Q-learning update
+rule, but represents $Q$ as a function approximator instead, allowing it to
+deal with large state and action spaces. PPO directly learns a parameterized
+policy $\pi_\theta$ by performing gradient updates on a clipped objective
+function that increases the probability of advantageous actions while limiting
+the magnitude of policy changes.
 
 \subsubsection{Model-based deep reinforcement learning and sample efficiency}\label{sec:rl-sample-efficiency}
 
-The success of model-free deep RL comes at the price of enormous data hunger:
-DQN and its successors require tens to hundreds of millions of environment interactions.
-When interactions are expensive --- a robot arm, a physical process, or, as in this thesis, a
-program executing under emulation --- the decisive metric becomes \emph{sample efficiency}:
-the performance achieved per environment interaction.
+Model-free deep RL algorithms require a large amount of data.
+For instance, DQN and its successors require on the order of tens to hundreds
+of millions of environment interactions to learn a useful $Q$ function.
+This is a major drawback if environment interactions are expensive.
+Many real-world applications therefore require high \emph{sample efficiency}.
 
-Model-based deep RL attacks this bottleneck by learning a model of the dynamics from the observed
-transitions and generating additional, cheap experience inside it~\cite{moerland_model-based_2022}.
-World models compress observations into a latent state and train the policy entirely inside the
-learned model~\cite{ha_world_2018}; the Dreamer line refines this recipe of learning latent
+Model-based deep RL algorithms allow higher sample efficiency by learning a model of the underlying dynamics
+while they interact with the environment.
+This allows them to generate additional, cheap experience~\cite{moerland_model-based_2022},
+and to train the policy inside the learned environment.
+The Dreamer line refines this recipe of learning latent
 dynamics and imagining rollouts~\cite{hafner_learning_2019,hafner_mastering_2024}.
-MuZero instead learns an implicit latent model end-to-end and uses it for planning:
-at every decision it runs an MCTS guided by the PUCT rule, reuniting the bandit-based search of
-\cref{sec:rl-exploration} with learned models~\cite{schrittwieser_mastering_2020}.
-EfficientZero augments MuZero with additional training signals and reaches near human-level Atari
-performance from only two hours of gameplay experience on the Atari~100k
-benchmark~\cite{ye_mastering_2021,kaiser_model-based_2024} --- precisely the
-limited-interaction regime an emulator-based fuzzer operates in.
-\Cref{chap:efficientzero} describes the algorithm in detail.
+The MuZero line instead learns an implicit latent model end-to-end and uses it for planning~\cite{schrittwieser_mastering_2020}.
+Both approaches achieve remarkable results with very few samples, making them
+great candidates for when sample efficiency is a high priority.
