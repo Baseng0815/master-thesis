@@ -438,6 +438,10 @@ positions alongside AFL++ through this interface~\cite{binosi_rainfuzz_2023}.
 
 \subsubsection{Test case retention}
 
+AFL++ collects coverage feedback at edge granularity.
+Hit counts are bucketed into buckets of power-of-two sizes as well as a fixed-size hashed coverage map.
+
+
 AFL's feedback combines the choices laid out in \cref{sec:fuzzing-cgf}: edge granularity,
 hit counts quantized into power-of-two buckets, and a fixed-size hashed coverage map.
 Concretely, that map is a bitmap shared between fuzzer and target holding one byte per

@@ -86,10 +86,253 @@ This state is called a \emph{belief state} $b_t(s)=\Pr\{S_t=s|H_t\}$ and suffice
 to allow the agent to act optimally~\cite{puterman_markov_2009}.
 Practically speaking, the belief-state approach is restricted in that it presupposes
 the existence of a known model $(p,o)$. Solving the resulting belief MDP is also intractable
-for all but the simplest problems.
+for all but the simplest problems~\cite{papadimitriou_complexity_1987}.
 
-This reduction is mostly of theoretical value here, since it presupposes a known model
-$(p,o)$ and an explicit state space, and solving the resulting belief MDP exactly is
-intractable for all but very small problems~\cite{papadimitriou_complexity_1987}.
+\subsection{The Exploration-Exploitation Tradeoff}\label{sec:rl-exploration}
 
-\subsection{The Exploration-Exploitation Tradeoff}
+The most important problem any RL agent encounters is that of the \emph{exploration-exploitation tradeoff}.
+At any point in time, the agent can either \emph{exploit} previously gained information
+to achieve a higher reward, or \emph{explore} yet unknown actions to gain more information
+that might come in useful in the future.
+Balancing the selection of actions that explore vs. actions that exploit is a key tradeoff in any RL algorithm.
+
+Any MDP where $\lvert\mathcal{S}\rvert=1$ and $\lvert\mathcal{A}\rvert=k$ is also known as
+a \emph{$k$-armed bandit}, where the $k$-th arm is equal to the $k$-th action $a_k\in\mathcal{A}$.
+This view is inspired by a slot machine with $k$ arms, where pulling a lever produces a reward $r_k\leftarrow R_k$
+drawn from a stationary distribution $R_k$.
+In this setting, the difficulty lies in judging which arm is best.
+Each arm has an expected value $q_*(a_k)=\mathbb{E}[R_t|A_t=a_k]$ that is unknown
+and must be estimated, for example by the sample average
+
+\begin{equation}\label{eq:bandit-sample-average}
+  Q_t(a_k)=\frac{1}{N_t(a_k)}\sum_{\substack{i<t\\A_i=a_k}}R_i,
+\end{equation}
+
+where $N_t(a)$ denotes the number of times arm $a$ has been pulled before time step $t$.
+The exploration-exploitation tradeoff in this case manifests itself through the choice
+of whether more samples should be collected to improve the estimate or whether
+the current estimate should be used to select actions to gain more reward.
+We will outline three possible strategies.
+
+\paragraph{greedy}
+
+A greedy agent always pulls the arm with the highest current estimate
+
+\[
+  a_t^*=\argmax_{a} Q_t(a)
+\]
+
+This strategy can easily fail.
+If the agent is unlucky and sees a few bad initial rewards, the sample average $Q_t$ be off and $a_t^*$ will be suboptimal.
+
+\paragraph{$\varepsilon$-greedy}
+The simplest remedy is to explore at random.
+With probability $\varepsilon$, the agent pulls an arm chosen uniformly at random, and exploits greedily otherwise.
+This guarantees that every arm keeps being sampled, but the exploration is undirected.
+Moreover, even after the estimate has converged, the agent keeps exploring.
+This is typically countered by decaying $\varepsilon$ over time~\cite{sutton_reinforcement_2020}.
+
+\paragraph{Upper confidence bounds}
+Directed exploration makes use of the \emph{upper confidence bounds} rule to estimate which arms
+could still yield a high reward given how little it has been tried.
+The rule is formulated in terms of the current estimate plus the visit count of each action
+and prioritizes high-value actions with low visit count.
+
+\begin{equation}\label{eq:ucb}
+  A_t=\argmax_a\left[Q_t(a)+c\sqrt{\frac{\ln t}{N_t(a)}}\,\right],
+\end{equation}
+
+This rule has been proven to be optimal in terms of regret minimization~\cite{auer_finite-time_nodate}.
+UCB is generalizable from bandits to full MDPs by treating every decision point
+of a search tree over the action space as its own bandit.
+This gives rise to the UCT algorithm~\cite{hutchison_bandit_2006} and an
+algorithm called Monte-Carlo Tree Search (MCTS)~\cite{hutchison_efficient_2007}.
+
+\subsection{Solving MDPs}\label{sec:rl-solving}
+
+Methods for solving MDPs can be organized along two orthogonal axes~\cite{moerland_model-based_2022}.
+The first axis concerns the representation of value estimates:
+\emph{tabular} methods store one exact entry per state or state-action pair, while
+\emph{function approximation} methods represent values by a parameterized function that
+generalizes across states.
+The second axis concerns the use of a model:
+\emph{model-based} methods exploit a model of the dynamics $p$ --- given or learned --- to plan
+ahead, while \emph{model-free} methods estimate values directly from sampled transitions.
+A caveat on terminology:
+in classical usage, model-based means the model is \emph{given}, as in the dynamic programming
+methods of \cref{sec:rl-dp}; in the modern deep RL literature, it usually means the model is
+\emph{learned} from interaction.
+This thesis uses the latter sense when calling EfficientZero model-based.
+\Cref{tab:rl-taxonomy} places representative algorithms in the resulting grid.
+The remainder of this subsection traverses it quadrant by quadrant, ending at the learned-model
+corner in which EfficientZero resides.
+
+\input{figures/rl-taxonomy}
+
+\subsubsection{Value functions and Bellman equations}\label{sec:rl-value-functions}
+
+To compare policies, the informal goal of maximizing cumulative reward must be made precise.
+The \emph{return} at time step $t$ is the discounted sum of all future rewards,
+\begin{equation}\label{eq:return}
+  G_t=R_{t+1}+\gamma R_{t+2}+\gamma^2 R_{t+3}+\dots=\sum_{k=0}^{\infty}\gamma^k R_{t+k+1},
+\end{equation}
+where the \emph{discount factor} $\gamma\in[0,1)$ keeps the sum finite and controls how
+far-sighted the agent is:
+$\gamma=0$ yields a myopic agent maximizing only the immediate reward, while $\gamma$ close to
+$1$ weighs distant rewards almost as heavily as immediate ones.
+
+A \emph{value function} measures how good a state is under a given policy.
+The state value $v_\pi(s)=\mathbb{E}_\pi[G_t|S_t=s]$ is the expected return when starting in $s$
+and following $\pi$ thereafter; the action value
+$q_\pi(s,a)=\mathbb{E}_\pi[G_t|S_t=s,A_t=a]$ additionally fixes the first action.
+Value functions satisfy a recursive consistency condition, the \emph{Bellman expectation
+equation}:
+\begin{equation}\label{eq:bellman-v}
+  v_\pi(s)=\sum_a\pi(a|s)\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma v_\pi(s^\prime)\right].
+\end{equation}
+In words, the value of a state is the expected immediate reward plus the discounted value of the
+successor state.
+
+A policy $\pi$ is optimal if $v_\pi(s)\geq v_{\pi^\prime}(s)$ holds for all states
+$s\in\mathcal{S}$ and all alternative policies $\pi^\prime$.
+All optimal policies share the same optimal value functions $v_*$ and $q_*$, which satisfy the
+\emph{Bellman optimality equations}
+\begin{equation}\label{eq:bellman-opt}
+  v_*(s)=\max_a\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma v_*(s^\prime)\right],
+  \qquad
+  q_*(s,a)=\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma\max_{a^\prime}q_*(s^\prime,a^\prime)\right].
+\end{equation}
+The maximization replaces the expectation over the policy:
+an optimal agent takes the best action rather than the average one.
+Knowing $q_*$ therefore solves the MDP, since acting greedily with respect to it --- selecting
+$\operatorname*{arg\,max}_a q_*(s,a)$ in every state --- is an optimal policy.
+For finite MDPs with $\gamma<1$, the Bellman optimality equations have a unique
+solution~\cite{puterman_markov_2009}.
+
+\subsubsection{Dynamic programming}\label{sec:rl-dp}
+
+When the model $p$ is known, the Bellman equations can be turned directly into algorithms by
+using them as update rules --- the essence of dynamic programming
+(DP)~\cite{sutton_reinforcement_2020,puterman_markov_2009}.
+\emph{Iterative policy evaluation} computes $v_\pi$ for a fixed policy $\pi$ by repeatedly
+applying the right-hand side of \cref{eq:bellman-v} to an arbitrary initial estimate; the
+iteration converges to $v_\pi$ as its unique fixed point.
+
+\paragraph{Policy iteration}
+Once $v_\pi$ is known, $\pi$ can be improved by acting greedily with respect to it, and the
+\emph{policy improvement theorem} guarantees that the greedy policy is at least as good as
+$\pi$~\cite{sutton_reinforcement_2020}.
+Policy iteration alternates evaluation and improvement.
+Since every improvement step yields a strictly better policy until the optimum is reached, and a
+finite MDP has only finitely many deterministic policies, it terminates with an optimal policy.
+
+\paragraph{Value iteration}
+Fully evaluating a policy between improvements is unnecessary.
+Value iteration folds both steps into one by applying the Bellman optimality equation
+(\cref{eq:bellman-opt}) as an update rule:
+\begin{equation}\label{eq:value-iteration}
+  v_{k+1}(s)=\max_a\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma v_k(s^\prime)\right].
+\end{equation}
+This update is a contraction with factor $\gamma$, so the sequence $v_k$ converges to $v_*$ from
+any initialization~\cite{puterman_markov_2009}.
+
+The interplay of the two processes --- driving the value estimate toward the current policy's
+true values while driving the policy toward greediness with respect to the current estimate ---
+is called \emph{generalized policy iteration} (GPI), and it is the template that nearly every RL
+method instantiates~\cite{sutton_reinforcement_2020}.
+DP itself, however, is rarely applicable in practice:
+it requires the complete model $p$ and sweeps over the entire state space in every iteration,
+echoing the intractability already encountered for belief MDPs in \cref{sec:rl-pomdp}.
+The methods of the following sections drop these requirements one by one.
+
+\subsubsection{Temporal-difference learning}\label{sec:rl-td}
+
+Temporal-difference (TD) learning removes the need for a model:
+values are estimated from sampled transitions $(S_t,A_t,R_{t+1},S_{t+1})$ obtained by interacting
+with the environment~\cite{sutton_learning_1988,sutton_reinforcement_2020}.
+Like DP, TD methods bootstrap --- they update estimates toward targets built from other
+estimates --- but the expectation over successor states is replaced by the single successor that
+was actually sampled.
+The simplest instance, TD(0), updates the estimate $V(S_t)$ by
+\begin{equation}\label{eq:td0}
+  V(S_t)\leftarrow V(S_t)+\alpha\,\delta_t,
+  \qquad
+  \delta_t=R_{t+1}+\gamma V(S_{t+1})-V(S_t),
+\end{equation}
+where $\alpha\in(0,1]$ is a step size and the \emph{TD error} $\delta_t$ measures how much the
+sampled outcome deviates from the current estimate.
+Monte Carlo methods form the bootstrap-free alternative, updating toward the full observed return
+$G_t$ at the end of each episode.
+The TD($\lambda$) family interpolates between the two extremes via \emph{eligibility traces},
+with TD(0) and Monte Carlo as the limit cases $\lambda=0$ and
+$\lambda=1$~\cite{sutton_learning_1988}.
+
+For control, state values are replaced by action values $Q(s,a)$, and GPI is instantiated with an
+exploratory behavior policy such as the $\varepsilon$-greedy rule of \cref{sec:rl-exploration}.
+
+\paragraph{SARSA}
+SARSA is \emph{on-policy}:
+it evaluates the policy it is executing, updating toward the action $A_{t+1}$ that is actually
+taken next:
+\begin{equation}\label{eq:sarsa}
+  Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\left[R_{t+1}+\gamma Q(S_{t+1},A_{t+1})-Q(S_t,A_t)\right].
+\end{equation}
+
+\paragraph{Q-learning}
+Q-learning is \emph{off-policy}:
+its target maximizes over the successor actions,
+\begin{equation}\label{eq:q-learning}
+  Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\left[R_{t+1}+\gamma\max_{a}Q(S_{t+1},a)-Q(S_t,A_t)\right],
+\end{equation}
+so it estimates $q_*$ directly, regardless of the (sufficiently exploratory) behavior policy that
+generates the data.\todo{cite Watkins 1989 / Watkins \& Dayan 1992 (add via Zotero)}
+
+All methods discussed so far are tabular:
+they maintain one entry per state or state-action pair, which presumes a state space small enough
+to enumerate --- an assumption the next section drops.
+
+\subsubsection{Function approximation}\label{sec:rl-fa}
+
+Realistic state spaces are far too large for tables.
+The coverage observations used in this thesis alone span more states than any table could
+enumerate (\cref{chap:fuzzing-mdp}), and tabular methods additionally cannot generalize:
+what was learned about one state says nothing about arbitrarily similar ones.
+Function approximation addresses both problems by replacing the table with a parameterized
+function $\hat{v}(s;\mathbf{w})$ or $\hat{q}(s,a;\mathbf{w})$ whose parameter vector $\mathbf{w}$
+is adjusted by (semi-)gradient descent on the TD error, so that an update for one state
+generalizes to similar states~\cite{sutton_reinforcement_2020}.
+Historically the approximators were linear in hand-crafted features; today they are deep neural
+networks, giving rise to the field of \emph{deep reinforcement learning}.
+The combination is powerful but fragile:
+bootstrapping, off-policy learning, and function approximation together --- the \emph{deadly
+triad} --- can make training diverge~\cite{sutton_reinforcement_2020}.
+
+The landmark model-free deep RL method is the deep Q-network (DQN), which stabilized Q-learning
+(\cref{eq:q-learning}) with two mechanisms --- an \emph{experience replay} buffer that
+decorrelates consecutive samples, and a periodically frozen \emph{target network} --- and reached
+human-level play on Atari games from raw pixels~\cite{mnih_human-level_2015}.
+Policy-gradient methods such as PPO form the other large model-free family, optimizing a
+parameterized policy directly instead of deriving it from value
+estimates~\cite{schulman_proximal_2017}.
+
+\subsubsection{Model-based deep reinforcement learning and sample efficiency}\label{sec:rl-sample-efficiency}
+
+The success of model-free deep RL comes at the price of enormous data hunger:
+DQN and its successors require tens to hundreds of millions of environment interactions.
+When interactions are expensive --- a robot arm, a physical process, or, as in this thesis, a
+program executing under emulation --- the decisive metric becomes \emph{sample efficiency}:
+the performance achieved per environment interaction.
+
+Model-based deep RL attacks this bottleneck by learning a model of the dynamics from the observed
+transitions and generating additional, cheap experience inside it~\cite{moerland_model-based_2022}.
+World models compress observations into a latent state and train the policy entirely inside the
+learned model~\cite{ha_world_2018}; the Dreamer line refines this recipe of learning latent
+dynamics and imagining rollouts~\cite{hafner_learning_2019,hafner_mastering_2024}.
+MuZero instead learns an implicit latent model end-to-end and uses it for planning:
+at every decision it runs an MCTS guided by the PUCT rule, reuniting the bandit-based search of
+\cref{sec:rl-exploration} with learned models~\cite{schrittwieser_mastering_2020}.
+EfficientZero augments MuZero with additional training signals and reaches near human-level Atari
+performance from only two hours of gameplay experience on the Atari~100k
+benchmark~\cite{ye_mastering_2021,kaiser_model-based_2024} --- precisely the
+limited-interaction regime an emulator-based fuzzer operates in.
+\Cref{chap:efficientzero} describes the algorithm in detail.

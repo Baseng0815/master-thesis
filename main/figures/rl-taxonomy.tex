@@ -1,0 +1,17 @@
+%!TEX root = ../thesis.tex
+
+\begin{table}[htb]
+  \centering
+  \caption{Taxonomy of MDP solution methods along the model axis and the
+    representation axis, with representative algorithms and the part of this
+    section discussing them.}
+  \label{tab:rl-taxonomy}
+  \begin{tabularx}{\textwidth}{@{}lXX@{}}
+    \toprule
+                           & Model-based                                             & Model-free \\
+    \midrule
+    Tabular                & Policy/value iteration (\cref{sec:rl-dp})               & SARSA, Q-learning (\cref{sec:rl-td}) \\
+    Function approximation & MuZero, EfficientZero (\cref{sec:rl-sample-efficiency}) & DQN, PPO (\cref{sec:rl-fa}) \\
+    \bottomrule
+  \end{tabularx}
+\end{table}

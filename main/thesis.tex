@@ -80,6 +80,11 @@
 \usepackage[hidelinks,pdfusetitle]{hyperref}
 \usepackage[capitalise,noabbrev]{cleveref}
 
+% Number subsubsections so \label/\cref on them bind correctly (report default
+% of 2 makes subsubsection labels silently resolve to the parent subsection).
+% tocdepth stays at 2: subsubsections are numbered but kept out of the ToC.
+\setcounter{secnumdepth}{3}
+
 % ----- Theorem environments -------------------------------------------------
 \newtheorem{theorem}{Theorem}[chapter]
 \newtheorem{lemma}[theorem]{Lemma}
@@ -87,6 +92,7 @@
 \theoremstyle{definition}
 \newtheorem{definition}[theorem]{Definition}
 \newtheorem{example}[theorem]{Example}
+\DeclareMathOperator*{\argmax}{arg\,max}
 
 % ----- Metadata ---------------------------------------------------------------
 \title{Applications of Reinforcement Learning to Stateful Emulator-Based Greybox Fuzzing}
