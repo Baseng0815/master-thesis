@@ -150,22 +150,21 @@ algorithm called Monte-Carlo Tree Search (MCTS)~\cite{hutchison_efficient_2007}.
 
 \subsection{Solving MDPs}\label{sec:rl-solving}
 
-Methods for solving MDPs can be organized along two orthogonal axes~\cite{moerland_model-based_2022}.
-The first axis concerns the representation of value estimates:
-\emph{tabular} methods store one exact entry per state or state-action pair, while
-\emph{function approximation} methods represent values by a parameterized function that
-generalizes across states.
-The second axis concerns the use of a model:
-\emph{model-based} methods exploit a model of the dynamics $p$ --- given or learned --- to plan
-ahead, while \emph{model-free} methods estimate values directly from sampled transitions.
-A caveat on terminology:
-in classical usage, model-based means the model is \emph{given}, as in the dynamic programming
-methods of \cref{sec:rl-dp}; in the modern deep RL literature, it usually means the model is
-\emph{learned} from interaction.
-This thesis uses the latter sense when calling EfficientZero model-based.
-\Cref{tab:rl-taxonomy} places representative algorithms in the resulting grid.
-The remainder of this subsection traverses it quadrant by quadrant, ending at the learned-model
-corner in which EfficientZero resides.
+Methods for solving MDPs can be classified along two axes.
+
+\paragraph{Representation of estimates}
+Classical algorithms represent estimates via tables.
+The size of the tables usually scales with action and state space size.
+This makes \emph{tabular methods} applicable only to small problems with tractable size.
+\emph{Function approximation methods} exploit regularities in the table data by fitting a parameterized model.
+Earlier work that made use of manually engineered features has been succeeded by modern, deep-learning based approaches.
+
+\paragraph{Model availability}
+Some algorithms require that a model of the transition function $p$ is available.
+Classically, the model is assumed to be specified. In more modern algorithms,
+the model is learned by the agent itself through interactions with the underlying MDP.
+\emph{Model-free methods} don't base their estimates on an underlying model, but
+derive them directly from the interactions.
 
 \input{figures/rl-taxonomy}
 
