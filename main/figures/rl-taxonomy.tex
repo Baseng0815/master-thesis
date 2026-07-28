@@ -7,10 +7,15 @@
   \label{tab:rl-taxonomy}
   \begin{tabularx}{\textwidth}{@{}lXX@{}}
     \toprule
-                           & Model-based                                             & Model-free \\
+    & Model-based & Model-free \\
     \midrule
-    Tabular                & Policy/value iteration (\cref{sec:rl-dp})               & SARSA, Q-learning (\cref{sec:rl-td}) \\
-    Function approximation & MuZero, EfficientZero (\cref{sec:rl-sample-efficiency}) & DQN, PPO (\cref{sec:rl-fa}) \\
+    Tabular
+      & Policy/value iteration\newline(\cref{sec:rl-dp})
+      & SARSA, Q-learning\newline(\cref{sec:rl-td}) \\
+    \addlinespace
+    Function approximation
+      & MuZero, EfficientZero\newline(\cref{sec:rl-sample-efficiency})
+      & DQN, PPO\newline(\cref{sec:rl-fa}) \\
     \bottomrule
   \end{tabularx}
 \end{table}

@@ -170,96 +170,96 @@ derive them directly from the interactions.
 
 \subsubsection{Value functions and Bellman equations}\label{sec:rl-value-functions}
 
-To compare policies, the informal goal of maximizing cumulative reward must be made precise.
+We will introduce some definitions and formalize what it means for a policy to be optimal.
+
 The \emph{return} at time step $t$ is the discounted sum of all future rewards,
+
 \begin{equation}\label{eq:return}
   G_t=R_{t+1}+\gamma R_{t+2}+\gamma^2 R_{t+3}+\dots=\sum_{k=0}^{\infty}\gamma^k R_{t+k+1},
 \end{equation}
-where the \emph{discount factor} $\gamma\in[0,1)$ keeps the sum finite and controls how
-far-sighted the agent is:
-$\gamma=0$ yields a myopic agent maximizing only the immediate reward, while $\gamma$ close to
-$1$ weighs distant rewards almost as heavily as immediate ones.
+
+where the \emph{discount factor} $\gamma\in[0,1)$ controls how far-sighted the agent is
+by exponentially discounting future rewards.
 
 A \emph{value function} measures how good a state is under a given policy.
-The state value $v_\pi(s)=\mathbb{E}_\pi[G_t|S_t=s]$ is the expected return when starting in $s$
-and following $\pi$ thereafter; the action value
-$q_\pi(s,a)=\mathbb{E}_\pi[G_t|S_t=s,A_t=a]$ additionally fixes the first action.
-Value functions satisfy a recursive consistency condition, the \emph{Bellman expectation
-equation}:
+It is defined as the expected return when starting in $s$ and following $\pi$:
+
+\begin{equation}\label{eq:value-function}
+  v_\pi(s)=\mathbb{E}_\pi[G_t|S_t=s]
+\end{equation}
+
+The \emph{Bellman equation} is a recursive consistency equation that formalizes the
+intuition of the value of a state being equal to its expected immediate reward plus
+the discounted value of its successor states:
+
 \begin{equation}\label{eq:bellman-v}
   v_\pi(s)=\sum_a\pi(a|s)\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma v_\pi(s^\prime)\right].
 \end{equation}
-In words, the value of a state is the expected immediate reward plus the discounted value of the
-successor state.
 
-A policy $\pi$ is optimal if $v_\pi(s)\geq v_{\pi^\prime}(s)$ holds for all states
-$s\in\mathcal{S}$ and all alternative policies $\pi^\prime$.
-All optimal policies share the same optimal value functions $v_*$ and $q_*$, which satisfy the
-\emph{Bellman optimality equations}
+An \emph{optimal policy} $\pi^*$ has the property that no non-optimal policy has
+a higher valued state: $\forall \pi,\pi\text{ non-optimal}:\forall s\in\mathcal{S}.v_{\pi^*}(s)\geq v_\pi(s)$.
+All optimal policies have the same value function, denoted as $v^*=v_{\pi^*}$.
+
+The recursive \emph{Bellman optimality equation} follows:
+
 \begin{equation}\label{eq:bellman-opt}
-  v_*(s)=\max_a\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma v_*(s^\prime)\right],
-  \qquad
-  q_*(s,a)=\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma\max_{a^\prime}q_*(s^\prime,a^\prime)\right].
+  v^*(s)=\max_a\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma v^*(s^\prime)\right],
 \end{equation}
-The maximization replaces the expectation over the policy:
-an optimal agent takes the best action rather than the average one.
-Knowing $q_*$ therefore solves the MDP, since acting greedily with respect to it --- selecting
-$\operatorname*{arg\,max}_a q_*(s,a)$ in every state --- is an optimal policy.
-For finite MDPs with $\gamma<1$, the Bellman optimality equations have a unique
-solution~\cite{puterman_markov_2009}.
+
+We can define the same equations over state-action pairs $(s,a)\in\mathcal{S}\times\mathcal{A}$ instead:
+
+\begin{align}
+  q_\pi(s,a)&=\mathbb{E}_\pi[G_t|S_t=s,A_t=a]\label{eq:q-function}\\
+  q_\pi(s,a)&=\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma\sum_{a^\prime}\pi(a^\prime|s^\prime)\,q_\pi(s^\prime,a^\prime)\right]\label{eq:bellman-q}\\
+  q^*(s,a)&=\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma\max_{a^\prime}q_*(s^\prime,a^\prime)\right]\label{eq:bellman-opt-q}
+\end{align}
+
+Given $v^*$ or $q^*$, we can solve for $\pi^*$ by either choosing the action that leads
+to the highest-valued state or directly choosing the highest-valued action.
 
 \subsubsection{Dynamic programming}\label{sec:rl-dp}
 
-When the model $p$ is known, the Bellman equations can be turned directly into algorithms by
-using them as update rules --- the essence of dynamic programming
-(DP)~\cite{sutton_reinforcement_2020,puterman_markov_2009}.
-\emph{Iterative policy evaluation} computes $v_\pi$ for a fixed policy $\pi$ by repeatedly
-applying the right-hand side of \cref{eq:bellman-v} to an arbitrary initial estimate; the
-iteration converges to $v_\pi$ as its unique fixed point.
+When the model $p$ is known, the Bellman optimality equation can be used to derive an algorithm
+that provably converges to $\pi^*$.
 
 \paragraph{Policy iteration}
-Once $v_\pi$ is known, $\pi$ can be improved by acting greedily with respect to it, and the
-\emph{policy improvement theorem} guarantees that the greedy policy is at least as good as
-$\pi$~\cite{sutton_reinforcement_2020}.
-Policy iteration alternates evaluation and improvement.
-Since every improvement step yields a strictly better policy until the optimum is reached, and a
-finite MDP has only finitely many deterministic policies, it terminates with an optimal policy.
+Let $\pi_i$ be given. By repeatedly applying the Bellman equation,
+we can compute $v_{\pi_i}$. Once $v_{\pi_i}$ is known, we improve $\pi_i$ by acting greedy
+with respect to $v_{\pi_i}$. This then yields a strictly better policy $\pi_{i+1}$.
+A fixpoint after $n$ steps is then guaranteed to be optimal: $\pi_n=\pi^*$.
 
 \paragraph{Value iteration}
-Fully evaluating a policy between improvements is unnecessary.
-Value iteration folds both steps into one by applying the Bellman optimality equation
-(\cref{eq:bellman-opt}) as an update rule:
+Instead of alternating between deriving $v_{\pi_i}$ and improving $\pi_i$, we can directly
+apply the Bellman optimality equation to get a one-step update rule~\cite{puterman_markov_2009}:
+
 \begin{equation}\label{eq:value-iteration}
   v_{k+1}(s)=\max_a\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma v_k(s^\prime)\right].
 \end{equation}
-This update is a contraction with factor $\gamma$, so the sequence $v_k$ converges to $v_*$ from
-any initialization~\cite{puterman_markov_2009}.
 
-The interplay of the two processes --- driving the value estimate toward the current policy's
-true values while driving the policy toward greediness with respect to the current estimate ---
-is called \emph{generalized policy iteration} (GPI), and it is the template that nearly every RL
-method instantiates~\cite{sutton_reinforcement_2020}.
-DP itself, however, is rarely applicable in practice:
-it requires the complete model $p$ and sweeps over the entire state space in every iteration,
-echoing the intractability already encountered for belief MDPs in \cref{sec:rl-pomdp}.
-The methods of the following sections drop these requirements one by one.
+Most RL algorithms make use of this general framework of estimating values and then
+using these estimates to improve the current policy.
+This framework is called \emph{generalized policy iteration} (GPI)~\cite{sutton_reinforcement_2020}.
+
+While Dynamic Programming guarantees convergence to an optimal policy, it requires a complete model $p$ and
+must sweep the entire state space each iteration, making it impractical for larger real-world problems.
 
 \subsubsection{Temporal-difference learning}\label{sec:rl-td}
 
-Temporal-difference (TD) learning removes the need for a model:
-values are estimated from sampled transitions $(S_t,A_t,R_{t+1},S_{t+1})$ obtained by interacting
-with the environment~\cite{sutton_learning_1988,sutton_reinforcement_2020}.
-Like DP, TD methods bootstrap --- they update estimates toward targets built from other
-estimates --- but the expectation over successor states is replaced by the single successor that
-was actually sampled.
-The simplest instance, TD(0), updates the estimate $V(S_t)$ by
+Temporal-difference (TD) learning removes the need for a model.
+Values are estimated from sampled transitions $(S_t,A_t,R_{t+1},S_{t+1})$ obtained by interacting with the environment~\cite{sutton_learning_1988,sutton_reinforcement_2020}.
+TD methods, like DP, make use of \emph{bootstrapping} --- updating estimates based on other estimates.
+They don't require full state space sweeps, but update the value function using the sampled transition data.
+A simple TD algorithm, TD(0), updates the estimate $V(S_t)$ as follows:
+
 \begin{equation}\label{eq:td0}
   V(S_t)\leftarrow V(S_t)+\alpha\,\delta_t,
   \qquad
   \delta_t=R_{t+1}+\gamma V(S_{t+1})-V(S_t),
 \end{equation}
+
 where $\alpha\in(0,1]$ is a step size and the \emph{TD error} $\delta_t$ measures how much the
 sampled outcome deviates from the current estimate.
+
 Monte Carlo methods form the bootstrap-free alternative, updating toward the full observed return
 $G_t$ at the end of each episode.
 The TD($\lambda$) family interpolates between the two extremes via \emph{eligibility traces},
