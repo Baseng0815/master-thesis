@@ -1,0 +1,126 @@
+%!TEX root = ../thesis.tex
+% One MCTS simulation for \cref{sec:ez-mcts}, traced through the three phases.
+% Worked example: |A| = 2 and gamma = 1 for legibility. The tree's Q values span
+% exactly [0,1], so the tree-wide normalization of \cref{eq:ez-qnorm} is the
+% identity here and the displayed values are both Q and \bar{Q}.
+% Layout rule, to keep the panels collision-free: the simulation path runs
+% straight down the left edge with siblings to its right; statistics of path
+% nodes are therefore always set LEFT, statistics of siblings always RIGHT.
+\begin{figure}[htbp]
+  \centering
+  \tikzset{
+    >={Stealth[round]},
+    nd/.style      = {draw, circle, fill=black!8, minimum size=6.5mm,
+                      inner sep=0pt, font=\scriptsize},
+    ndpath/.style  = {nd, fill=blue!15, very thick},
+    ndnew/.style   = {nd, fill=blue!15, very thick, draw=blue!60!black},
+    ndopen/.style  = {draw, circle, densely dashed, black!50, minimum size=6.5mm,
+                      inner sep=0pt, font=\scriptsize},
+    net/.style     = {draw, rounded corners=2pt, fill=white, font=\tiny,
+                      inner sep=1.5pt},
+    ed/.style      = {->, black!55},
+    edsel/.style   = {->, very thick, blue!60!black},
+    edup/.style    = {->, very thick, densely dashed, black!75},
+    pr/.style      = {font=\tiny, inner sep=1pt, black!55},
+    prsel/.style   = {font=\tiny, inner sep=1pt},
+    sl/.style      = {font=\tiny, inner sep=1pt, align=right},
+    sr/.style      = {font=\tiny, inner sep=1pt, align=left},
+  }
+
+  % ===== (a) Selection =====================================================
+  \begin{subfigure}[t]{0.32\textwidth}
+    \centering
+    \begin{tikzpicture}
+      % equalize the vertical extent across panels so the roots line up
+      \path (0,0.40) (0,-3.80);
+      \node[ndpath] (s0) at (0,0)        {$s^0$};
+      \node[ndpath] (s1) at (0,-1.15)    {$s^1$};
+      \node[ndopen] (nw) at (0,-2.30)    {};
+      \node[nd]     (A)  at (1.15,-1.15) {};
+      \node[nd]     (B)  at (1.15,-2.30) {};
+
+      \draw[edsel] (s0) -- node[prsel,fill=white,left=0.3mm] {p=$0.75$} (s1);
+      \draw[ed]    (s0) -- node[pr,midway,above right=-1mm] {p=$0.25$} (A);
+      \draw[edsel] (s1) -- node[prsel,fill=white,left=0.3mm] {p=$0.6$} (nw);
+      \draw[ed]    (s1) -- node[pr,midway,above right=-1mm] {p=$0.4$} (B);
+
+      \node[sl,left=0.8mm of s0] {$N{=}6$};
+      \node[sl,left=0.8mm of s1] {$\bar{Q}{=}0.5$\\$N{=}2$\\\textbf{1.27}};
+      \node[sl,left=0.8mm of nw] {\textbf{1.06}};
+      \node[sr,right=0.8mm of A]  {$\bar{Q}{=}1.0$\\$N{=}4$\\$1.15$};
+      \node[sr,right=0.8mm of B]  {$\bar{Q}{=}0.0$\\$N{=}2$\\$0.24$};
+    \end{tikzpicture}
+    \caption{Nodes are selected by pUCT (\cref{eq:ez-puct}).
+      Despite Action~1 having twice the action value of action~0,
+      action~0 is chosen because of the higher prior and lower visit count.}
+    \label{fig:ez-mcts-selection}
+  \end{subfigure}
+  \hfill
+  % ===== (b) Expansion and evaluation ======================================
+  \begin{subfigure}[t]{0.32\textwidth}
+    \centering
+    \begin{tikzpicture}
+      % equalize the vertical extent across panels so the roots line up
+      \path (0,0.40) (0,-3.80);
+      \node[ndpath] (s0) at (0,0)        {$s^0$};
+      \node[ndpath] (s1) at (0,-1.15)    {$s^1$};
+      \node[ndnew]  (s2) at (0,-2.30)    {$s^2$};
+      \node[nd]     (A)  at (1.15,-1.15) {};
+      \node[nd]     (B)  at (1.15,-2.30) {};
+      \node[ndopen] (c0) at (-0.5,-3.40) {};
+      \node[ndopen] (c1) at ( 0.5,-3.40) {};
+
+      \draw[edsel] (s0) -- (s1);
+      \draw[ed]    (s0) -- (A);
+      \draw[ed]    (s1) -- (B);
+      \draw[edsel] (s1) -- node[net,midway] {$G$} (s2);
+      \draw[ed]    (s2) -- node[pr,midway,left=-0.5mm] {$0.35$} (c0);
+      \draw[ed]    (s2) -- node[pr,midway,right=-0.5mm] {$0.65$} (c1);
+
+      \node[net] (V) at (-1.0,-2.30) {$V$};
+      \draw[ed] (s2) -- (V);
+      \node[sl,left=0.8mm of V] {$v^2$\\$=0.6$};
+    \end{tikzpicture}
+    \caption{The selected node is expanded. The latent state is rolled out once
+    via $G$ and value statistics are initialized.} \todo{how are value statistics initialized?}
+    \label{fig:ez-mcts-expansion}
+  \end{subfigure}
+  \hfill
+  % ===== (c) Backup ========================================================
+  \begin{subfigure}[t]{0.32\textwidth}
+    \centering
+    \begin{tikzpicture}
+      % equalize the vertical extent across panels so the roots line up
+      \path (0,0.40) (0,-3.80);
+      \node[ndpath] (s0) at (0,0)        {$s^0$};
+      \node[ndpath] (s1) at (0,-1.15)    {$s^1$};
+      \node[ndnew]  (s2) at (0,-2.30)    {$s^2$};
+      \node[nd]     (A)  at (1.15,-1.15) {};
+      \node[nd]     (B)  at (1.15,-2.30) {};
+
+      \draw[ed] (s0) -- (A);
+      \draw[ed] (s1) -- (B);
+      \draw[edup] (s1) -- node[prsel,fill=white,right=0.3mm] {$r{=}0.2$} (s0);
+      \draw[edup] (s2) -- node[prsel,fill=white,right=0.3mm] {$r{=}0.4$} (s1);
+
+      \node[sl,left=0.8mm of s0] {$G^0{=}1.2$\\$N{:}\,6{\to}7$\\$Q_\Sigma{:}\,3.6{\to}4.8$};
+      \node[sl,left=0.8mm of s1] {$G^1{=}1.0$\\$N{:}\,2{\to}3$\\$Q_\Sigma{:}\,0.6{\to}1.6$};
+      \node[sl,left=0.8mm of s2] {$G^2{=}v^2{=}0.6$\\$N{:}\,0{\to}1$\\$Q_\Sigma{:}\,0{\to}0.6$};
+    \end{tikzpicture}
+    \caption{The leaf estimate is backed up through the path. Each node accumulates
+      its return and the visit count is incremented.}
+    \label{fig:ez-mcts-backup}
+  \end{subfigure}
+
+  \caption[One MCTS simulation]{One simulation of EfficientZero's Monte-Carlo
+    tree search, traced through its three phases on a worked example with
+    $\lvert\mathcal{A}\rvert=2$ and $\gamma=1$.
+    Thick nodes and edges mark the simulation path; dashed circles are actions
+    that carry a prior but have no node yet.
+    Only $s^0$ corresponds to a real observation --- $s^1$ and $s^2$ are latents
+    imagined by $G$, so the environment is never stepped during the search.
+    The values are chosen so that the tree's action values span $[0,1]$ and the
+    normalization of \cref{eq:ez-qnorm} is the identity, which lets the pUCT
+    scores be checked by hand.}
+  \label{fig:ez-mcts-simulation}
+\end{figure}

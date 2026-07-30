@@ -1,0 +1,84 @@
+%!TEX root = ../thesis.tex
+% Architecture overview for \cref{sec:ez-architecture}: the five networks of
+% EfficientZero and the flow between them, unrolled two imagined steps.
+% Superscripts count imagined steps, as in the surrounding prose; subscripts are
+% reserved for real time steps ($o_t$), following MuZero's convention.
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[
+      >={Stealth[round]}, font=\small,
+      net/.style    = {draw, rounded corners=2pt, fill=blue!8,
+                       minimum height=7.5mm, minimum width=9mm},
+      latent/.style = {draw, circle, fill=black!8, minimum size=9.5mm,
+                       inner sep=0pt},
+      sig/.style    = {inner sep=1.5pt},
+      flow/.style   = {->, thick, black!70},
+      carry/.style  = {->, thick, black!70, densely dashed},
+    ]
+    % --- representation network and the latent unroll ------------------------
+    \node[sig]    (o)  at (-0.3,0) {$o_1,\dots,o_t$};
+    \node[net]    (R)  at ( 1.6,0) {$R$};
+    \node[latent] (s0) at ( 3.4,0) {$s^0$};
+    \node[net]    (G1) at ( 5.2,0) {$G$};
+    \node[latent] (s1) at ( 7.0,0) {$s^1$};
+    \node[net]    (G2) at ( 8.8,0) {$G$};
+    \node[latent] (s2) at (10.6,0) {$s^2$};
+    \node[sig]    (sK) at (12.1,0) {$\cdots$};
+
+    \draw[flow] (o)  -- (R);   \draw[flow] (R)  -- (s0);
+    \draw[flow] (s0) -- (G1);  \draw[flow] (G1) -- (s1);
+    \draw[flow] (s1) -- (G2);  \draw[flow] (G2) -- (s2);
+    \draw[flow] (s2) -- (sK);
+
+    % --- actions entering the dynamics network -------------------------------
+    \node[sig] (a1) at (5.2,-1.3) {$a^1$};
+    \node[sig] (a2) at (8.8,-1.3) {$a^2$};
+    \draw[flow] (a1) -- (G1);
+    \draw[flow] (a2) -- (G2);
+
+    % --- policy and value heads, evaluated at every latent state -------------
+    \node[net] (P0) at ( 2.6,1.5) {$P$};  \node[net] (V0) at ( 4.2,1.5) {$V$};
+    \node[net] (P1) at ( 6.2,1.5) {$P$};  \node[net] (V1) at ( 7.8,1.5) {$V$};
+    \node[net] (P2) at ( 9.8,1.5) {$P$};  \node[net] (V2) at (11.4,1.5) {$V$};
+
+    \draw[flow] (s0) -- (P0);  \draw[flow] (s0) -- (V0);
+    \draw[flow] (s1) -- (P1);  \draw[flow] (s1) -- (V1);
+    \draw[flow] (s2) -- (P2);  \draw[flow] (s2) -- (V2);
+
+    \draw[flow] (P0) -- ++(0,0.7) node[sig,above] {$p^0$};
+    \draw[flow] (V0) -- ++(0,0.7) node[sig,above] {$v^0$};
+    \draw[flow] (P1) -- ++(0,0.7) node[sig,above] {$p^1$};
+    \draw[flow] (V1) -- ++(0,0.7) node[sig,above] {$v^1$};
+    \draw[flow] (P2) -- ++(0,0.7) node[sig,above] {$p^2$};
+    \draw[flow] (V2) -- ++(0,0.7) node[sig,above] {$v^2$};
+
+    % --- recurrent value-prefix network over the imagined latents -----------
+    \node[net] (VP1) at ( 7.0,-2.5) {$VP$};
+    \node[net] (VP2) at (10.6,-2.5) {$VP$};
+
+    \draw[flow] (s1) -- (VP1);
+    \draw[flow] (s2) -- (VP2);
+    \draw[carry] (VP1) -- node[above,inner sep=3pt,font=\scriptsize] {LSTM state} (VP2);
+    \draw[carry] (VP2) -- ++(1.1,0) node[sig,right] {$\cdots$};
+
+    \draw[flow] (VP1) -- ++(0,-0.7) node[sig,below] {$\hat{x}^1$};
+    \draw[flow] (VP2) -- ++(0,-0.7) node[sig,below] {$\hat{x}^2$};
+  \end{tikzpicture}
+  \caption[The EfficientZero architecture]{%
+    The five networks of EfficientZero, unrolled for two imagined steps.
+    The representation network $R$ encodes the observation history into the root
+    latent state $s^0$ --- the only state in the diagram that corresponds to a
+    real observation.
+    The dynamics network $G$ advances a latent state by one action,
+    $s^k = G(s^{k-1},a^k)$, so the unroll can be continued to any depth without
+    touching the environment.
+    Every latent state is scored by the policy head $P$ and the value head $V$.
+    The value-prefix network $VP$ is recurrent: instead of a per-step reward it
+    consumes the imagined latent states in sequence, carrying an LSTM state
+    along the unroll, and predicts the reward accumulated since the root
+    (\cref{sec:ez-value-prefix}).
+    All five networks share the parameter vector $\theta$ and are trained
+    jointly (\cref{sec:ez-loss}).
+  }
+  \label{fig:ez-architecture}
+\end{figure}
