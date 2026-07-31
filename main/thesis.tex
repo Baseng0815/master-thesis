@@ -1,37 +1,89 @@
 % ============================================================================
 % thesis.tex -- main document
+%
+% Built on the SDQ/KASTEL student thesis template (sdqthesis.cls v1.6, KIT).
+% Layout parameters -- font size, margins, line spacing, caption style -- come
+% from the class and must not be changed here; see the template README at
+% https://sdq.kastel.kit.edu/wiki/Dokumentvorlagen
+%
 % Build: latexmk -pdf thesis.tex   (bibliography is processed with biber)
 % ============================================================================
-\documentclass[11pt,a4paper]{report}
-% For print/submission consider: \documentclass[11pt,a4paper,twoside,openright]{report}
 
-% ----- Encoding & fonts -----------------------------------------------------
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
-\usepackage{lmodern}
-\usepackage{microtype}
+%% The class's ``draft'' option below reaches hyperref as a global option, and
+%% hyperref in draft mode turns every link into plain text. Keep the links: the
+%% option list here is appended after the global options, so ``final'' wins.
+\PassOptionsToPackage{final}{hyperref}
 
-% ----- Language -------------------------------------------------------------
-\usepackage[english]{babel}
-\usepackage{csquotes}
+%% Available page modes: oneside, twoside
+%% Available languages: english, ngerman
+%% Available modes: draft, final
+%%   draft -- shows \todo notes and overfull-box markers; use while writing
+%%   final -- hides them; switch before submission
+\documentclass[twoside, english, draft]{sdqthesis}
 
-% ----- Page layout ----------------------------------------------------------
-\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=3cm,right=2.5cm,marginparwidth=2cm]{geometry}
-\usepackage{setspace}
-\onehalfspacing
+%% ---------------------------------
+%% | Information about the thesis  |
+%% ---------------------------------
+
+\author{Bastian Engel}
+
+\title{Applications of Reinforcement Learning to Stateful Emulator-Based
+Greybox Fuzzing}
+
+\thesistype{Master's Thesis}
+
+%% Change the institute here, ``KASTEL'' is default
+% \myinstitute{Institute for \dots}
+
+%% A logo can be placed in the ``logos'' directory and included here instead of
+%% the SDQ logo
+% \grouplogo{myfile}
+%% Alternatively, the group logo can be disabled
+% \nogrouplogo
+
+%% The reviewers are the professors that grade the thesis
+\reviewerone{TODO: Prof. A}
+\reviewertwo{TODO: Prof. B}
+
+%% The advisors are PhDs or Postdocs
+\advisorone{TODO: M.Sc. C}
+%% The second advisor can be omitted
+\advisortwo{TODO: M.Sc. D}
+
+%% Start and end date of the thesis
+\editingtime{TODO: xx. Month 20XX}{TODO: xx. Month 20XX}
+
+%% Place of residence of the author; used on the declaration page
+\location{TODO: City}
+
+\settitle
+
+%% --------------------------------
+%% | Packages                     |
+%% --------------------------------
+%% The class already provides booktabs, longtable, array, graphicx, enumitem,
+%% microtype, babel, csquotes, url, hyperref, appendix, import and wallpaper.
+%% Only what the content needs on top of that is loaded here.
 
 % ----- Mathematics ----------------------------------------------------------
+% amssymb is deliberately not loaded: the class pulls in newtxmath, which
+% already provides \mathbb and \mathcal and clashes with amssymb.
 \usepackage{amsmath}
-\usepackage{amssymb}
+% newtxmath (loaded by the class, hence before amsthm) already defines \openbox;
+% let amsthm redefine it instead of erroring out.
+\let\openbox\relax
 \usepackage{amsthm}
 \usepackage{mathtools}
 
 % ----- Figures --------------------------------------------------------------
-\usepackage{graphicx}
 \graphicspath{{figures/}}
 \usepackage{xcolor}
-\usepackage{caption}
 \usepackage{subcaption}
+% subcaption loads caption, which disables the class's KOMA caption fonts.
+% Restore them so captions keep the template's appearance (sdqthesis.cls sets
+% \setkomafont{caption}{\small}, \setkomafont{captionlabel}{\sffamily\bfseries\small}
+% and \setcapindent{0em}).
+\captionsetup{format=plain, font=small, labelfont={sf,bf,small}}
 \usepackage{float}
 
 % ----- Diagrams -------------------------------------------------------------
@@ -40,8 +92,6 @@
 \tikzset{terminal/.style={double,double distance=1.2pt}}
 
 % ----- Tables ---------------------------------------------------------------
-\usepackage{booktabs}
-\usepackage{array}
 \usepackage{tabularx}
 \usepackage{multirow}
 
@@ -69,21 +119,23 @@
 \usepackage{algpseudocode}
 
 % ----- Draft aids -----------------------------------------------------------
-\usepackage[colorinlistoftodos]{todonotes}   % \todo{...}, \listoftodos
+% Follows the class's draft/final mode: notes are shown in draft, hidden in final.
+% The margin the class leaves is a little under todonotes' 2cm minimum. Widening
+% \marginparwidth changes nothing in the printed thesis --- \marginpar is only
+% ever used by todonotes, which is disabled in final mode.
+\setlength{\marginparwidth}{2cm}
+\ifdraft
+  {\usepackage[colorinlistoftodos]{todonotes}}
+  {\usepackage[disable]{todonotes}}
 
 % ----- Bibliography ---------------------------------------------------------
-\usepackage[backend=biber,style=numeric,sorting=nyt]{biblatex}
+%% Use biber instead of BibTeX, see the template README
+\usepackage[citestyle=numeric,style=numeric,sorting=nyt,backend=biber]{biblatex}
 \addbibresource{references/fuzzing.bib}
 \addbibresource{references/reinforcement-learning.bib}
 
-% ----- Hyperlinks & cross-references (load last) ----------------------------
-\usepackage[hidelinks,pdfusetitle]{hyperref}
+% ----- Cross-references (loaded after hyperref, which the class provides) ----
 \usepackage[capitalise,noabbrev]{cleveref}
-
-% Number subsubsections so \label/\cref on them bind correctly (report default
-% of 2 makes subsubsection labels silently resolve to the parent subsection).
-% tocdepth stays at 2: subsubsections are numbered but kept out of the ToC.
-\setcounter{secnumdepth}{3}
 
 % ----- Theorem environments -------------------------------------------------
 \newtheorem{theorem}{Theorem}[chapter]
@@ -94,120 +146,135 @@
 \newtheorem{example}[theorem]{Example}
 \DeclareMathOperator*{\argmax}{arg\,max}
 
-% ----- Metadata ---------------------------------------------------------------
-\title{Applications of Reinforcement Learning to Stateful Emulator-Based Greybox Fuzzing}
-\author{Bastian Engel}
-\date{\today}
-
-% ============================================================================
+%% ====================================
+%% ||                                ||
+%% || Beginning of the main document ||
+%% ||                                ||
+%% ====================================
 \begin{document}
 
-% ----- Front matter ---------------------------------------------------------
-\hypersetup{pageanchor=false}  % title page has no page number; avoids duplicate anchors
-\begin{titlepage}
-  \centering
-  \vspace*{2cm}
-  {\LARGE Master's Thesis\par}
-  \vspace{1.5cm}
-  {\Huge\bfseries Applications of Reinforcement Learning to Stateful Emulator-Based Greybox Fuzzing\par} % TODO: final title
-  \vspace{2cm}
-  {\Large Bastian Engel\par}
-  \vfill
-  % TODO: university, faculty, supervisors, submission date
-  {\large \today\par}
-\end{titlepage}
-\hypersetup{pageanchor=true}
+%% Set PDF metadata
+\setpdf
+
+%% Set the title
+\maketitle
+
+%% The preamble begins here
+\frontmatter
+
+\input{sections/declaration.tex}
+
+\setcounter{page}{1}
 \pagenumbering{roman}
 
-\input{chapters/abstract}
+%% ----------------
+%% |   Abstract   |
+%% ----------------
+%% For theses written in English, an abstract in both English and German is
+%% mandatory. \includeabstract pulls in sections/abstract_en.tex and
+%% sections/abstract_de.tex.
 
+\includeabstract
+
+%% ------------------------
+%% |   Table of Contents  |
+%% ------------------------
 \tableofcontents
-% \listoffigures
-% \listoftables
+
+\listoffigures
+\listoftables
 % \lstlistoflistings
 % \listoftodos
 
-\cleardoublepage
-\pagenumbering{arabic}
+%% -----------------
+%% |   Main part   |
+%% -----------------
 
-% ----- Main matter ----------------------------------------------------------
-% Document order is defined here and only here. The three groups below correspond to
-% background / approach / evaluation; uncomment the \part lines to make that split
-% explicit in the printed document.
+\mainmatter
+
+% Document order is defined here and only here. The three groups below correspond
+% to background / approach / evaluation; uncomment the \part lines to make that
+% split explicit in the printed document.
 
 % \part{Background}
-\input{chapters/introduction}
+\input{sections/introduction}
 
 \chapter{Background}\label{chap:background}
-\input{chapters/background/fuzzing}
-\input{chapters/background/reinforcement-learning}
+\input{sections/background/fuzzing}
+\input{sections/background/reinforcement-learning}
 
-\input{chapters/efficientzero}
+\input{sections/efficientzero}
 
 \chapter{Related Work}\label{chap:related-work}
-\input{chapters/related-work}
+\input{sections/related-work}
 
 % \part{Approach}
-\input{chapters/platform}
-\input{chapters/fuzzing-mdp}
+\input{sections/platform}
+\input{sections/fuzzing-mdp}
 
 \chapter{Input-Level Action Spaces}\label{chap:input-actions}
 % Keep the section order identical to \cref{chap:corpus-actions} --- the two chapters
 % are meant to be read as a diff.
-\input{chapters/fuzzing-input-actions/overview}
-\input{chapters/fuzzing-input-actions/action-space}
-\input{chapters/fuzzing-input-actions/observation}
-\input{chapters/fuzzing-input-actions/reward}
-\input{chapters/fuzzing-input-actions/determinism}
-\input{chapters/fuzzing-input-actions/prior-work}
+\input{sections/fuzzing-input-actions/overview}
+\input{sections/fuzzing-input-actions/action-space}
+\input{sections/fuzzing-input-actions/observation}
+\input{sections/fuzzing-input-actions/reward}
+\input{sections/fuzzing-input-actions/determinism}
+\input{sections/fuzzing-input-actions/prior-work}
 
 \chapter{Corpus-Level Action Spaces}\label{chap:corpus-actions}
-\input{chapters/fuzzing-corpus-actions/overview}
-\input{chapters/fuzzing-corpus-actions/action-space}
-\input{chapters/fuzzing-corpus-actions/observation}
-\input{chapters/fuzzing-corpus-actions/reward}
-\input{chapters/fuzzing-corpus-actions/determinism}
-\input{chapters/fuzzing-corpus-actions/prior-work}
+\input{sections/fuzzing-corpus-actions/overview}
+\input{sections/fuzzing-corpus-actions/action-space}
+\input{sections/fuzzing-corpus-actions/observation}
+\input{sections/fuzzing-corpus-actions/reward}
+\input{sections/fuzzing-corpus-actions/determinism}
+\input{sections/fuzzing-corpus-actions/prior-work}
 
-\input{chapters/implementation}
+\input{sections/implementation}
 
 % \part{Evaluation}
 \chapter{Targets}\label{chap:targets}
-\input{chapters/targets/overview}
+\input{sections/targets/overview}
 
 \section{Diagnostic Microbenchmarks}\label{sec:targets-microbenchmarks}
-\input{chapters/targets/bandit}
-\input{chapters/targets/contextual-bandit}
-\input{chapters/targets/sequence}
-\input{chapters/targets/branches}
+\input{sections/targets/bandit}
+\input{sections/targets/contextual-bandit}
+\input{sections/targets/sequence}
+\input{sections/targets/branches}
 
 \section{Realistic Targets}\label{sec:targets-realistic}
-\input{chapters/targets/cjson}
-\input{chapters/targets/open62541}
+\input{sections/targets/cjson}
+\input{sections/targets/open62541}
 
-\input{chapters/methodology}
+\input{sections/methodology}
 
 \chapter{Results}\label{chap:results}
-\input{chapters/results/input-actions}
-\input{chapters/results/corpus-actions}
-\input{chapters/results/head-to-head}
-\input{chapters/results/ablations}
+\input{sections/results/input-actions}
+\input{sections/results/corpus-actions}
+\input{sections/results/head-to-head}
+\input{sections/results/ablations}
 
-\input{chapters/failure-modes}
+\input{sections/failure-modes}
 
 \chapter{Discussion}\label{chap:discussion}
-\input{chapters/discussion/advantages}
-\input{chapters/discussion/disadvantages}
-\input{chapters/discussion/threats}
+\input{sections/discussion/advantages}
+\input{sections/discussion/disadvantages}
+\input{sections/discussion/threats}
 
-\input{chapters/conclusion}
-\input{chapters/future-work}
+\input{sections/conclusion}
+\input{sections/future-work}
 
-% ----- Back matter ----------------------------------------------------------
-% \nocite{*}  % uncomment to list all references.bib entries while drafting
+%% --------------------
+%% |   Bibliography   |
+%% --------------------
+
+% \nocite{*}  % uncomment to list every bib entry while drafting
 \printbibliography[heading=bibintoc]
 
+%% ----------------
+%% |   Appendix   |
+%% ----------------
 \appendix
-\input{chapters/appendix}
+\input{sections/appendix}
 
 \end{document}

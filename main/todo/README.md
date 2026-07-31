@@ -50,7 +50,7 @@ chapter is built on — pre-registered pool, paired comparisons, per-seed report
 **2. `open62541` carries the thesis title and belongs in P0.** `high_and_low` and
 `sequence` are both *diagnostic microbenchmarks* with hand-shaped rewards; a thesis
 evaluated only on them meets the strongest objection in
-`chapters/discussion/threats.tex` with nothing. `open62541` is the target that answers
+`sections/discussion/threats.tex` with nothing. `open62541` is the target that answers
 it: a real OPC UA stack under emulation, 15 protocol-message actions, and a 4-step
 connect path (`hel → opn → create_sess → activate_sess`) that is exactly the stateful
 navigation the title claims. It is already instrumented with the full probe set — and
@@ -77,7 +77,7 @@ predicts runs plateauing at 12. `O-REW*` in the matrix tests it directly.
 **3. No corpus-level results means Chapter 8 is design-only.**
 
 The restructured thesis
-has `chapters/fuzzing-corpus-actions/` as a full chapter and
+has `sections/fuzzing-corpus-actions/` as a full chapter and
 `sec:results-head-to-head` as the controlled comparison. If the corpus branch stays
 out of scope, that chapter becomes a design contribution with no evaluation, and
 `sec:results-head-to-head` must be cut. That is a legitimate choice — but decide it

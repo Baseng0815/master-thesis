@@ -21,7 +21,7 @@
 # hyperref backref
 *.brf
 
-# \listoffigures / \listoftables (both currently commented out in thesis.tex)
+# \listoffigures / \listoftables
 *.lof
 *.lot
 

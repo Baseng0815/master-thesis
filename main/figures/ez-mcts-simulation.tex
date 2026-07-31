@@ -81,8 +81,11 @@
       \draw[ed] (s2) -- (V);
       \node[sl,left=0.8mm of V] {$v^2$\\$=0.6$};
     \end{tikzpicture}
+    % The \todo that used to sit here moved next to \input{figures/ez-mcts-simulation}
+    % in sections/efficientzero.tex: \todo uses \marginpar, and a \marginpar inside
+    % a subfigure (a minipage) makes LaTeX abort with ``Float(s) lost''.
     \caption{The selected node is expanded. The latent state is rolled out once
-    via $G$ and value statistics are initialized.} \todo{how are value statistics initialized?}
+    via $G$ and value statistics are initialized.}
     \label{fig:ez-mcts-expansion}
   \end{subfigure}
   \hfill

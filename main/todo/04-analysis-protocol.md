@@ -1,7 +1,7 @@
 # Analysis protocol
 
 Decided before the data arrives, so that analysis choices cannot be fitted to results.
-This file is also the source for `chapters/methodology.tex` — write that chapter from
+This file is also the source for `sections/methodology.tex` — write that chapter from
 here on D5, before the results tempt you.
 
 ## 1. The outcome is bimodal, and that changes everything

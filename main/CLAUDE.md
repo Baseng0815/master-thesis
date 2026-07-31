@@ -17,41 +17,75 @@ sample-efficient model-based reinforcement-learning algorithm. Fuzzing is framed
 the target program under emulation is the environment, mutations/protocol actions are the action
 space, and coverage feedback (basic-block hit counts) is the reward and observation signal.
 
-**Current state:** every chapter under `chapters/` is a skeleton — a heading plus a `% TODO` comment
+**Current state:** every chapter under `sections/` is a skeleton — a heading plus a `% TODO` comment
 describing what belongs there. The primary task in this repo is writing that content, grounded in the
 companion code and the source papers. The document structure, packages, and bibliography are already
 set up.
+
+## The document class
+
+The thesis uses **`sdqthesis.cls` v1.6**, the SDQ/KASTEL student-thesis template of the KIT
+(<https://sdq.kastel.kit.edu/wiki/Dokumentvorlagen>); the upstream copy lives in
+`~/abschlussarbeiten`. The class and its assets are vendored next to `thesis.tex`:
+
+- `sdqthesis.cls` — the class. **Do not modify it**, and do not override the layout parameters it
+  sets (font size, margins, line spacing, caption fonts, `\typearea`). A uniform layout across
+  theses is the point of the template.
+- `logos/` — KIT and SDQ logos for the title page.
+- `title-background.pdf` — the KIT frame drawn behind the title page.
+
+The class is based on **`scrbook`** (KOMA-Script), so KOMA idioms apply: `\frontmatter`/`\mainmatter`,
+`parskip=half` (paragraphs are separated by vertical space, not indented), `\setkomafont`.
+
+Class-specific commands used in `thesis.tex`: `\thesistype`, `\reviewerone`/`\reviewertwo`,
+`\advisorone`/`\advisortwo`, `\editingtime`, `\location`, `\settitle`, `\setpdf`, and
+`\includeabstract`. **`\includeabstract` hard-codes the paths `sections/abstract_en.tex` and
+`sections/abstract_de.tex`** — that is why the content directory is called `sections/` and why the
+abstract is split in two files. A German abstract is mandatory for a thesis written in English.
+
+`draft` vs `final` is a `\documentclass` option (currently `draft`): `draft` shows `\todo` notes and
+overfull-box markers, `final` hides them. Switch to `final` before submission. `thesis.tex` passes
+`final` to hyperref explicitly so that draft builds keep working PDF links.
 
 ## Building
 
 The toolchain is provided via Nix (`latexmk`, `pdflatex`, `biber` are on the path).
 
 ```sh
-latexmk -pdf thesis.tex     # full build; runs pdflatex + biber as needed
-latexmk -pvc thesis.tex     # continuous preview: rebuild on save
-latexmk -C                  # clean all generated files (aux, bbl, pdf, ...)
+make                        # build thesis.pdf once
+make continuous             # rebuild on every save
+make clear                  # remove every generated file, thesis.pdf included
 ```
+
+`make` just wraps `latexmk -pdf thesis.tex`; `latexmk -pdf thesis.tex` works the same way.
 
 The bibliography backend is **biber** (not bibtex) — biblatex is configured with
 `backend=biber`. `latexmk` invokes it automatically; a manual sequence would be
-`pdflatex → biber → pdflatex → pdflatex`. There is no `latexmkrc` or `Makefile`.
+`pdflatex → biber → pdflatex → pdflatex`. There is no `latexmkrc`.
 
 ## Document structure
 
-`thesis.tex` is the master document: it holds the preamble (packages, theorem environments,
-metadata) and `\input`s each chapter. Content lives in `chapters/`, one file per section or chapter,
-mirroring the outline:
+`thesis.tex` is the master document: it holds the thesis metadata, the preamble (the packages the
+class does not already load, theorem environments) and `\input`s each chapter. Content lives in
+`sections/`, one file per section or chapter, mirroring the outline:
 
-- **Introduction** — `chapters/introduction/{fuzzing,reinforcement-learning,reinforcement-fuzzing}.tex`
-- **EfficientZero** — `chapters/efficientzero.tex` (the algorithm)
-- **Fuzzing with EfficientZero** — `chapters/efficientzero-fuzzing.tex` (how the algorithm is applied: state/action/reward design)
-- **Targets** — `chapters/targets/{bandit,contextual-bandit,sequence,open62541}.tex` (evaluation targets, from toy to real-world)
-- **MOGI Setup** — `chapters/mogi-setup.tex` (the emulator/experiment harness)
-- **Analysis** — `chapters/analysis/{challenge,evaluation,advantages,disadvantages}.tex`
-- **Conclusion / Future Work** — `chapters/{conclusion,future-work}.tex`
+- **Front matter** — `sections/{declaration,abstract_en,abstract_de}.tex`
+- **Introduction** — `sections/introduction.tex`
+- **Background** — `sections/background/{fuzzing,reinforcement-learning}.tex`
+- **EfficientZero** — `sections/efficientzero.tex` (the algorithm)
+- **Related Work** — `sections/related-work.tex`
+- **Platform / MDP formulation** — `sections/{platform,fuzzing-mdp}.tex`
+- **Action spaces** — `sections/fuzzing-input-actions/` and `sections/fuzzing-corpus-actions/`
+  (the two chapters share a section order and are meant to be read as a diff)
+- **Implementation** — `sections/implementation.tex`
+- **Targets** — `sections/targets/*.tex` (evaluation targets, from microbenchmark to real-world)
+- **Methodology / Results** — `sections/methodology.tex`, `sections/results/*.tex`
+- **Failure modes / Discussion** — `sections/failure-modes.tex`, `sections/discussion/*.tex`
+- **Conclusion / Future Work / Appendix** —
+  `sections/{conclusion,future-work,appendix}.tex`
 
 To reorder, add, or remove a chapter, edit the `\input` lines in `thesis.tex` — it is the single
-source of truth for document order. `chapters/abstract.tex` is `\input` before the table of contents.
+source of truth for document order.
 
 Conventions to match when editing chapter files:
 
@@ -62,20 +96,27 @@ Conventions to match when editing chapter files:
 - Cross-reference with **cleveref** (`\cref{...}`, `\Cref{...}`) — it is loaded `capitalise,noabbrev`,
   so write `\cref{chap:efficientzero}`, not a hand-typed "Chapter 2".
 - Cite with biblatex numeric style: `\cite{ye_mastering_2021}`. Bib entries live in
-  `references/fuzzing.bib`, `references/reinforcement-learning.bib`, and `references/misc.bib`
+  `references/fuzzing.bib` and `references/reinforcement-learning.bib`
   (biber format, exported from Zotero — do not hand-edit; Bastian adds entries via Zotero).
   During drafting, `\nocite{*}` in `thesis.tex` can list every bib entry.
-- Figures go in `figures/` (currently empty); `\graphicspath{{figures/}}` is set, so reference images
-  by bare filename.
+- Figures go in `figures/`, one TikZ picture per file, `\input` from the chapter that discusses it;
+  `\graphicspath{{figures/}}` is set, so reference images by bare filename.
+- `\todo{...}` uses `\marginpar`, so it must not appear inside a float, `minipage` or `subfigure` —
+  LaTeX aborts with "Float(s) lost". Put the note in the surrounding text instead.
 
 Available preamble machinery (already loaded — use rather than re-adding packages): `amsmath`/
 `mathtools` and theorem environments (`theorem`, `lemma`, `corollary`, `definition`, `example`);
 `algorithm`/`algpseudocode` for pseudocode; `listings` (`lstlisting`, styled) for source; `siunitx`
-for numbers/units; `booktabs`/`tabularx` for tables; `subcaption` for subfigures. Draft aids:
-`todonotes` provides `\todo{...}` and `\listoftodos` (the list is commented out in `thesis.tex`).
+for numbers/units; `booktabs`/`tabularx` for tables; `subcaption` for subfigures; `tikz` for
+diagrams. The class itself adds `booktabs`, `longtable`, `array`, `enumitem`, `graphicx`, `url`,
+`hyperref` and `csquotes`, plus `\code{...}` and `\model{...}` text macros. Draft aids: `todonotes`
+provides `\todo{...}` and `\listoftodos` (the list is commented out in `thesis.tex`).
 
-Outstanding preamble TODOs: final title (appears twice — metadata and titlepage), and titlepage
-university/faculty/supervisors/submission date.
+`amssymb` is deliberately *not* loaded: the class pulls in `newtxmath`, which provides `\mathbb` and
+`\mathcal` already and clashes with `amssymb`.
+
+Outstanding TODOs in `thesis.tex`: examiners, advisors, editing period and location — all marked
+`TODO:` so they show up on the title and declaration pages until filled in.
 
 ## Companion repositories
 
