@@ -1,0 +1,70 @@
+%!TEX root = ../thesis.tex
+% Worker architecture for \cref{sec:ez-loop}: the four worker types, the replay
+% buffer they share, and the parameter feedback that closes the loop.
+% Layout rule: the five stages form a rectangular cycle, traversed clockwise
+% --- right along the top row, down the right edge, left along the bottom row,
+% and up the left edge, where the parameters close it. The environment hangs
+% off the cycle above the data workers, since it is not part of the algorithm.
+% Every edge is horizontal or vertical: keep it that way. An earlier draft put
+% the GPU workers under the environment instead of under the data workers,
+% which forced the parameter arrow into a diagonal that crossed the $a_t$ edge.
+% Spacing constraint: an edge label sits in the gap between two boxes, so it
+% must be NARROWER than that gap or it slides under them. Columns are 5.2cm
+% apart and boxes are 3cm wide, leaving a 2.2cm (62.6pt) gap; at \scriptsize
+% "prioritized positions" alone is 74pt, which is why such labels are stacked
+% over two lines. Widen the columns before un-stacking them. "refreshed
+% targets" (61.7pt) is single-line because it spans the whole bottom row, not a
+% gap, and so has 70pt of clearance on either side.
+% Solid arrows carry data, dashed arrows carry parameters.
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[
+      >={Stealth[round]}, font=\small,
+      worker/.style = {draw, rounded corners=2pt, fill=blue!8,
+                       minimum height=9mm, minimum width=30mm, align=center},
+      store/.style  = {draw, fill=black!8,
+                       minimum height=9mm, minimum width=30mm, align=center},
+      env/.style    = {draw, densely dashed, fill=white,
+                       minimum height=9mm, minimum width=30mm, align=center},
+      flow/.style   = {->, thick, black!70},
+      param/.style  = {->, thick, black!70, densely dashed},
+      lbl/.style    = {font=\scriptsize, inner sep=2.5pt, align=center},
+    ]
+    % --- the environment, outside the cycle ----------------------------------
+    \node[env]    (env)  at (0,2.3)     {Environment};
+
+    % --- top row: acting -----------------------------------------------------
+    \node[worker] (data) at (0,0)       {Data workers};
+    \node[store]  (buf)  at (5.2,0)     {Replay buffer};
+    \node[worker] (roll) at (10.4,0)    {Rollout workers};
+
+    % --- bottom row: learning ------------------------------------------------
+    \node[worker] (gpu)  at (0,-3.1)    {GPU workers};
+    \node[worker] (rean) at (10.4,-3.1) {Reanalyze workers};
+
+    % --- environment interaction, as a parallel pair -------------------------
+    \draw[flow] ([xshift=-8mm]env.south)  --
+                node[lbl,left]  {$o_t,\,u_t$} ([xshift=-8mm]data.north);
+    \draw[flow] ([xshift=8mm]data.north)  --
+                node[lbl,right] {$a_t$}       ([xshift=8mm]env.south);
+
+    % --- data path: clockwise around the cycle -------------------------------
+    \draw[flow] (data) -- node[lbl,above] {$(o,u,\pi_t,\nu_t)$} (buf);
+    \draw[flow] (buf)  -- node[lbl,above] {prioritized\\positions} (roll);
+    \draw[flow] (roll) -- node[lbl,left]  {training\\batches} (rean);
+    \draw[flow] (rean) -- node[lbl,above] {refreshed targets} (gpu);
+
+    % --- parameter feedback: closes the cycle, and reaches the searchers -----
+    \draw[param] (gpu) -- node[lbl,left] {$\theta$} (data);
+    \draw[param,rounded corners=3pt]
+      (gpu.south) -- (0,-4.1) -- node[lbl,fill=white] {$\theta$} (10.4,-4.1)
+                  -- (rean.south);
+  \end{tikzpicture}
+  \caption[The EfficientZero worker architecture]{%
+    The parallel worker architecture of EfficientZero.
+    Data workers generate fresh trajectories and store them inside the replay buffer.
+    Rollout and reanalyze workers sample from the replay buffer and prepare data for training.
+    GPU workers calculate losses and update the model parameters.
+  }
+  \label{fig:ez-workers}
+\end{figure}

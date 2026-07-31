@@ -5,6 +5,34 @@
 
 \section{Fuzzing as a Reinforcement Learning Problem}\label{sec:rlfuzz-framing}
 
+Fuzzing is a sequential decision making problem under certainty over a large search space
+with a scalar progress signal.
+This makes it amenable to solving it through reinforcement learning methods.
+
+\textcite{bottinger_deep_2018} first formalized fuzzing as an MDP and then introduced
+a deep Q-learning-based fuzzer.
+They model the fuzzing problem as an MDP tuple $M_\mathcal{F}=(\mathcal{S},\mathcal{A},p)$
+as follows:
+
+\paragraph{State space $\mathcal{S}$}
+
+Let $\Sigma$ denote a finite set of symbols. All possible program inputs are then
+defined by the Kleene closure as $\mathcal{I}=\Sigma^*$. The state space then corresponds
+to that set of possible program inputs $\mathcal{S}=\mathcal{I}$.
+
+\paragraph{Action space $\mathcal{A}$}
+
+They define their action space as the set of random variables mapping program inputs
+to probabilistic rewriting rules:
+
+% TODO insert boettinger18 figure 8 (or maybe simplify this section a bit)
+
+\paragraph{Rewards}
+
+Rewards are split into an action-dependent component $G(a)$ and an
+execution-dependent component $E(x)$, i.e., $r(x,a)=E(x)+G(a)$ for selected
+action $a$ and execution result $x$.
+
 \begin{itemize}
   \item Why the fit is natural: fuzzing is sequential decision making under uncertainty over an
     enormous search space, with a cheap scalar progress signal (new coverage) --- exactly the RL
