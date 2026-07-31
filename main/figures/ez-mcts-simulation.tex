@@ -112,15 +112,9 @@
     \label{fig:ez-mcts-backup}
   \end{subfigure}
 
-  \caption[One MCTS simulation]{One simulation of EfficientZero's Monte-Carlo
-    tree search, traced through its three phases on a worked example with
-    $\lvert\mathcal{A}\rvert=2$ and $\gamma=1$.
-    Thick nodes and edges mark the simulation path; dashed circles are actions
-    that carry a prior but have no node yet.
-    Only $s^0$ corresponds to a real observation --- $s^1$ and $s^2$ are latents
-    imagined by $G$, so the environment is never stepped during the search.
-    The values are chosen so that the tree's action values span $[0,1]$ and the
-    normalization of \cref{eq:ez-qnorm} is the identity, which lets the pUCT
-    scores be checked by hand.}
+  \caption[One MCTS simulation]{A single iteration of Monte-Carlo
+    tree search, where $\lvert\mathcal{A}\rvert=2$ and $\gamma=1$.
+    Search starts from a true root latent $s^0$ and is then continued by imagined rollouts
+  to imagined latents $s^1$ and $s^2$.}
   \label{fig:ez-mcts-simulation}
 \end{figure}
