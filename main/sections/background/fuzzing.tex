@@ -358,24 +358,6 @@ There are several categories of instrumentation in use~\cite{fioraldi_afl_nodate
     but restricts instrumentation to host-native binaries.
 \end{enumerate}
 
-\subsubsection{Directed greybox fuzzing}
-
-Not every campaign wants coverage everywhere.
-In patch testing, crash reproduction, or the triage of statically flagged suspicious code,
-the goal is to reach a specific set of program locations.
-\emph{Directed} greybox fuzzing replaces the novelty objective with a distance between the
-executed path and those target locations, and uses a power schedule that concentrates
-energy on the test cases that are closest \todo{cite: AFLGo (Böhme et al.\ 2017) as the
-canonical directed greybox fuzzer}.
-Refinements condition on program state rather than on control-flow distance
-alone~\cite{chen_critical_nodate}.
-
-Directed fuzzing is not pursued in this thesis, but it makes an important structural point.
-The objective in \cref{alg:cgf} is not intrinsic to greybox fuzzing; it is one replaceable
-component among four, and swapping it yields a different search without changing the loop
-around it.
-The formulations developed in \cref{chap:fuzzing-mdp} exercise exactly that freedom.
-
 \subsection{AFL++}\label{sec:fuzzing-aflpp}
 
 The most prominent instantiation of \cref{alg:cgf} is
@@ -404,8 +386,7 @@ It assigns a power proportional to the performance score $\alpha$:
 
 On top of these, AFL++ adds \texttt{mmopt}, which raises the score of the newest queue
 entries to encourage exploration, as well as
-\texttt{rare}, which puts focus on queue entries that hit rare edges.~\cite{fioraldi_afl_nodate}
-\todo{cite fairfuzz}.
+\texttt{rare}, which puts focus on queue entries that hit rare edges.~\cite{fioraldi_afl_nodate}\cite{lemieux_fairfuzz_2018};
 It is noteworthy that a fixed schedule is picked before the start of the campaign, disallowing any adaptation to the target during runtime.
 
 \subsubsection{Test case mutation}
@@ -425,7 +406,7 @@ AFL++ adds three further mutations that can be combined with the above.
 \emph{MOpt}~\cite{lyu_mopt_nodate} replaces the fixed operator distribution with one
 searched online by particle swarm optimization.
 Another module consists of RedQueen's \emph{input-to-state} (I2S)
-correspondence\todo{cite: RedQueen (Aschermann et al.\ NDSS 2019)}.
+correspondence~\cite{aschermann_redqueen_2019}.
 By tracking values used in comparison operations and comparing them with input values,
 it can locate the responsible bytes in the input and substitute the value the comparison is testing for.
 This allows overcoming magic byte and checksum checks without the overhead of concolic execution.
@@ -438,61 +419,44 @@ positions alongside AFL++ through this interface~\cite{binosi_rainfuzz_2023}.
 
 \subsubsection{Test case retention}
 
-AFL++ collects coverage feedback at edge granularity.
-Hit counts are bucketed into buckets of power-of-two sizes as well as a fixed-size hashed coverage map.
+AFL implements \textsc{IsInteresting} through a hybrid metric combining edge coverage with
+the number of times each edge was taken~\cite{fioraldi_afl_nodate}.
+Basic blocks are assigned identifiers at instrumentation time.
+Edges are represented by a hash of the identifiers of their source and destination blocks.
+The instrumentation increments one byte per edge in a shared-memory bitmap that is reset before every execution.
+After the run, each counter is quantized into one of eight power-of-two buckets and
+compared against a bitmap accumulated over the campaign.
+A test case is retained if it enters a new bucket for at least one edge.
+The bitmap has a fixed size, so distinct edges may alias onto the same byte due to hash collisions.
 
-
-AFL's feedback combines the choices laid out in \cref{sec:fuzzing-cgf}: edge granularity,
-hit counts quantized into power-of-two buckets, and a fixed-size hashed coverage map.
-Concretely, that map is a bitmap shared between fuzzer and target holding one byte per
-edge and indexed by a hash of the source and destination block addresses, and
-\textsc{IsInteresting} returns true exactly when an execution enters a bucket not yet
-entered for some edge~\cite{fioraldi_afl_nodate}.
-The aliasing this buys is not a criticism levelled from outside: AFL++ lists collision-free
-instrumentation among its own open problems.
-
-Fixing the entry width at one byte has a further consequence that the abstract account does
-not predict.
-A counter can overflow, so an edge executed a multiple of 256 times wraps back to zero and
-vanishes from the map entirely, leaving the fuzzer in an inconsistent state.
-AFL++'s \emph{NeverZero} fix adds the carry flag back into the entry so that a covered edge
-never reads as zero; the obvious alternative of saturating the counter at 255 was measured
-and found to \emph{reduce} overall performance, so NeverZero became the default on most
-backends.
-The detail is small, but it makes the point that the reliability of the retention criterion
-rests as much on the representation of the coverage map as on the principle behind it.
+The counter wraps around at 256 edge hits.
+AFL++ offers a \emph{saturated counters} mode in which entries are freezed at 255,
+as well as a \emph{NeverZero} mode in which the carry flag is folded in so that
+an overflowing counter never reaches zero.
+NeverZero was shown to improve the visibility of hidden edges with a multiple of
+256 hits, and is the default on most instrumentation backends~\cite{fioraldi_afl_nodate}.
 
 \subsubsection{Instrumentation}
 
 AFL++ supports six instrumentation backends: an LLVM pass, a GCC plugin, the legacy
 \texttt{afl-gcc} wrapper, QEMU~\cite{bellard_qemu_2005}, \emph{unicornafl}, and QBDI.
-Against the taxonomy of \cref{sec:fuzzing-cgf}, this covers compile-time instrumentation (LLVM, GCC) and
-dynamic binary translation (QEMU for user-space binaries, unicornafl for raw firmware
-blobs), with QBDI adding dynamic binary instrumentation for closed-source Android native
-libraries; static rewriting and hardware tracing (\cref{sec:fuzzing-cgf}) are left to other
-tools.
-The backends are not interchangeable: CmpLog is available only under LLVM and QEMU, and
-context-sensitive coverage, ngram coverage and InsTrim only under LLVM.
-The choice of instrumentation therefore constrains which of the other components can be
-used at all, which is worth stating explicitly because it means \enquote{AFL++} does not
-name a single fixed configuration.
+This covers compile-time instrumentation (LLVM, GCC) and dynamic binary
+translation (QEMU for user-space binaries, unicornafl for raw firmware blobs),
+with QBDI adding dynamic binary instrumentation for closed-source Android
+native libraries.
+Some AFL++ components are backend-specific, for instance, CmpLog is available only under LLVM and QEMU.
+The choice of instrumentation therefore constrains which other components can be used.
 
-Granularity is itself configurable, and refines rather than merely selects among the
-block, edge and path granularities of \cref{sec:fuzzing-cgf}~\cite{fioraldi_afl_nodate}.
+Granularity is configurable between block, edge and path granularities.
 \emph{Context-sensitive} edge coverage XORs a block's identifier with an identifier of the
 current call context, so that the same edge reached from different callers is counted
-separately --- more discriminating, at the cost of more collisions and lower throughput.
+separately, improving edge discrimination and reducing aliasing.
 \emph{Ngram} coverage hashes the destination block together with the $N-1$ preceding blocks
-for $N$ between 2 and 16, approximating bounded path coverage; AFL++'s authors describe it
-as effectively adding a small amount of state feedback, which makes it the closest the tool
-comes to the state sensitivity that \cref{sec:fuzzing-stateful} will argue stateful targets
-require.
-\emph{InsTrim} moves in the opposite direction: a dominator-tree analysis identifies the
-blocks whose instrumentation actually adds information, halving the number of instrumented
-locations on most targets and buying back speed at no cost in
-signal\todo{cite: LAF-Intel (2016) and InsTrim (Hsu et al.\ 2018)}.
+for $N$ between 2 and 16, approximating path coverage.
+\emph{InsTrim} only add instrumentation to blocks that have been deemed interesting
+by a prior static analysis pass, improving information density~\cite{hsu2018instrim}.
 
-Instrumentation is also used to attack roadblocks directly.
+Instrumentation can also be used 
 The LAF-Intel passes split multi-byte integer comparisons into chains of single-byte
 comparisons, rewrite \texttt{>=} into a chain of \texttt{>} and \texttt{==}, and reduce
 signed comparisons to a sign check plus an unsigned comparison.
