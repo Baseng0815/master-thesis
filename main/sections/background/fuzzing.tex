@@ -456,177 +456,271 @@ for $N$ between 2 and 16, approximating path coverage.
 \emph{InsTrim} only add instrumentation to blocks that have been deemed interesting
 by a prior static analysis pass, improving information density~\cite{hsu2018instrim}.
 
-Instrumentation can also be used 
-The LAF-Intel passes split multi-byte integer comparisons into chains of single-byte
-comparisons, rewrite \texttt{>=} into a chain of \texttt{>} and \texttt{==}, and reduce
-signed comparisons to a sign check plus an unsigned comparison.
-A partially correct input then earns partial coverage credit, and the fuzzer can climb a
-magic value one byte at a time instead of having to guess all four at once.
-QEMU mode obtains the same effect without modifying any code, by hooking every comparison
-at translation time and comparing the operands byte by byte
-(\emph{CompareCoverage}), configurable to immediate operands only, to all integer
-comparisons, or to floating-point comparisons as well.
-Note that this is the same roadblock problem the I2S mutator attacks from the mutation
-side.
-Two independent components addressing one limitation from opposite directions is precisely
-the kind of orthogonality AFL++ exists to let researchers combine.
-
-\subsubsection{Execution engine}
-
-A component that does not appear in \cref{alg:cgf} at all, but determines how often the
-loop body runs, is the mechanism for getting a test case into a fresh copy of the PUT.
-AFL injects a \emph{forkserver} into the target so that each execution costs a
-\texttt{fork()} rather than an \texttt{execve()}, and the fork point can be deferred past
-expensive initialization.
-\emph{Persistent mode} goes further and patches a loop into the target so that one process
-serves many test cases, which is sound only if each iteration leaves minimal residual
-state; combined with test case delivery through shared memory it is reported at up to
-$10\text{--}20\times$ the throughput of fork mode.
-QEMU mode supports persistent mode as well, either by looping around a function whose
-return address is patched or between a user-specified pair of entry and exit addresses.
-The Snapshot LKM, a Linux kernel module, replaces \texttt{fork()} with process snapshot and
-restore, worth up to $2\times$ on a single core and more under parallel fuzzing, where
-\texttt{fork()} contends on kernel locks.
-
-The weight of this engineering is itself informative.
-Because a single execution yields only the weak signal discussed in \cref{sec:fuzzing-cgf}
---- a few bits about which buckets are new --- a coverage-guided fuzzer compensates with
-volume, and a large
-share of AFL++'s development effort goes into raising executions per second rather than
-into extracting more from each execution.
-This thesis deliberately inverts that trade-off: emulation and a learned model make every
-execution far more expensive (\cref{sec:platform-throughput}) in exchange for a much richer
-update per execution (\cref{chap:efficientzero}).
-That is exactly why \cref{sec:methodology-currencies} insists on reporting results in both
-currencies.
-
-\subsubsection{No configuration dominates}
-
-The AFL++ evaluation compares six configurations --- the default, MOpt, Ngram4, RedQueen,
-Ngram4 with \texttt{rare} scheduling, and MOpt with RedQueen --- over roughly 20 trials of
-about a day each on FuzzBench targets\todo{cite: FuzzBench (Metzman et al.\ 2020)}.
-Its headline result is negative and, for this thesis, useful.
-No configuration wins everywhere: RedQueen is the only configuration that reaches any depth
-at all on \texttt{libpcap}, yet pairing it with MOpt hurts on \texttt{openthread}; MOpt is
-either strongly positive or strongly negative with little middle ground; Ngram4 dominates
-on \texttt{libxml2}, where the other two barely register.
-Hand-picking a configuration per target (\enquote{AFL++ Optimal}) raised the average
-normalized coverage score by \SI{7}{\percent}~\cite{fioraldi_afl_nodate}.
-
-Two consequences carry forward.
-First, it justifies the per-target reporting protocol of \cref{chap:methodology}: a claim
-about a fuzzing technique that is not resolved per target says very little.
-Second, it is an argument for the direction taken here.
-If the best configuration is target-dependent and must currently be found by hand, the
-natural response is a fuzzer that adapts its own policy to the target while the campaign
-runs, which is what the formulations of \cref{chap:input-actions,chap:corpus-actions}
-attempt.
-
-Finally, the loop described here is not confined to the native, source-available setting.
-AFL++'s QEMU and unicornafl backends run it in the same binary-only, emulated regime as
-MOGI (\cref{chap:platform}); unicornafl is built on the same Unicorn engine, and it keeps
-the emulator in a known state in a parent process from which a fresh copy is forked per
-test case --- the reset primitive of \cref{sec:fuzzing-emulation}, realized through
-\texttt{fork()} rather than through snapshots.
-The coverage-guided climber used as a baseline in \cref{sec:methodology-baselines} is a
-deliberately stripped-down version of this loop, so pitting a learned policy against it is
-a comparison of search strategies and not of execution regimes.
-
 \subsection{Strengths and Limitations of Coverage-Guided Fuzzing}\label{sec:fuzzing-limitations}
 
+% Drafting outline. First step of the motivation chain of
+% \cref{sec:introduction-motivation}: establish the standard this thesis has to beat,
+% then isolate the limitations it actually attacks (unassigned feedback, non-adaptive
+% scheduling, statelessness). Throughput is deliberately NOT one of them ---
+% \cref{sec:fuzzing-emulation} makes it worse on purpose.
+
+\subsubsection{Strengths}
+
 \begin{itemize}
-  \item Strengths (why CGF won):
-    \begin{itemize}
-      \item simple, robust, almost no per-target manual effort~\cite{manes_art_2019},
-      \item scales linearly with compute; embarrassingly parallel in
-        principle~\cite{zhou_kraken_2025},
-      \item empirically the most productive bug-finding technique of the last
-        decade~\cite{manes_art_2019,fioraldi_afl_nodate}.
-    \end{itemize}
-  \item Limitations --- each one motivates ``smarter'' input generation and frames a design goal of
-    this thesis:
-    \begin{itemize}
-      \item \emph{Coverage plateaus}: random mutation practically never satisfies narrow
-        constraints (magic bytes, checksums, length fields), so campaigns stall on frontier
-        branches~\cite{stephens_driller_2016,she_neuzz_2019}.
-      \item \emph{Coverage is only a proxy}: maximizing edges is not the same as triggering bugs;
-        state- and data-dependent bugs need specific values in specific contexts, not just new
-        edges~\cite{chen_critical_nodate}.
-      \item \emph{Blind mutation wastes the execution budget}: most mutations are irrelevant to
-        control flow; which bytes and operators matter is input- and target-dependent
-        ~\cite{lyu_mopt_nodate,binosi_rainfuzz_2023}.
-      \item \emph{Feedback aliasing}: bitmap hash collisions and coarse hit-count bucketing hide
-        genuinely new behavior~\cite{gan_collafl_2018}.
-      \item \emph{Statelessness}: the classic loop assumes one self-contained input per fresh
-        execution --- breaks down for stateful/reactive targets (\cref{sec:fuzzing-stateful}).
-      \item \emph{Evaluation is tricky}: campaigns are highly stochastic; sound comparisons need
-        many trials and statistical testing \todo{cite: Klees et al.\ 2018, ``Evaluating Fuzz
-        Testing''} (also needed for \cref{chap:methodology}).
-    \end{itemize}
-  \item Research responses (survey briefly, as context for the RL approach):
-    \begin{itemize}
-      \item data-flow/taint guidance to identify influential input bytes
-        (GreyOne)~\cite{gan_greyone_nodate},
-      \item neural surrogates: smooth the coverage function and follow gradients (NEUZZ,
-        MTFuzz)~\cite{she_neuzz_2019,she_mtfuzz_2020}, deep-learning path prediction
-        (NeuFuzz)~\cite{wang_neufuzz_2019},
-      \item hybrid concolic execution (Driller)~\cite{stephens_driller_2016},
-      \item machine learning across all loop stages --- seed selection, mutation, scheduling ---
-        surveyed in~\cite{wang_systematic_2020,qiu_survey_2025}.
-    \end{itemize}
+  \item \emph{Negligible cost per execution}: the instrumentation is a few instructions per
+    coverage element and the retention check is a constant-time comparison against a
+    fixed-size bitmap, so the design spends its budget on executions rather than on
+    reasoning about them~\cite{fioraldi_afl_nodate,manes_art_2019}.
+  \item \emph{No input model required}: a seed corpus substitutes for the grammar or
+    protocol specification that generation-based fuzzers need
+    (\cref{sec:fuzzing-input-generation}), which is what makes the technique applicable to
+    targets with undocumented or proprietary input formats~\cite{manes_art_2019}.
+  \item \emph{Scales where whitebox techniques do not}: symbolic execution is defeated by path
+    explosion on real programs~\cite{godefroid_sage_2012,manes_art_2019}, and hybrid fuzzers
+    concede the point by using concolic execution only where the greybox loop is stuck, leaving
+    the bulk of the search to that loop~\cite{stephens_driller_2016}.
+  \item \emph{Demonstrated at scale}: continuous CGF deployments account for tens of thousands of
+    fixed bugs across a thousand projects (\cref{sec:fuzzing-overview})~\cite{arya_oss-fuzz_nodate}.
+  \item \emph{Stable enough to be a platform}: a decade of research variants has been folded back
+    into a single configurable implementation, which is why AFL++ is the customary point of
+    comparison and therefore the standard this thesis is measured
+    against (\cref{sec:methodology-baselines})~\cite{fioraldi_afl_nodate,qiu_survey_2025}.
+\end{itemize}
+
+\subsubsection{Limitations}
+
+\begin{itemize}
+  \item \emph{Coverage saturation}: coverage rises steeply and then plateaus, because every
+    coverage element pays out exactly once and the expected cost of discovering the next one
+    grows as the campaign progresses~\todo{cite: B\"ohme \& Falk, On the exponential cost of
+    vulnerability discovery (FSE 2020)}. AFLFast attributes the plateau to the budget being
+    spent on high-frequency paths~\cite{bohme_coverage-based_2016} and FairFuzz to rarely
+    exercised branches~\cite{lemieux_fairfuzz_2018}. In reinforcement-learning terms this is a
+    sparse and non-stationary reward (\cref{sec:rlfuzz-difficulties})~\cite{borcherding_bandits_2023}.
+  \item \emph{The feedback is one unassigned bit}: \textsc{IsInteresting} judges a whole test case
+    and never attributes the outcome to the mutation that produced it, so the fuzzer accumulates
+    no model of the relation between input bytes and program
+    behavior~\cite{manes_art_2019,she_neuzz_2019}. The work that recovers that relation ---
+    neural surrogates of the byte-to-coverage map~\cite{she_neuzz_2019,she_mtfuzz_2020} and
+    data-flow or taint analysis~\cite{gan_greyone_nodate} --- is surveyed as a single line of
+    research for exactly this reason~\cite{wang_systematic_2020,qiu_survey_2025}.
+  \item \emph{Hard branch conditions are outside the loop}: magic bytes and checksums are not
+    reachable by random mutation (\cref{sec:fuzzing-input-generation}), and every published remedy
+    adds machinery beside the loop rather than improving it --- concolic
+    execution~\cite{stephens_driller_2016}, input-to-state
+    correspondence~\cite{aschermann_redqueen_2019}, taint tracking~\cite{gan_greyone_nodate}.
+  \item \emph{Coverage is a proxy for the objective}: new coverage is neither necessary nor
+    sufficient for a bug, and the usual crash-only oracle misses memory corruption that does not
+    manifest as a fault --- a gap that widens on embedded and emulated
+    targets~\cite{muench_what_2018}. Sanitizers strengthen the oracle at a throughput
+    cost~\cite{zhang_debloating_nodate}.
+  \item \emph{The coverage representation is itself lossy}: hash collisions in the fixed-size
+    bitmap alias distinct edges and can hide new behavior entirely~\cite{gan_collafl_2018},
+    bucketed hit counts discard magnitude (\cref{sec:fuzzing-cgf}), and block coverage is strictly
+    weaker than edge coverage --- which matters here, because the platform of
+    \cref{sec:platform-coverage} provides the block-level signal~\cite{fioraldi_afl_nodate}.
+  \item \emph{Scheduling is fixed before the campaign}: seed and power schedules are hand-tuned
+    distributions selected offline (\cref{sec:fuzzing-aflpp}), although the underlying allocation
+    problem is a decision problem under uncertainty whose optimal solution is
+    target-dependent~\cite{woo_scheduling_2013,bohme_coverage-based_2016}. Online adaptation is
+    consistently retrofitted rather than native to the
+    loop~\cite{lyu_mopt_nodate,wang_syzvegas_2021,wang_reinforcement_2021}.
+  \item \emph{The loop assumes a stateless target}: \cref{alg:cgf} treats an execution as a pure
+    function of one input and resets the PUT between test cases, an assumption that does not hold
+    for servers, protocol stacks or any target with a session --- the subject of
+    \cref{sec:fuzzing-stateful}~\cite{doupe_enemy_2012,thuraisingham_pulsar_2015}.
+  \item \emph{Results are fragile to evaluate}: measured performance depends heavily on the seed
+    corpus, campaign length and number of repetitions, which is why the protocol of
+    \cref{sec:methodology-seeds} is stated in advance~\todo{cite: Klees et al., Evaluating fuzz
+    testing (CCS 2018)}.
+  \item \emph{Scope for this thesis}: the approach developed in
+    \cref{chap:input-actions,chap:corpus-actions} targets the unassigned feedback, the fixed
+    schedule and the statelessness assumption; it does not address saturation, and it makes
+    throughput strictly worse (\cref{sec:fuzzing-emulation,sec:discussion-disadvantages}).
 \end{itemize}
 
 \subsection{Stateful and Protocol Fuzzing}\label{sec:fuzzing-stateful}
 
+% Drafting outline. Second step of the motivation chain. This subsection owns the
+% *mechanism* --- what statefulness is and how systems obtain, schedule and restore
+% state; the RL-specific treatment stays in \cref{chap:related-work}. It must name
+% AFLNet and SGFuzz, because \cref{sec:target-open62541} compares against them.
+
+\subsubsection{What Makes a Target Stateful}
+
 \begin{itemize}
-  \item Many high-value targets are reactive servers speaking a protocol (network services,
-    industrial control systems, embedded devices): behavior depends on \emph{session state}
-    accumulated over a message exchange~\cite{ang_quic-fuzz_2025,borcherding_bandits_2023}.
-  \item Consequences for the classic single-input model:
-    \begin{itemize}
-      \item a test case is a \emph{sequence} of messages, not one blob; ordering and protocol
-        context matter,
-      \item deep states are reachable only through valid message prefixes; mutating a late message
-        is useless if an early one breaks the session,
-      \item the same code can behave differently in different states, so pure edge coverage
-        under-represents state coverage~\cite{borcherding_bandits_2023},
-      \item state is invisible: the fuzzer must infer or track it (response codes, annotated state
-        variables) \todo{cite: AFLNet (Pham et al.\ 2020) and SGFuzz (Ba et al.\ 2022) --- the
-        standard stateful greybox fuzzers; both are baselines the thesis should discuss}.
-      \item state-awareness matters in adjacent domains too, e.g.\ black-box web
-        scanning~\cite{doupe_enemy_2012}.
-    \end{itemize}
-  \item Extra decision problem on top of the CGF loop: \emph{which state to fuzz next} ---
-    an exploration/exploitation trade-off, already modeled as a multi-armed bandit in prior
-    work~\cite{borcherding_bandits_2023}; direct bridge to \cref{sec:reinforcement-learning}.
-  \item Practical complications for encrypted/checksummed transports (e.g.\ QUIC): the fuzzer must
-    sit inside the crypto boundary to mutate meaningfully~\cite{ang_quic-fuzz_2025}.
-  \item Position of this thesis: protocol-level actions against a stateful target are exactly the
-    action space handed to the RL agent (\cref{chap:input-actions}).
+  \item \emph{Definition}: the response of the PUT to a message depends on the messages that
+    preceded it, so the reachable code is a function of the message \emph{sequence} rather than
+    of a single input~\cite{doupe_enemy_2012,thuraisingham_pulsar_2015}.
+  \item \emph{Two notions are conflated in the literature} and should be separated here: the
+    externally visible protocol or session automaton, and the internal state variables that
+    encode it~\todo{cite: AFLNet (Pham et al.); StateAFL; SGFuzz}.
+  \item \emph{Depth is the objective}: the interesting attack surface of a protocol stack sits
+    behind a handshake, so progress is measured by how deep into the session the fuzzer
+    gets --- the argument the OPC~UA target rests on
+    (\cref{sec:target-open62541})~\cite{borcherding_bandits_2023,ang_quic-fuzz_2025}.
+\end{itemize}
+
+\subsubsection{Why the Coverage-Guided Loop Degrades}
+
+\begin{itemize}
+  \item \emph{A valid prefix is a precondition, not a mutation target}: the probability that a
+    randomly mutated sequence still parses as a legal session decays with depth, so mutation
+    pressure is spent re-deriving a prefix the fuzzer already
+    had~\cite{thuraisingham_pulsar_2015}\todo{cite: AFLNet}.
+  \item \emph{The reset is now expensive}: the per-execution reset that gives \cref{alg:cgf} its
+    reproducibility discards exactly the state that was paid for, and replaying the prefix to get
+    it back costs time quadratic in session depth~\todo{cite: SNPSFuzzer; Nyx}.
+  \item \emph{Credit assignment gets worse}: new coverage is attributed to a whole sequence rather
+    than to the message that caused it, compounding the unassigned-feedback limitation of
+    \cref{sec:fuzzing-limitations}~\cite{borcherding_bandits_2023}.
+  \item \emph{Code coverage is a poor progress metric inside a state machine}: advancing the
+    session can re-execute the same blocks, so coverage-based retention does not recognize the
+    progress it should reward~\todo{cite: StateAFL; SGFuzz (state-variable feedback)}.
+  \item \emph{Determinism breaks}: nonces, session identifiers, timers and timeouts make the same
+    byte sequence produce different executions, which invalidates both the retention decision and
+    any crash reproduction~\cite{ang_quic-fuzz_2025}.
+\end{itemize}
+
+\subsubsection{Design Questions and How Systems Answer Them}
+
+\begin{itemize}
+  \item \emph{What is a test case}: a single message, or a sequence of them retained as a
+    unit~\cite{thuraisingham_pulsar_2015}\todo{cite: AFLNet (message-sequence corpus)}.
+  \item \emph{Where the state model comes from}: written by hand from a
+    specification~\todo{cite: Peach; boofuzz}, inferred from response
+    codes~\todo{cite: AFLNet}, instrumented from state variables in the
+    source~\todo{cite: SGFuzz; StateAFL}, inferred from recorded
+    traffic~\cite{thuraisingham_pulsar_2015}, or learned as an automaton by active
+    querying~\cite{marksteiner_learning_2025,dongol_grey-box_2020}.
+  \item \emph{Which state to fuzz next}: state selection is a scheduling problem under
+    uncertainty and has been modelled as a multi-armed
+    bandit~\cite{borcherding_bandits_2023}, as state-aware
+    crawling~\cite{doupe_enemy_2012}, and as directed fuzzing towards critical state
+    variables~\cite{chen_critical_nodate}.
+  \item \emph{How to return to a state}: replay the prefix, or restore a snapshot taken at that
+    state --- the question \cref{sec:fuzzing-emulation} answers~\todo{cite: SNPSFuzzer; Nyx}.
+  \item \emph{Worked systems to name}: the early state-aware black-box
+    scanner~\cite{doupe_enemy_2012}, Pulsar for proprietary
+    protocols~\cite{thuraisingham_pulsar_2015}, AFLNet, StateAFL and SGFuzz as the greybox
+    line~\todo{cite: AFLNet; StateAFL; SGFuzz}, QUIC-Fuzz for a modern encrypted
+    protocol~\cite{ang_quic-fuzz_2025}, and transformer-based protocol-similarity
+    mutation~\cite{wang_adaptive_2023}.
+\end{itemize}
+
+\subsubsection{Why This Setting Invites Reinforcement Learning}
+
+\begin{itemize}
+  \item \emph{The correspondence stops being an analogy}: a session is an episode, a message is an
+    action, and choosing the next state to visit is action selection under uncertainty --- the
+    framing of \cref{sec:rlfuzz-framing}, instantiated in
+    \cref{chap:input-actions}~\cite{bottinger_deep_2018,borcherding_bandits_2023}.
+  \item \emph{Sequence-level credit assignment is what value functions are for}: the discounted
+    return propagates a reward earned deep in a session back to the message that enabled it
+    (\cref{sec:rl-value-functions})~\cite{sutton_reinforcement_2020}.
+  \item \emph{Honest counterweight}: in the one head-to-head comparison available, a
+    conventional stateful greybox fuzzer outperformed both bandit-based state
+    selectors~\cite{borcherding_bandits_2023}; this is the burden of proof carried into
+    \cref{chap:results}.
+  \item \emph{Evaluation is harder than in the stateless case}: state coverage and code coverage
+    disagree, and benchmark protocols for stateful fuzzers are comparatively
+    recent~\todo{cite: ProFuzzBench}.
 \end{itemize}
 
 \subsection{Emulator-Based Fuzzing}\label{sec:fuzzing-emulation}
 
+% Drafting outline. Third step of the motivation chain, and the section
+% \cref{sec:platform-overview} points back to for *why* emulation. It has to earn the
+% claim made in \cref{sec:rlfuzz-gap}: snapshots supply the exact, cheap episode reset
+% and the coverage observation the MDP framing requires. Close by naming the three
+% properties so that \cref{chap:platform} only has to deliver them.
+
+\subsubsection{Why Emulate}
+
 \begin{itemize}
-  \item Motivation from embedded/firmware targets: fuzzing on the device is slow and, worse,
-    faults are often \emph{silent} --- without MMU protection or sanitizers, memory corruption
-    frequently does not crash (``what you corrupt is not what you
-    crash'')~\cite{muench_what_2018}.
-  \item Rehosting the target in an emulator restores the missing capabilities~\cite{muench_what_2018}
-    \todo{cite: QEMU (Bellard 2005); Unicorn engine; optionally a rehosting survey (e.g.\ Wright
-    et al.\ 2021 or Fasano et al.\ 2021)}:
-    \begin{itemize}
-      \item full observability: coverage and memory-access instrumentation without source access,
-      \item determinism and replayability of executions,
-      \item fine-grained fault detection via emulator-level checks,
-      \item \emph{snapshots}: capture full machine state once, restore cheaply before every test.
-    \end{itemize}
-  \item Snapshot restore gives an exact, cheap \emph{reset} of the target to a known state ---
-    for stateful targets this is what makes per-episode experimentation tractable, and it is
-    precisely the environment-reset primitive that reinforcement learning assumes
-    (\cref{sec:reinforcement-learning}); realized here by the MOGI framework
-    (\cref{chap:platform}).
-  \item Cost: emulation overhead reduces raw executions per second versus native execution ---
-    sharpens the need to make every execution count (sample efficiency,
-    \cref{chap:efficientzero}).
+  \item \emph{No source code}: compile-time instrumentation is unavailable for binary-only
+    targets, and dynamic binary translation supplies the coverage signal instead
+    (\cref{sec:fuzzing-cgf})~\cite{bellard_qemu_2005,fioraldi_afl_nodate}.
+  \item \emph{Foreign architectures and firmware}: embedded targets cannot be executed natively on
+    the fuzzing host at all, which is what motivates rehosting them in an
+    emulator~\cite{muench_what_2018}\todo{cite: a rehosting system --- P2IM / HALucinator /
+    Fuzzware --- and avatar2}.
+  \item \emph{Control over the machine}: the emulator can be hooked at arbitrary points, stopped,
+    inspected, snapshotted and restored, which is the property this thesis actually depends
+    on~\todo{cite: Unicorn Engine; Nyx (snapshot fuzzing)}.
+\end{itemize}
+
+\subsubsection{Coverage Under Emulation}
+
+\begin{itemize}
+  \item \emph{Block hooks are the natural instrumentation point}: the translator sees each basic
+    block as it is translated and can emit or invoke coverage code there, which yields a
+    block-level signal on unmodified binaries~\cite{bellard_qemu_2005,fioraldi_afl_nodate}.
+  \item \emph{Edge coverage must be reconstructed}, conventionally by combining the current block
+    identifier with the previous one, and is what AFL++'s QEMU and \emph{unicornafl} backends do
+    (\cref{sec:fuzzing-aflpp})~\cite{fioraldi_afl_nodate}.
+  \item \emph{Component availability is constrained by the backend}: features such as CmpLog exist
+    only for some instrumentation modes, so the choice of emulation also narrows the rest of the
+    fuzzer's configuration~\cite{fioraldi_afl_nodate}.
+\end{itemize}
+
+\subsubsection{The Cost, and Why It Reframes the Problem}
+
+\begin{itemize}
+  \item \emph{Dynamic binary translation costs a substantial slowdown} relative to natively
+    executed, compile-time-instrumented code~\cite{bellard_qemu_2005,fioraldi_afl_nodate}.
+  \item \emph{The low-overhead alternative does not apply here}: hardware tracing keeps the
+    overhead small but only for host-native binaries, which is precisely what a rehosted target
+    is not~\cite{zhang_ptfuzz_2018}.
+  \item \emph{Consequence --- the binding constraint moves}: when executions per second drop by
+    orders of magnitude, the scarce resource is information extracted per execution rather than
+    executions per unit time, which is the argument for a sample-efficient learner
+    (\cref{sec:rl-sample-efficiency}) and the reason both currencies are reported in
+    \cref{sec:methodology-currencies}~\cite{ye_mastering_2021}.
+\end{itemize}
+
+\subsubsection{What Emulation Buys Back}
+
+\begin{itemize}
+  \item \emph{An exact and cheap reset}: restoring a snapshot re-establishes a known machine state
+    without re-running the program from its entry point, which is the episodic-environment
+    assumption of \cref{sec:rl-mdp} rather than a mere
+    optimization~\cite{sutton_reinforcement_2020}\todo{cite: AFL fork server; Nyx}.
+  \item \emph{Deep states become reachable without replay}, answering the reset question raised in
+    \cref{sec:fuzzing-stateful} and making per-episode experimentation on a stateful target
+    tractable~\todo{cite: SNPSFuzzer; Nyx}.
+  \item \emph{Determinism}: with address-space randomization, host scheduling and guest entropy
+    removed, one input yields one execution and one coverage vector --- the property that licenses
+    attributing run-to-run variance to the algorithm
+    (\cref{sec:platform-determinism,sec:methodology-seeds})~\todo{cite: Nyx; Klees et al.}.
+  \item \emph{Observability beyond a bitmap}: registers and memory are readable at any hook, so
+    the observation is not restricted to the coverage map the way it is for a compile-time
+    instrumented target~\todo{cite: TriforceAFL; avatar2}.
+\end{itemize}
+
+\subsubsection{What Emulation Does Not Give}
+
+\begin{itemize}
+  \item \emph{Fidelity gaps}: peripherals, syscalls and timing are approximated, so behavior
+    observed in the emulator need not correspond to behavior on the real
+    device~\cite{muench_what_2018}.
+  \item \emph{A weaker bug oracle}: sanitizers generally require recompilation, so an emulated
+    campaign falls back on fault detection and inherits the visibility problem of
+    \cref{sec:fuzzing-limitations}~\cite{muench_what_2018,zhang_debloating_nodate}.
+  \item \emph{Per-target rehosting effort}, which is the practical reason emulation is not the
+    default choice for source-available targets~\cite{muench_what_2018}.
+  \item \emph{Scope note}: this thesis emulates for observability, reset and determinism, not in
+    order to rehost firmware; \cref{chap:platform} describes the setup that
+    results~\cite{bellard_qemu_2005}.
+\end{itemize}
+
+\subsubsection{The Three Properties Required Later}
+
+\begin{itemize}
+  \item \textbf{P1} a coverage observation on unmodified binaries, obtained from block hooks
+    (\cref{sec:platform-coverage})~\cite{bellard_qemu_2005,fioraldi_afl_nodate}.
+  \item \textbf{P2} an exact, cheap reset, i.e.\ the episode boundary an MDP assumes
+    (\cref{sec:platform-snapshots})~\cite{sutton_reinforcement_2020}.
+  \item \textbf{P3} deterministic execution, so that the environment is a function and not a
+    distribution (\cref{sec:platform-determinism})~\cite{ye_mastering_2021}.
 \end{itemize}
