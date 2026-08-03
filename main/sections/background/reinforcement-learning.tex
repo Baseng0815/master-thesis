@@ -18,7 +18,7 @@ Formally, a Markov decision process is a 3-tuple $\mathit{MDP}=(\mathcal{S},\mat
   \item $\mathcal{A}$ is the set of actions where $\mathcal{A}_s\subseteq\mathcal{A}$ are actions available in state $s\in\mathcal{S}$,
   \item $p(s^\prime,r|s,a)=\Pr\{S_t=s^\prime, R_t=r|S_{t-1}=s, A_{t-1}=a\}$
     describes the system dynamics, i.e., the probability of encountering a next
-    state $s^\prime$ and reward $r$ at time step $t$ when taking action $a$ in
+    state $s^\prime$ and reward $r\in\mathbb{R}$ at time step $t$ when taking action $a$ in
     state $s$ at time step $t-1$. This satisfies the \emph{Markov property}:
     $p$ depends only on the current state and not the full history.
 \end{itemize}
@@ -29,7 +29,7 @@ the cumulative reward.
 
 A common way to visualize MDPs is via a directed graph: nodes model the state
 space $\mathcal{S}$ while edges $(s_i,s_j)$ labeled with an action-reward-probability
-tuple $(a,r,p)\in\mathcal{A}\times\mathcal{R}\times[0,1]$ model potential
+tuple $(a,r,p)\in\mathcal{A}\times\mathbb{R}\times[0,1]$ model potential
 transitions.
 
 A standard example introduced in~\textcite{sutton_reinforcement_2020} is that of a \emph{recycling robot} (\cref{fig:mdp-recycling-robot}).

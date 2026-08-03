@@ -69,7 +69,7 @@ The representation network $h:\mathcal{O}\to\mathcal{S}$ maps observations $o_t$
 to a latent representation $s_t$.
 Other networks operate only on latent representations, so it can be interpreted
 as extracting information from the observations that is relevant for achieving
-a high reward, while discarding non-relevant information~\cite{grimm_value_2020} .
+a high reward, while discarding non-relevant information~\cite{grimm_value_2020}.
 This sets it apart from world models that are trained to predict or reconstruct
 raw observations~\cite{ha_world_2018,kaiser_model-based_2024,hafner_learning_2019,hafner_mastering_2024},
 where the model must also capture detail that is irrelevant to the task.
@@ -80,9 +80,12 @@ current latent $s^i$ and an action $a^i$ to the next latent
 $s^{i+1}=g(s^i,a^i;\theta)$.
 A single forwarding step is known as a \emph{rollout} step.
 $g$ can be interpreted as a learned model of the environment behavior.
-Instead of actually taking action $a^i$ and then re-encoding the observation
-$s^{i+1}=h(o^{i+1};\theta)$, we can \emph{imagine} forwarding the latent.
+Instead of actually taking action $a^i$ and then re-encoding the resulting
+observation as $h(o^{i+1};\theta)$, we can \emph{imagine} forwarding the latent.
 This is a key part of the high sample efficiency of EfficientZero.
+Throughout this chapter, $s^0$ denotes the encoded root latent and $s^k$ for
+$k>0$ the latent reached after $k$ imagined steps; where the encoded latent at
+a later real time step is meant, it is written out as $h(o_{t+k};\theta)$.
 
 \paragraph{Value network $v$}
 The value network $v:\mathcal{S}\to\mathbb{R}$ estimates the expected discounted
@@ -268,7 +271,7 @@ improves the value estimates.
 The reanalyzed batches are then used to jointly train all networks.
 A batch entry starting at position $t$ is encoded once as $s^0=h(o_t;\theta)$ and then
 unrolled for $K$ steps with the actions that were actually taken,
-$\hat{s}^k=g(s^{k-1},a_{t+k};\theta)$.
+$s^k=g(s^{k-1},a_{t+k};\theta)$.
 Each unrolled latent $s^k$ is supervised with the targets located at the real
 position $t+k$. These include the actual reward and actual observation as well
 as MCTS root visit distribution and root value target.
@@ -295,7 +298,7 @@ It replaces MuZero's per-step reward target.
 
 \paragraph{Consistency target}
 The dynamics network is additionally supervised by a consistency loss
-calculated from the predicted successor latent $\hat{s}^k=g(s^{k-1},a_{t+k};\theta)$
+calculated from the predicted successor latent $s^k=g(s^{k-1},a_{t+k};\theta)$
 and true successor latent $h(o_{t+k};\theta)$.
 
 \paragraph{Total loss}
@@ -331,8 +334,8 @@ the dynamics function $g$ to lose its predictive power.
 
 EfficientZero adds an additional, SimSiam-inspired~\cite{chen_exploring_2020}
 training signal.
-The idea is that the imagined next state $\hat{s}^{k}=g(s^{k-1},a^{k};\theta)$
-and the encoded real next state $s^{k}=h(o_{t+k};\theta)$ should be similar.
+The idea is that the imagined next state $s^{k}=g(s^{k-1},a^{k};\theta)$
+and the encoded real next state $h(o_{t+k};\theta)$ should be similar.
 To this end, both states are passed through a projection network $\projnet$, the
 imagined branch additionally through a prediction head $\prednet$, and the two
 outputs are pulled together with a negative cosine similarity loss:
@@ -340,8 +343,8 @@ outputs are pulled together with a negative cosine similarity loss:
 \begin{equation}\label{eq:ez-consistency}
   \mathcal{L}_{\text{consistency}}
   = -\operatorname{cossim}\!\Big(
-      \operatorname{sg}\big(\projnet(s^{k};\theta)\big),\;
-      \prednet\big(\projnet(\hat{s}^{k};\theta);\theta\big)
+      \operatorname{sg}\big(\projnet(h(o_{t+k};\theta);\theta)\big),\;
+      \prednet\big(\projnet(s^{k};\theta);\theta\big)
     \Big),
 \end{equation}
 
