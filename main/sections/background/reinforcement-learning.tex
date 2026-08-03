@@ -11,11 +11,11 @@ Reinforcement learning (RL) is an extremely general framework for approaching pr
 in which an agent strives to maximize a reward signal through a selection of actions
 in certain states~\cite{sutton_reinforcement_2020}.
 These kinds of problems can be modeled as finite Markov decision processes (MDPs).
-Formally, a Markov decision process is a 3-tuple $MDP=(\mathcal{S},\mathcal{A},p)$ where
+Formally, a Markov decision process is a 3-tuple $\mathit{MDP}=(\mathcal{S},\mathcal{A},p)$ where
 
 \begin{itemize}
   \item $\mathcal{S}$ is the set of states,
-  \item $\mathcal{A}$ is the set of actions where $\mathcal{A}_s\subseteq A$ are actions available in state $s\in\mathcal{S}$,
+  \item $\mathcal{A}$ is the set of actions where $\mathcal{A}_s\subseteq\mathcal{A}$ are actions available in state $s\in\mathcal{S}$,
   \item $p(s^\prime,r|s,a)=\Pr\{S_t=s^\prime, R_t=r|S_{t-1}=s, A_{t-1}=a\}$
     describes the system dynamics, i.e., the probability of encountering a next
     state $s^\prime$ and reward $r$ at time step $t$ when taking action $a$ in
@@ -25,10 +25,10 @@ Formally, a Markov decision process is a 3-tuple $MDP=(\mathcal{S},\mathcal{A},p
 
 An RL agent's goal is to learn a policy $\pi:\mathcal{S}\times\mathcal{A}\rightarrow [0,1]$
 mapping each state $s$ to probabilities of taking each possible action $a$ to maximize
-the cumulative reward.\\
+the cumulative reward.
 
 A common way to visualize MDPs is via a directed graph: nodes model the state
-space $S$ while edges $(s_i,s_j)$ labeled with an action-reward-probability
+space $\mathcal{S}$ while edges $(s_i,s_j)$ labeled with an action-reward-probability
 tuple $(a,r,p)\in\mathcal{A}\times\mathcal{R}\times[0,1]$ model potential
 transitions.
 
@@ -41,8 +41,8 @@ Its state is the charge level of its battery, $\mathcal{S}=\{\mathtt{high},\math
 
 A simple greedy approach is to always select the $\mathtt{search}$ action since it
 pays the highest rewards in expectation.
-This approach encurs the penalty of searching while the battery is in the $\mathtt{low}$.
-An agent must therefore recognize the state he is in and choose its action accordingly.
+This approach incurs the penalty of searching while the battery is in the $\mathtt{low}$ state.
+An agent must therefore recognize the state it is in and choose its action accordingly.
 While this example is easily solved, MDPs with larger state and action spaces present
 a much harder problem.
 
@@ -59,10 +59,10 @@ The Markov property then still holds for the underlying state, but not for what 
 
 This situation is modeled through a \emph{partially observable Markov decision process}
 (POMDP)~\cite{ASTROM1965174,kaelbling_planning_1998}, which
-extends the original 3-tuple MDP $(\mathcal{S},\mathcal{A},p)$ to a 5-tuple POMDP=$(\mathcal{S},\mathcal{A},p,\Omega,o)$, by adding
+extends the original 3-tuple MDP $(\mathcal{S},\mathcal{A},p)$ to a 5-tuple $\mathit{POMDP}=(\mathcal{S},\mathcal{A},p,\mathcal{O},o)$, by adding
 
 \begin{itemize}
-  \item $\Omega$, the set of observations the agent can receive, and
+  \item $\mathcal{O}$, the set of observations the agent can receive, and
   \item $o(\omega|s^\prime,a)=\Pr\{O_t=\omega|S_t=s^\prime,A_{t-1}=a\}$, the observation
     function, giving the probability of perceiving $\omega$ after a transition into
     $s^\prime$ under action $a$.
@@ -70,17 +70,17 @@ extends the original 3-tuple MDP $(\mathcal{S},\mathcal{A},p)$ to a 5-tuple POMD
 
 The environment still evolves as an MDP over $\mathcal{S}$ according to $p$.
 However, the agent must act on observation $O_t$ instead of on the true state $S_t$.
-An ordinary MDP is the special case $\Omega=\mathcal{S}$ with $o=\text{id}(\cdot)$.
+An ordinary MDP is the special case $\mathcal{O}=\mathcal{S}$ with $o=\operatorname{id}(\cdot)$.
 
 POMDPs introduce the problem of \emph{state aliasing}.
 If two states that require different actions map to the same observation, then no deterministic
-memoryless policy $\pi:\Omega\times\mathcal{A}\rightarrow[0,1]$ can act correctly in both,
+memoryless policy $\pi:\mathcal{O}\times\mathcal{A}\rightarrow[0,1]$ can act correctly in both,
 and the best achievable memoryless policy can be arbitrarily worse than a policy that is
 allowed to consult the history~\cite{SINGH1994284}.
 
 A POMDP can be made Markovian by treating not the actual observations, but the
 entire observation-action history $H_t=O_0,A_0,O_1,A_1,\dots,O_t$ as the state space.
-Another classical solution is to summarize the observation-action history in a probability distribution 
+Another classical solution is to summarize the observation-action history in a probability distribution
 and treat this distribution as the actual state.
 This state is called a \emph{belief state} $b_t(s)=\Pr\{S_t=s|H_t\}$ and suffices
 to allow the agent to act optimally~\cite{puterman_markov_2009}.
@@ -98,10 +98,10 @@ Balancing the selection of actions that explore vs. actions that exploit is a ke
 
 Any MDP where $\lvert\mathcal{S}\rvert=1$ and $\lvert\mathcal{A}\rvert=k$ is also known as
 a \emph{$k$-armed bandit}, where the $k$-th arm is equal to the $k$-th action $a_k\in\mathcal{A}$.
-This view is inspired by a slot machine with $k$ arms, where pulling a lever produces a reward $r_k\leftarrow R_k$
+This view is inspired by a slot machine with $k$ arms, where pulling a lever produces a reward $r_k\sim R_k$
 drawn from a stationary distribution $R_k$.
 In this setting, the difficulty lies in judging which arm is best.
-Each arm has an expected value $q_*(a_k)=\mathbb{E}[R_t|A_t=a_k]$ that is unknown
+Each arm has an expected value $q^*(a_k)=\mathbb{E}[R_t|A_t=a_k]$ that is unknown
 and must be estimated, for example by the sample average
 
 \begin{equation}\label{eq:bandit-sample-average}
@@ -114,7 +114,7 @@ of whether more samples should be collected to improve the estimate or whether
 the current estimate should be used to select actions to gain more reward.
 We will outline three possible strategies.
 
-\paragraph{greedy}
+\paragraph{Greedy}
 
 A greedy agent always pulls the arm with the highest current estimate
 
@@ -123,7 +123,7 @@ A greedy agent always pulls the arm with the highest current estimate
 \]
 
 This strategy can easily fail.
-If the agent is unlucky and sees a few bad initial rewards, the sample average $Q_t$ be off and $a_t^*$ will be suboptimal.
+If the agent is unlucky and sees a few bad initial rewards, the sample average $Q_t$ will be off and $a_t^*$ will be suboptimal.
 
 \paragraph{$\varepsilon$-greedy}
 The simplest remedy is to explore at random.
@@ -142,10 +142,10 @@ and prioritizes high-value actions with low visit count.
   A_t=\argmax_a\left[Q_t(a)+c\sqrt{\frac{\ln t}{N_t(a)}}\,\right],
 \end{equation}
 
-This rule has been proven to be optimal in terms of regret minimization~\cite{auer_finite-time_nodate}.
+This rule has been proven to be optimal in terms of regret minimization up to a constant factor~\cite{auer_finite-time_nodate}.
 UCB is generalizable from bandits to full MDPs by treating every decision point
 of a search tree over the action space as its own bandit.
-This gives rise to the UCT algorithm~\cite{hutchison_bandit_2006} and an
+This gives rise to the UCT rule~\cite{hutchison_bandit_2006} that is used in an
 algorithm called Monte-Carlo Tree Search (MCTS)~\cite{hutchison_efficient_2007}.
 
 \subsection{Solving MDPs}\label{sec:rl-solving}
@@ -196,8 +196,8 @@ the discounted value of its successor states:
   v_\pi(s)=\sum_a\pi(a|s)\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma v_\pi(s^\prime)\right].
 \end{equation}
 
-An \emph{optimal policy} $\pi^*$ has the property that no non-optimal policy has
-a higher valued state: $\forall \pi,\pi\text{ non-optimal}:\forall s\in\mathcal{S}.v_{\pi^*}(s)\geq v_\pi(s)$.
+An \emph{optimal policy} $\pi^*$ has the property that no other policy assigns a
+higher value to any state: $\forall\pi\;\forall s\in\mathcal{S}:v_{\pi^*}(s)\geq v_\pi(s)$.
 All optimal policies have the same value function, denoted as $v^*=v_{\pi^*}$.
 
 The recursive \emph{Bellman optimality equation} follows:
@@ -211,7 +211,7 @@ We can define the same equations over state-action pairs $(s,a)\in\mathcal{S}\ti
 \begin{align}
   q_\pi(s,a)&=\mathbb{E}_\pi[G_t|S_t=s,A_t=a]\label{eq:q-function}\\
   q_\pi(s,a)&=\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma\sum_{a^\prime}\pi(a^\prime|s^\prime)\,q_\pi(s^\prime,a^\prime)\right]\label{eq:bellman-q}\\
-  q^*(s,a)&=\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma\max_{a^\prime}q_*(s^\prime,a^\prime)\right]\label{eq:bellman-opt-q}
+  q^*(s,a)&=\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma\max_{a^\prime}q^*(s^\prime,a^\prime)\right]\label{eq:bellman-opt-q}
 \end{align}
 
 Given $v^*$ or $q^*$, we can solve for $\pi^*$ by either choosing the action that leads
@@ -261,13 +261,13 @@ where $\alpha\in(0,1]$ is a step size and the \emph{TD error} $\delta_t$ measure
 sampled outcome deviates from the current estimate.
 
 Monte Carlo methods form the bootstrap-free alternative by simulating a whole
-episode updating toward the full observed return $G_t$ at the end.
+episode, updating toward the full observed return $G_t$ at the end.
 The TD($\lambda$) family interpolates between the two extremes via \emph{eligibility traces},
 with TD(0) and Monte Carlo as the limit cases $\lambda=0$ and
 $\lambda=1$~\cite{sutton_learning_1988}.
 
 \paragraph{SARSA}
-SARSA is similar to TD learning, but learns an action-value function $Q(s,a)$ instead of
+SARSA~\cite{sutton_emphatic_2015} is similar to TD learning, but learns an action-value function $Q(s,a)$ instead of
 a value function $V(s)$. The update rule makes use of the action that the agent
 actually performed, making SARSA an \emph{on-policy} algorithm since it follows
 the currently active policy $\pi$:
@@ -277,7 +277,7 @@ the currently active policy $\pi$:
 \end{equation}
 
 \paragraph{Q-learning}
-Q-learning can be interpreted as an \emph{off-policy} SARSA:
+Q-learning\cite{watkins_q-learning_1992} can be interpreted as an \emph{off-policy} SARSA:
 its target maximizes over the successor actions, making the update rule
 independent from the actually taken action:
 

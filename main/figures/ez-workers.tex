@@ -49,7 +49,7 @@
                 node[lbl,right] {$a_t$}       ([xshift=8mm]env.south);
 
     % --- data path: clockwise around the cycle -------------------------------
-    \draw[flow] (data) -- node[lbl,above] {$(o,u,\pi_t,\nu_t)$} (buf);
+    \draw[flow] (data) -- node[lbl,above] {$(o,u,\pi_t,v^{\text{MCTS}}_t)$} (buf);
     \draw[flow] (buf)  -- node[lbl,above] {prioritized\\positions} (roll);
     \draw[flow] (roll) -- node[lbl,left]  {training\\batches} (rean);
     \draw[flow] (rean) -- node[lbl,above] {refreshed targets} (gpu);

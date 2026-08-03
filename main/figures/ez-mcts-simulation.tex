@@ -73,11 +73,11 @@
       \draw[edsel] (s0) -- (s1);
       \draw[ed]    (s0) -- (A);
       \draw[ed]    (s1) -- (B);
-      \draw[edsel] (s1) -- node[net,midway] {$G$} (s2);
+      \draw[edsel] (s1) -- node[net,midway] {$g$} (s2);
       \draw[ed]    (s2) -- node[pr,midway,left=-0.5mm] {$0.35$} (c0);
       \draw[ed]    (s2) -- node[pr,midway,right=-0.5mm] {$0.65$} (c1);
 
-      \node[net] (V) at (-1.0,-2.30) {$V$};
+      \node[net] (V) at (-1.0,-2.30) {$v$};
       \draw[ed] (s2) -- (V);
       \node[sl,left=0.8mm of V] {$v^2$\\$=0.6$};
     \end{tikzpicture}
@@ -85,7 +85,7 @@
     % in sections/efficientzero.tex: \todo uses \marginpar, and a \marginpar inside
     % a subfigure (a minipage) makes LaTeX abort with ``Float(s) lost''.
     \caption{The selected node is expanded. The latent state is rolled out once
-    via $G$ and value statistics are initialized.}
+    via $g$ and value statistics are initialized.}
     \label{fig:ez-mcts-expansion}
   \end{subfigure}
   \hfill

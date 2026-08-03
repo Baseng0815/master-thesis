@@ -2,18 +2,14 @@
 
 \chapter{The MOGI Platform}\label{chap:platform}
 
-% Placed BEFORE the formulation chapters on purpose: the coverage signal, the reset
-% primitive and execution determinism are preconditions for defining the MDP at all
-% (\cref{chap:fuzzing-mdp}). The run configuration --- hardware, hyperparameters,
-% campaign protocol --- deliberately does NOT live here; it belongs to
-% \cref{chap:methodology}, where the reader needs it.
+We implement our fuzzer on top of the MOGI emulation framework\todo{cite mogi}.
+MOGI supports CPU and MMU emulation for various architectures and includes
+instrumentation support as well as the possibility for emulating Linux userspace
+binaries.
 
 \section{Overview}\label{sec:platform-overview}
 
-% TODO: What MOGI is and which crates make it up (mogi_emulator, mogi_fuzzer,
-% mogi_unicorn, mogi_system), how a target binary is staged and booted, and why
-% emulation rather than native execution --- pointing back to the argument in
-% \cref{sec:fuzzing-emulation}.
+\todo{generate architecture figure that contain all components and describe them}
 
 \section{Emulation and the Guest Model}\label{sec:platform-emulation}
 

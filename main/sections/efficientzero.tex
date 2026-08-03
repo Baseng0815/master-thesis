@@ -2,11 +2,6 @@
 
 \chapter{EfficientZero}\label{chap:efficientzero}
 
-% This chapter is the algorithm AS PUBLISHED \cite{ye_mastering_2021} and its
-% MuZero foundation \cite{schrittwieser_mastering_2020} --- theory only. Nothing
-% about fuzzing (\cref{chap:fuzzing-mdp}) and nothing about the Rust
-% implementation (\cref{chap:implementation}) belongs here.
-
 EfficientZero~\cite{ye_mastering_2021} is a model-based deep reinforcement
 learning algorithm and a member of the AlphaGo family of algorithms.
 It combines a learned latent-space model of the environment with Monte-Carlo
@@ -18,8 +13,8 @@ benchmark~\cite{ye_mastering_2021}.
 
 \section{From AlphaGo to EfficientZero}\label{sec:ez-lineage}
 
-AlphaGo~\cite{silver_mastering_2016} released in 2016 and was the first program to defeat a
-professional human player at the game of Go, a challenging task due to Go's extremely large state space
+AlphaGo~\cite{silver_mastering_2016} was released in 2016 and was the first program to defeat a
+professional human player at the game of Go, a challenging task due to Go's extremely large state space.
 It combines Monte-Carlo tree search with two deep neural networks: a policy
 network that proposes promising moves and narrows the search, and a value
 network that evaluates board positions.
@@ -31,7 +26,7 @@ pretraining and a perfect simulator of the game rules.
 AlphaGo Zero~\cite{silver_mastering_2017-1} removes the dependency on human
 data.
 It learns exclusively from self-play, using a single network with a policy and a value head.
-The training loop is an instance of GIP (\cref{sec:rl-dp}): MCTS improves
+The training loop is an instance of GPI (\cref{sec:rl-dp}): MCTS improves
 the policy and the improved policy is used to generate new games to train the
 networks to predict the output of MCTS.
 AlphaGo Zero defeated the published AlphaGo by 100 games to 0.
@@ -63,57 +58,62 @@ approach to continuous action spaces and further benchmarks.
 \section{General Architecture}\label{sec:ez-architecture}
 
 The core architecture of EfficientZero is mostly similar to MuZero.
-Its world model consists of a representation network $R$, a dynamics network $G$,
-a value network $V$, a value-prefix network $VP$, and a policy network $P$,
+Its world model consists of a representation network $h$, a dynamics network $g$,
+a value network $v$, a value-prefix network $\vpnet$, and a policy network $p$,
 wired together as shown in \cref{fig:ez-architecture}.
 
 \input{figures/ez-architecture}
 
-\paragraph{Representation network $R$}
-The representation network $R:O\mapsto S$ maps observations $o_t$ to a latent
-representation $s_t$.
+\paragraph{Representation network $h$}
+The representation network $h:\mathcal{O}\to\mathcal{S}$ maps observations $o_t$
+to a latent representation $s_t$.
 Other networks operate only on latent representations, so it can be interpreted
 as extracting information from the observations that is relevant for achieving
-a high reward, while discarding non-relevant information.
-This sets it apart from other approaches that operate on raw observations \todo{cite other approaches that do this}.
+a high reward, while discarding non-relevant information~\cite{grimm_value_2020} .
+This sets it apart from world models that are trained to predict or reconstruct
+raw observations~\cite{ha_world_2018,kaiser_model-based_2024,hafner_learning_2019,hafner_mastering_2024},
+where the model must also capture detail that is irrelevant to the task.
 
-\paragraph{Dynamics network $G$}
-The dynamics network $G:S\times A\mapsto S$ maps a current latent $s^i$ and
-an action $a_i$ to the next latent $s^{i+1}=G(s^i,a^i)$.
+\paragraph{Dynamics network $g$}
+The dynamics network $g:\mathcal{S}\times\mathcal{A}\to\mathcal{S}$ maps a
+current latent $s^i$ and an action $a^i$ to the next latent
+$s^{i+1}=g(s^i,a^i;\theta)$.
 A single forwarding step is known as a \emph{rollout} step.
-$G$ can be interpreted as a learned model of the environment behavior.
+$g$ can be interpreted as a learned model of the environment behavior.
 Instead of actually taking action $a^i$ and then re-encoding the observation
-$s^{i+1}=R(o^{i+1}$, we can \emph{imagine} forwarding the latent.
+$s^{i+1}=h(o^{i+1};\theta)$, we can \emph{imagine} forwarding the latent.
 This is a key part of the high sample efficiency of EfficientZero.
 
-\paragraph{Value network $V$}
-The value network $V:S\mapsto\mathbb{R}$ estimates the expected discounted return (\cref{eq:value-function} of 
-a state $s_t$.
+\paragraph{Value network $v$}
+The value network $v:\mathcal{S}\to\mathbb{R}$ estimates the expected discounted
+return (\cref{eq:value-function}) of a state $s_t$.
 
-\paragraph{Value-prefix network $VP$}
-The value prefix $VP:S\times A^k\mapsto\mathbb{R}$ estimates the expected sum of all
-rewards when starting in a state $s_t$ and applying actions $(a^0,a^1,\dots,a^k)$.
-Combining the value network $V$ with the value prefix network $VP$ allows MCTS to
-guide its search towards high-valued actions and states.
+\paragraph{Value-prefix network $\vpnet$}
+The value prefix $\vpnet:\mathcal{S}\times\mathcal{A}^k\to\mathbb{R}$ estimates
+the expected discounted sum of all rewards when starting in a state $s_t$ and
+applying actions $(a^1,\dots,a^k)$.
+Combining the value network $v$ with the value-prefix network $\vpnet$ allows
+MCTS to guide its search towards high-valued actions and states.
 
-\paragraph{Policy network $P$}
-The policy network $P:S\mapsto\mathcal{P}(A)$ maps a state $s_t$ to a probability
-distribution over actions $p(a)$.
+\paragraph{Policy network $p$}
+The policy network $p:\mathcal{S}\to\Delta(\mathcal{A})$ maps a state $s_t$ to a
+probability distribution over actions, whose component for action $a$ is written
+$p_a(s)$.
 It models a learned policy $\pi(a|s)$ and acts as a search prior for MCTS.
 
 \section{Monte-Carlo Tree Search}\label{sec:ez-mcts}
 
 Monte-Carlo tree search
-(MCTS)\cite{hutchison_bandit_2006,hutchison_efficient_2007} is a tree search
-algorithm that derives from the UCB rule (\cref{eq:ucb}) introduced in
-\cref{sec:rl-exploration}, called UCT.
-It searches through the action space $A$ to find an action that maximizes the
+(MCTS)~\cite{hutchison_bandit_2006,hutchison_efficient_2007} is a tree search
+algorithm. It makes use of the UCT rule that derives from the UCB rule (\cref{eq:ucb}) introduced in
+\cref{sec:rl-exploration}.
+It searches through the action space $\mathcal{A}$ to find an action that maximizes the
 expected future return.
-On a high level, the search is guided by the policy network $P$, which acts as
+On a high level, the search is guided by the policy network $p$, which acts as
 a prior distribution over the possible actions, as well as the value network
-$V$ and value prefix network $VP$ to prefer higher-valued states.
+$v$ and value-prefix network $\vpnet$ to prefer higher-valued states.
 The use of a prior entails a slight modification of the UCT rule, called pUCT (prior UCT).
-The dynamics network $G$ is used to \enquote{imagine} the successor states when
+The dynamics network $g$ is used to \enquote{imagine} the successor states when
 taking certain actions without actually needing to interact with the environment.
 MCTS is applied in each state and produces a root visit count distribution as well
 as a root value estimate.
@@ -123,8 +123,8 @@ which to step the environment.
 MCTS itself is a general framework that can be adapted to many situations.
 It can be interpreted as a policy improvement operator: given a policy prior
 and search heuristics, it produces a new, better policy.
-Previous algorithms like AlphaGo did not use imagined rollouts, but relied on searching
-while stepping a live environment.
+Previous algorithms like AlphaGo did not use imagined rollouts, but relied on a perfect simulator
+of the Go rules.
 The use of imagined rollouts is a key factor in the sample efficiency of EfficientZero.
 
 The MCTS variant used in EfficientZero consists of three phases that are
@@ -148,41 +148,50 @@ Actions are chosen using the pUCT rule~\cite{schrittwieser_mastering_2020}:
 \begin{equation}\label{eq:ez-puct}
   a^k = \argmax_a\left[
     \bar{Q}(s,a)
-    + P(s,a)
+    + p_a(s)
       \cdot\frac{\sqrt{\sum_b N(s,b)}}{1+N(s,a)}
       \cdot\left(c_1+\log\frac{\sum_b N(s,b)+c_2+1}{c_2}\right)
   \right],
 \end{equation}
 
 where constants $c_1,c_2$ control the exploration term, $N(s,a)$ is the number
-of times action $a$ has already been selected in state $s$, $P(s,a)$ is the
+of times action $a$ has already been selected in state $s$, $p_a(s)$ is the
 policy prior, and $\bar{Q}(s,a)$ is a normalized, empirical action value.
-Writing $s'=G(s,a)$ for the child reached by $a$ and $r(s,a)$ for the reward on
-that edge:
+Writing $s'=g(s,a;\theta)$ for the child reached by $a$ and $r(s,a)$ for the
+reward on that edge:
 
 \begin{equation}\label{eq:ez-qnorm}
   \begin{aligned}
     \bar{Q}(s,a)
       &= \frac{Q(s,a)-\min_{(s',a')\in\mathit{Tree}} Q(s',a')}
               {\max_{(s',a')\in\mathit{Tree}} Q(s',a')-\min_{(s',a')\in\mathit{Tree}} Q(s',a')}, \\
-    Q(s,a) &= r(s,a)+\gamma\,V(s'), \\
-    V(s')  &= \frac{Q_\Sigma(s')}{N(s')}.
+    Q(s,a) &= r(s,a)+\gamma\,\bar{v}(s'), \\
+    \bar{v}(s')  &= \frac{Q_\Sigma(s')}{N(s')}.
   \end{aligned}
 \end{equation}
+
+% TODO: $r(s,a)$ is not a prediction of the model: EfficientZero has no per-step
+% reward head and recovers the edge reward as a difference of consecutive value
+% prefixes (\cref{sec:ez-value-prefix}). Say so here --- as written, the reader
+% meets $r$ in \cref{eq:ez-qnorm} and \cref{eq:ez-backup} and only learns 150
+% lines later that nothing produces it directly.
 
 To improve exploration, the root priors are perturbed with Dirichlet noise
 before the search begins.
 
 \begin{equation}\label{eq:ez-dirichlet}
-  P(s^0,a) \leftarrow (1-\rho)\,P(s^0,a)+\rho\,\eta_a,
+  p_a(s^0) \leftarrow (1-\rho)\,p_a(s^0)+\rho\,\eta_a,
   \qquad \eta\sim\operatorname{Dir}(\xi),
 \end{equation}
+
+where $\rho\in[0,1]$ interpolates between the prior and Dirichlet noise and $\xi$
+controls its shape.
 
 \paragraph{Expansion and Evaluation}\label{sec:ez-mcts-expansion}
 
 When a sequence of actions has been selected and an unexpanded node is reached,
 it is expanded: the previous latent state is unrolled one step to get the new
-latent $s^{k+1}=G(s^k,a^k)$ and the value statistics are initialized.
+latent $s^{k+1}=g(s^k,a^k;\theta)$ and the value statistics are initialized.
 
 \paragraph{Backup}\label{sec:ez-mcts-backup}
 
@@ -195,7 +204,7 @@ rewards below it, bootstrapped with the leaf estimate:
   G^k=\sum_{\tau=0}^{l-1-k}\gamma^{\tau}\,r^{k+1+\tau}\;+\;\gamma^{l-k}\,v^l,
 \end{equation}
 
-which the descent from the leaf computes recursively as $G^l=v^l$ and
+which the backup from the leaf computes recursively as $G^l=v^l$ and
 $G^k=r^{k+1}+\gamma\,G^{k+1}$.
 Each node on the path then accumulates its return and one visit:
 
@@ -217,7 +226,7 @@ EfficientZero uses a parallel architecture with multiple worker types.
 
 New data is generated by interacting with the environment.
 At every time step $t$, a worker encodes the latest observation into
-$s_t = R(o_t)$ and runs MCTS from this root.
+$s_t = h(o_t;\theta)$ and runs MCTS from this root.
 The resulting root visit count distribution is then sampled using a temperature
 $T$ and the action passed to the environment:
 
@@ -231,7 +240,7 @@ The temperature $T$ interpolates between sampling proportionally to the visit
 counts ($T=1$) and greedily playing the most-visited action
 ($T\rightarrow 0$).
 
-The resulting observation-reward tuples $(o,r)$ are stored in a replay buffer,
+The resulting observation-reward tuples $(o,u)$ are stored in a replay buffer,
 together with the root visit count distribution and root state value.
 As soon as an episode ends, the environment state is reset and data collection starts anew.
 
@@ -239,8 +248,8 @@ As soon as an episode ends, the environment state is reset and data collection s
 
 The rollout workers repeatedly sample positions from the replay buffer and
 prepare training batches.
-Each trajectory position inside of the replay buffer has a sampling priority associated with it~\cite{schaul_prioritized_2016}.
-This priority is proportional to the loss of the value network $V$ evaluated at this position.
+Each trajectory position inside the replay buffer has a sampling priority associated with it~\cite{schaul_prioritized_2016}.
+This priority is proportional to the loss of the value network $v$ evaluated at this position.
 Prioritizing such positions with a high loss accelerates learning.
 
 \paragraph{Reanalyze workers}
@@ -248,38 +257,91 @@ Prioritizing such positions with a high loss accelerates learning.
 Prepared batches then get processed by reanalyze workers.
 \emph{MuZero Reanalyze} is an extension to the basic MuZero algorithm that improves the freshness of
 data by re-running MCTS on old data with updated model weights, contributing to data reuse and sample efficiency.
-Reanalyzed batches are finally passed to the GPU workers where the model is trained.\\
+Reanalyzed batches are finally passed to the GPU workers where the model is trained.
 
 This architecture is an instance of generalized policy iteration:
 MCTS serves as the policy improvement operator~\cite{grill_monte-carlo_2020}, while learning from stored experience
 improves the value estimates.
 
+\section{Training Objective}\label{sec:ez-loss}
+
+The reanalyzed batches are then used to jointly train all networks.
+A batch entry starting at position $t$ is encoded once as $s^0=h(o_t;\theta)$ and then
+unrolled for $K$ steps with the actions that were actually taken,
+$\hat{s}^k=g(s^{k-1},a_{t+k};\theta)$.
+Each unrolled latent $s^k$ is supervised with the targets located at the real
+position $t+k$. These include the actual reward and actual observation as well
+as MCTS root visit distribution and root value target.
+
+\paragraph{Policy target}
+The policy head is trained toward the MCTS root visit distribution $\pi_{t+k}$
+to align the current policy with the improved MCTS policy.
+
+\paragraph{Value target}
+The value head is trained toward an $n$-step return of actual rewards,
+bootstrapped with the root value that MCTS produced:
+
+\begin{equation}\label{eq:ez-value-target}
+  z_t=\sum_{i=0}^{n-1}\gamma^{i}\,u_{t+i+1}+\gamma^{n}\,v^{\text{MCTS}}_{t+n},
+\end{equation}
+
+where $u$ are the actual rewards observed by the data workers and
+$v^{\text{MCTS}}_{t+n}$ is the MCTS root value.
+
+\paragraph{Value-prefix target}
+The value-prefix head is trained toward $x_{t,k}$ of \cref{eq:ez-value-prefix},
+the discounted reward accumulated between the root and unroll step $k$.
+It replaces MuZero's per-step reward target.
+
+\paragraph{Consistency target}
+The dynamics network is additionally supervised by a consistency loss
+calculated from the predicted successor latent $\hat{s}^k=g(s^{k-1},a_{t+k};\theta)$
+and true successor latent $h(o_{t+k};\theta)$.
+
+\paragraph{Total loss}
+The four terms are weighted and summed over the unroll horizon $0\dots K$:
+
+\begin{equation}\label{eq:ez-loss}
+  \begin{split}
+    \mathcal{L}(\theta)=\sum_{k=0}^{K}\Big[
+      &\lambda_p\,\ell\!\left(\pi_{t+k},p(s^k;\theta)\right)
+       + \lambda_v\,\ell\!\left(z_{t+k},v(s^k;\theta)\right)\\
+      &+ \lambda_x\,\ell\!\left(x_{t,k},\vpnet(s^0,a_{t+1:t+k};\theta)\right)
+       + \lambda_c\,\mathcal{L}^k_{\text{consistency}}\Big],
+  \end{split}
+\end{equation}
+
+where $\ell$ is the cross entropy between a target and the categorical
+prediction of the corresponding head.
+The value loss $\lambda_v\,\ell\!\left(z_{t+k},v(s^k;\theta)\right)$ is used to update
+the replay buffer priorities.
+
 \section{EfficientZero's Improvements}\label{sec:ez-improvements}
 
-The EfficientZero paper~\cite{ye_mastering_2021} identifies three weaknesses
-of the vanilla architecture introduced above.
-To improve the learner performance, they introduce three changes:
+The EfficientZero paper~\cite{ye_mastering_2021} identifies three weaknesses of
+the vanilla architecture. To improve the learner performance, they introduce
+three changes:
 
 \subsection{Self-Supervised Consistency Loss}\label{sec:ez-consistency}
 
 In MuZero, training the dynamics function happens implicitly through the prediction
 of rewards, policies and values.
 In a reward-sparse environment, this signal is often not strong enough and causes
-the dynamics function $G$ to lose its predictive power.
+the dynamics function $g$ to lose its predictive power.
 
 EfficientZero adds an additional, SimSiam-inspired~\cite{chen_exploring_2020}
 training signal.
-The idea is that the imagined next state $\hat{s}_{t+1}=G(s_t,a_{t+1})$ and the encoded
-real next state $s_{t+1}=H(o_{t+1})$ should be similar.
-To this end, both states are passed through a projection network $P_1$, the imagined
-branch additionally through a prediction head $P_2$, and the two outputs are pulled
-together with a negative cosine similarity loss:
+The idea is that the imagined next state $\hat{s}^{k}=g(s^{k-1},a^{k};\theta)$
+and the encoded real next state $s^{k}=h(o_{t+k};\theta)$ should be similar.
+To this end, both states are passed through a projection network $\projnet$, the
+imagined branch additionally through a prediction head $\prednet$, and the two
+outputs are pulled together with a negative cosine similarity loss:
 
 \begin{equation}\label{eq:ez-consistency}
   \mathcal{L}_{\text{consistency}}
   = -\operatorname{cossim}\!\Big(
-      \operatorname{sg}\big(P_1(s_{t+1})\big),\;
-      P_2\big(P_1(\hat{s}_{t+1})\big)
+      \operatorname{sg}\big(\projnet(s^{k};\theta)\big),\;
+      \prednet\big(\projnet(\hat{s}^{k};\theta);\theta\big)
     \Big),
 \end{equation}
 
@@ -314,8 +376,8 @@ collected by a potentially older policy and might therefore be biased.
 Off-policy bias of multi-step targets is a classical problem.
 EfficientZero corrects the target by varying the bootstrap horizon:
 a trajectory that is $\tau$ updates old uses a shortened horizon $l\leq n$,
-causing less stale data to enter the boostrapped value target.
+causing less stale data to enter the bootstrapped value target.
 
 \begin{equation}\label{eq:ez-corrected-target}
-  z_t=\sum_{i=0}^{l-1}\gamma^{i}\,u_{t+i+1}+\gamma^{l}\,\nu^{\text{MCTS}}_{t+l}.
+  z_t=\sum_{i=0}^{l-1}\gamma^{i}\,u_{t+i+1}+\gamma^{l}\,v^{\text{MCTS}}_{t+l}.
 \end{equation}

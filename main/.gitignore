@@ -1,0 +1,21 @@
+# Everything the build produces: PDFs in output/ and output/chapters/, the
+# intermediate files in output/aux/. See the Makefile.
+output/
+
+# A bare `latexmk thesis.tex' or an editor's own build ignores -outdir and
+# writes next to the sources; keep those out of the repository too.
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*-SAVE-ERROR
+/thesis.pdf

@@ -1,0 +1,90 @@
+% ============================================================================
+% chapter.tex -- one chapter on its own, for sending a draft out for review
+%
+% This file is never built directly. `make chapters' runs one latexmk pass per
+% chapter over it, passing the chapter in on the command line:
+%
+%   latexmk -jobname=background -usepretex='\def\ChapterFile{sections/background}
+%           \def\ChapterNumber{2}\def\ChapterKind{chapter}
+%           \def\ThesisAux{output/aux/thesis}' chapter.tex
+%
+% The result is a self-contained PDF that keeps the numbering of the full
+% thesis: the chapter carries its real number, and \cref to another chapter
+% resolves against thesis.aux instead of printing ??. Page numbers and citation
+% numbers are local to the excerpt -- they cannot be anything else, since the
+% surrounding chapters are not typeset.
+% ============================================================================
+
+\input{preamble}
+
+\makeatletter
+\@ifundefined{ChapterFile}{%
+  \GenericError{}{chapter.tex is not built directly --- use `make chapters' or
+    `make chapter-NAME' instead}{}{}%
+  \stop
+}{}
+\makeatother
+
+% ----- Cross-references into the rest of the thesis -------------------------
+% xr pulls in every label of the full thesis, so a \cref to another chapter
+% shows the number that chapter has in thesis.pdf. hyperref is already loaded
+% by the class, hence plain xr rather than xr-hyper: references into the other
+% chapters are correct but not clickable, which is what a chapter excerpt can
+% offer anyway.
+\usepackage{xr}
+\expandafter\externaldocument\expandafter{\ThesisAux}
+
+% Every label of *this* chapter is therefore defined twice: once by the import
+% above, and once by this build's own .aux, which is read at \begin{document}
+% and wins -- so in-chapter references get this PDF's pages and working links.
+% Drop the kernel's duplicate-label warning, which would otherwise fire for
+% every label in the chapter. Genuinely duplicated labels are still reported by
+% the full thesis build, which is the build that has all of them.
+\makeatletter
+\def\@newl@bel#1#2#3{\global\@namedef{#1@#2}{#3}}
+\makeatother
+
+% No empty verso pages: the excerpt opens with a cover note and the chapter
+% follows on the next page, wherever that falls.
+\KOMAoptions{open=any}
+
+\begin{document}
+
+\setpdf
+\hypersetup{pdftitle={\thethesistype{} (draft excerpt): \ChapterFile}}
+
+\mainmatter
+
+% ----- Cover note -----------------------------------------------------------
+% Says what the reader is holding, so a chapter that has been mailed around for
+% a while cannot be mistaken for the thesis or for a newer draft of itself.
+\thispagestyle{empty}
+\begin{center}
+  \sffamily
+  {\large\bfseries\thetitle\par}
+  \vskip 1em
+  {\thethesistype{} of \theauthor\par}
+  \vskip .3em
+  {Draft excerpt, \today\par}
+\end{center}
+\vskip 2em
+\noindent
+This PDF contains
+\ifthenelse{\equal{\ChapterKind}{appendix}}{the appendix}{Chapter~\ChapterNumber}
+of the thesis and nothing else. Chapter, section and figure numbers are the
+ones the full document uses, and references to material outside this excerpt
+name their number there; page numbers, citation numbers and the bibliography
+are local to this file.
+
+% ----- The chapter ----------------------------------------------------------
+\ifthenelse{\equal{\ChapterKind}{appendix}}{%
+  \appendix
+}{%
+  \setcounter{chapter}{\numexpr\ChapterNumber-1\relax}%
+}
+\input{\ChapterFile}
+
+% Only the works cited in this chapter, numbered from one.
+\printbibliography
+
+\end{document}

@@ -8,59 +8,124 @@
 
 \section{Motivation}\label{sec:introduction-motivation}
 
-% TODO: Condense the argument that is developed at length in \cref{chap:background}:
-%   - coverage-guided greybox fuzzing is the dominant technique but plateaus
-%     (\cref{sec:fuzzing-limitations}),
-%   - stateful/reactive targets break its one-input-per-execution model
-%     (\cref{sec:fuzzing-stateful}),
-%   - emulation restores observability and a cheap exact reset, at the cost of
-%     throughput (\cref{sec:fuzzing-emulation}) --- which makes sample efficiency,
-%     not executions per second, the binding constraint,
-%   - hence a sample-efficient, model-based RL agent (EfficientZero) rather than
-%     the model-free learners used by prior RL fuzzers.
+Modern-day automatic security testing is essential for finding vulnerabilities
+and keeping software secure.
+Coverage-guided greybox fuzzing plays a major role and has an impressive track
+record: OSS-Fuzz alone has helped fix over \num{13000} security vulnerabilities
+and \num{50000} bugs across \num{1000} projects~\cite{arya_oss-fuzz_nodate}.
+Its success rests on exploring a program by iteratively refining a set of inputs
+with the goal of maximizing execution coverage, exposing bugs along the way.
+Strikingly, it never forms an explicit model of what makes an input good,
+but relies only on a scalar coverage novelty signal, ensuring high execution
+throughput.
+
+While this sparse feedback signal enables testing of a large number of different inputs,
+it also limits the amount of information that can be extracted from a program's execution trace.
+\textcite{bohme_fuzzing_2020} show that while a linearly increasing compute budget
+linearly reduces the time to find a given set of bugs, discovering
+new bugs requires an exponentially increasing one.
+
+The decision of where to spend the execution budget is largely determined by
+hand-tuned heuristics.
+This is suboptimal since it has been shown that an optimal fuzzing schedule
+is strongly target-dependent~\cite{woo_scheduling_2013,bohme_coverage-based_2016}.
+A large part of the research surveyed in \cref{sec:fuzzing-limitations} can be
+read as an attempt to extract more information from the same executions.
+
+Stateful targets present an even larger problem.
+Coverage-guided fuzzing models a program as a pure function from an
+input to a coverage vector, and resets it to its initial state before each new input.
+Stateful targets are different: their behavior depends not only on a new input,
+but on a (potentially very large) history of inputs.
+Examples for such targets include highly relevant software systems such as
+industrial control systems, and embedded and IoT
+stacks~\cite{zhang_iot_2014,sadeghi_security_2015,borcherding_bandits_2023,ang_quic-fuzz_2025}.
+
+The information available to a fuzzer changes depending on how targets are executed.
+While native execution provides high throughput, using emulation allows for easier
+program instrumentation without the need for recompilation and enables a fuzzer to
+run programs compiled for different architectures.
+Some emulators also allow the fuzzer to take a lightweight snapshot of a programs'
+execution state and restore it afterwards, making emulation an attractive direction
+for stateful fuzzing.
+
+Fuzzing can be modeled as sequential decision making under uncertainty with a scalar progress signal.
+Reinforcement learning is a machine learning paradigm that aims at solving these
+kinds of problems.
+While model-free RL methods have been applied to fuzzing before~\cite{bottinger_deep_2018,binosi_rainfuzz_2023,wang_reinforcement_2021,wang_syzvegas_2021,borcherding_bandits_2023},
+the use of model-based RL promises a higher sample efficiency, requiring fewer
+executions of a program to achieve a given goal.
+
+EfficientZero~\cite{ye_mastering_2021} is a model-based RL method that learns a
+latent model of the environment's dynamics and plans inside it with Monte-Carlo
+tree search, reaching above-average human performance on Atari from roughly two
+hours of game experience~\cite{kaiser_model-based_2024}.
+It allows an agent to learn how to choose an optimal set of actions given
+potentially incomplete observations from the environment.
+This makes it an interesting research direction for fuzzing.
 
 \section{Problem Statement and Research Questions}\label{sec:introduction-rqs}
 
-% TODO: State the problem in one paragraph, then the research questions. These are
-% currently drafted as prose bullets in \cref{sec:rlfuzz-gap}; promote them here as a
-% numbered list and cite them by number from \cref{chap:results} onward, so every
-% result answers a named question.
-%
-% Proposed numbering (each RQ maps to one results section):
-%   RQ1  Can EfficientZero learn useful policies on fuzzing-shaped reward
-%        landscapes (sparse, decaying, heavily aliased observations)?
-%        -> \cref{sec:results-input-actions}
-%   RQ2  How should the fuzzing action space be modelled --- as the input the
-%        program consumes, or as operations on a seed corpus?  What does each
-%        formulation cost and buy?
-%        -> \cref{sec:results-head-to-head}
-%   RQ3  Does planning with a learned model help, or is the benefit attributable
-%        to the learned value function alone?
-%        -> \cref{sec:results-ablations} (sims=1 vs.\ full MCTS)
-%   RQ4  Does the approach transfer from diagnostic microbenchmarks
-%        (\cref{sec:targets-microbenchmarks}) to targets whose reward was not
-%        designed for it (\cref{sec:targets-realistic})?
-%        -> \cref{sec:results-corpus-actions,sec:discussion-threats}
+The main question this thesis addresses is whether model-based RL can be
+successfully used as the core of a fuzzer. EfficientZero is extremely slow
+compared to traditional fuzzers, but can learn a useful model of its
+environment and make better use of information.
+
+We pose three research questions:
+
+\begin{enumerate}[label=\textbf{RQ\arabic*.}, ref=RQ\arabic*, leftmargin=*]
+  \item\label{rq:learnability}
+    Can EfficientZero learn a useful policy on fuzzing-shaped rewards?
+    Coverage rewards are sparse and observations are aliased and only a partial
+    view of a program's true state.
+
+  \item\label{rq:action-space}
+    How should the fuzzing action space be modelled?
+    We pursue two approaches: modeling actual inputs a program expects as actions,
+    as well as modeling mutation operators acting on a corpus as actions.
+
+  \item\label{rq:planning}
+    Does planning with a learned model help? A core part of EfficientZero is
+    \enquote{imagining} how a program behaves given an input. How well can this be learned?
+\end{enumerate}
 
 \section{Contributions}\label{sec:introduction-contributions}
 
-% TODO: Enumerate, one sentence each:
-%   1. Two MDP formulations of emulator-based greybox fuzzing that satisfy the
-%      planning contract of a MuZero-family learner (\cref{chap:fuzzing-mdp}),
-%      and a controlled comparison of the two on a shared target
-%      (\cref{sec:results-head-to-head}).
-%   2. An implementation: a reusable EfficientZero in Rust on burn, and its
-%      integration with the MOGI emulator as a fuzzing driver
-%      (\cref{chap:implementation}).
-%   3. A diagnostic methodology for model-based RL collapse in this setting ---
-%      probes, failure taxonomy, and the evidence that distinguishes the modes
-%      (\cref{chap:failure-modes}).
-%   4. An empirical evaluation with a pre-registered multi-seed protocol,
-%      reporting both executions and wall-clock (\cref{chap:methodology,chap:results}).
+This thesis makes three contributions.
+
+\begin{enumerate}
+  \item \emph{Two MDP formulations of emulator-based greybox fuzzing} that allow
+    RL algorithms to drive fuzzing of various target executables.
+
+  \item \emph{An implementation}: a reusable EfficientZero implementation in Rust
+    using the \code{Burn} deep-learning framework, and the fuzzer \emph{mugiwara}
+    built on top of the MOGI emulation framework.
+
+  \item \emph{An empirical evaluation} including a detailed ablation study
+    on a simple json parser as well as fuzzing runs for various programs.
+\end{enumerate}
 
 \section{Outline}\label{sec:introduction-outline}
 
-% TODO: One short paragraph walking the reader through the parts:
-%   background (\cref{chap:background,chap:efficientzero,chap:related-work}),
-%   approach (\cref{chap:platform,chap:fuzzing-mdp,chap:input-actions,chap:corpus-actions,chap:implementation}),
-%   evaluation (\cref{chap:targets,chap:methodology,chap:results,chap:failure-modes,chap:discussion}).
+The rest of this document is structured as follows.
+
+\cref{chap:background} introduces coverage-guided greybox fuzzing and
+reinforcement learning, \cref{chap:efficientzero} describes EfficientZero, and
+\cref{chap:related-work} surveys prior applications of RL to fuzzing and the
+difficulties they report.
+
+\cref{chap:platform} presents MOGI, the emulation platform this thesis builds
+on, and the coverage and snapshot primitives it provides.
+\cref{chap:fuzzing-mdp} models emulator-based fuzzing as a Markov decision
+process.
+\cref{chap:input-actions,chap:corpus-actions} introduce the two different ways
+we model the action space.
+\cref{chap:implementation} describes the resulting system.
+
+\cref{chap:targets} introduces the fuzzing targets, and \cref{chap:methodology}
+the experimental methodology.
+\cref{chap:results} reports the results for both formulations,
+\cref{chap:failure-modes} the observed failure modes and \cref{chap:discussion}
+compares \emph{mugiwara} against conventional fuzzers.
+\cref{chap:conclusion} concludes the research questions and
+\cref{chap:future-work} outlines follow-up work.

@@ -63,7 +63,7 @@
 % \cref{sec:corpus-determinism} buys many executions per agent decision, so the two
 % formulations sit at different points on the same trade-off.
 
-\section{Multi-Seed Protocol}\label{sec:methodology-seeds}
+\section{Multi-Run Protocol}\label{sec:methodology-runs}
 
 % TODO: The reliability protocol, and the statistical framing it forces.
 %
@@ -71,7 +71,7 @@
 % collapses, so this is a mixture of two populations and a mean lands in a valley
 % where no run lives. Report solve rate with a Wilson score interval, report
 % conditional-on-success metrics separately ("of the runs that solved, the median
-% executions to solve was ..."), and plot medians with quantile bands or all seeds
+% executions to solve was ..."), and plot medians with quantile bands or all runs
 % individually --- never mean and standard deviation.
 %
 % Because the environment is deterministic (\cref{sec:platform-determinism}), all
@@ -79,12 +79,12 @@
 % This is a reliability study of the learner, and stating that makes the variance
 % analysis of \cref{sec:results-ablations} interpretable rather than apologetic.
 %
-% Protocol: a pre-registered seed pool fixed before any results are looked at;
-% at least ten seeds for headline configurations, around five paired seeds for
+% Protocol: a pre-registered set of RNG seeds fixed before any results are looked at;
+% at least ten runs for headline configurations, around five paired runs for
 % load-bearing ablations, three for peripheral ones and labelled indicative. Compare
-% paired at fixed seeds --- McNemar or a paired bootstrap for rates, Wilcoxon signed
+% paired at fixed RNG seeds --- McNemar or a paired bootstrap for rates, Wilcoxon signed
 % rank for continuous metrics --- and report effect sizes rather than p-values alone.
-% If an effect falls inside the seed band, report insensitivity: that is a result.
+% If an effect falls inside the run-to-run band, report insensitivity: that is a result.
 %
 % Distinguish "ever reached" from "still solving at the end of training": late
 % collapse wipes out earlier success, so state when the reported model was snapshotted.
@@ -98,13 +98,13 @@
 %     worked example --- the reward gap must span more than one bin or the heads go
 %     action-blind (\cref{sec:input-reward}); show the arithmetic,
 %   - sensitivity-analyzed: the few parameters the result hinges on, with a small
-%     multi-seed sweep showing a stable basin.
+%     multi-run sweep showing a stable basin.
 %
-% State that no joint grid search was run and why (runs cost hours; seed variance can
+% State that no joint grid search was run and why (runs cost hours; run-to-run variance can
 % swamp the parameter effect, so single-seed sweeps mislead). For the learning rate,
 % use the evidence already in hand rather than inheritance: a rate that destabilized
 % training through invalid replay priorities is a stronger justification than a
-% citation. Any reported sweep uses at least three seeds per point.
+% citation. Any reported sweep uses at least three runs per point.
 %
 % Finally, the move that answers "you tuned to your result": the configuration is
 % frozen after development on \cref{sec:target-sequence} and transferred UNCHANGED to
@@ -118,6 +118,6 @@
 % hypothesis-generating; anything discovered by that search is contaminated as a
 % tested claim, and with dozens of diagnostic series some will look significant by
 % chance. Every headline claim in \cref{chap:results} is re-run fresh, on the
-% pre-registered seed pool, with the frozen configuration and the final code, and
+% pre-registered set of RNG seeds, with the frozen configuration and the final code, and
 % reported as confirmatory. Results from before a correctness fix are never mixed with
 % results from after it.

@@ -20,7 +20,7 @@ The technique was first introduced in the early 1990s as a way of testing the
 reliability of UNIX utilities~\cite{miller_empirical_1990}.
 The authors were inspired by spurious characters being introduced to a dial-up
 line causing crashes of common programs on a remote workstation.
-This lad to the creation of a simple command-line utility \emph{fuzz} that produced
+This led to the creation of a simple command-line utility \emph{fuzz} that produced
 random input strings that were then sent to various utilities in the hope of causing
 a crash in the form of a core dump or a hang.
 They managed to find inputs that caused between 24\% and 33\% of the tested
@@ -34,10 +34,10 @@ For example, Google's OSS-Fuzz
 \enquote{aims to make common open source software more secure and stable by combining
 modern fuzzing techniques with scalable, distributed execution}~\cite{arya_oss-fuzz_nodate}.
 It supports a variety of target languages and is therefore widely applicable.
-OSS-Fuzz has helped to fix over 13,000 security vulnerabilities and 50,000 bugs across
-1,000 projects, proving the importance of modern fuzzing techniques for ensuring reliability and security.\\
+OSS-Fuzz has helped to fix over \num{13000} security vulnerabilities and \num{50000} bugs across
+\num{1000} projects, proving the importance of modern fuzzing techniques for ensuring reliability and security.
 
-\subsection{Core Terminology\label{sec:fuzzing-definitions}}
+\subsection{Core Terminology}\label{sec:fuzzing-definitions}
 
 We will introduce some general definitions that mainly follow \textcite{manes_art_2019}.
 
@@ -51,7 +51,7 @@ We will introduce some general definitions that mainly follow \textcite{manes_ar
     A security policy defines which observable behaviors of the PUT are acceptable.
     Each execution either satisfies or violates a given security policy. A common
     security policy deems all executions that result in crashes like segmentation
-    fauls to be violations.
+    faults to be violations.
 
   \item \emph{Bug Oracle:}
     A bug oracle is a program that decides whether a given input to the PUT violates
@@ -79,6 +79,16 @@ We will introduce some general definitions that mainly follow \textcite{manes_ar
     and the test case recorded in case the bug oracle deems it a violation of the
     security policy.
 
+  \item \emph{Seed:}
+    A seed is a, commonly well-structured, input to the PUT that the fuzzer uses
+    as the basis for deriving new test cases by modifying it.
+
+  \item \emph{Corpus:}
+    The corpus is the collection of seeds the fuzzer maintains. Coverage-guided
+    fuzzers evolve it over the course of a campaign by retaining test cases that
+    exhibit new behavior. We write \emph{initial corpus} for the collection the
+    campaign starts from, which is usually supplied by the user.
+
   \item \emph{Fuzz Configuration:}
     A fuzz configuration comprises the parameter values that control the fuzzing
     algorithm.
@@ -86,10 +96,10 @@ We will introduce some general definitions that mainly follow \textcite{manes_ar
 
 % TODO include the Fuzz Testing ALGORITHM scheme with the steps PREPROCESS, CONTINUE, etc.
 
-\subsection{Taxonomy\label{sec:fuzzing-taxonomy}}
+\subsection{Taxonomy}\label{sec:fuzzing-taxonomy}
 
-Fuzzers can be roughly divided into three classes, defined by the amount of
-information from the execution of the PUT available to them.~\cite{liang_fuzzing_2018}.
+Fuzzers can be roughly divided into four classes, defined by the amount of
+information from the execution of the PUT available to them~\cite{liang_fuzzing_2018}.
 
 \subsubsection{Black-box fuzzing}
 
@@ -104,7 +114,7 @@ This makes it difficult for fuzzers to generate high-coverage inputs.
 
 \subsubsection{White-box fuzzing}
 
-In constrast to pure black-box fuzzers, white-box fuzzers have full access to
+In contrast to pure black-box fuzzers, white-box fuzzers have full access to
 the internal logic of the PUT as well as usually any original source code or
 documentation which can greatly aid the fuzzing process.
 In practice, this allows an approach known as \emph{symbolic execution}: instead
@@ -115,21 +125,20 @@ While this allows to easily find test cases of interest in theory, this approach
 to large PUTs due to the path explosion problem.
 A popular white-box fuzzer is SAGE~\cite{godefroid_sage_2012}.
 
-\subsubsection{Grey-box fuzzing}
+\subsubsection{Greybox fuzzing}
 
 Since full information is often not available but observing certain parts
-of the internal behavior of the PUT might still be possible, \textit{grey-box}
+of the internal behavior of the PUT might still be possible, \textit{greybox}
 fuzzing represents an important middle-ground between the previous two extremes.
 By making use of runtime instrumentation information like code coverage, the fuzzer can
 better judge the behavior of the PUT for a given input and direct its exploration efforts towards promising regions.
-Limitations are discussed in detail in~\cref{sec:fuzzing-limitations}.
 
 \subsubsection{Hybrid approaches}
 
 There also exists a variety of hybrid approaches combining different fuzzing methodologies.
 A prominent example is \emph{Driller} that alternates pure greybox fuzzing with
 \emph{concolic} execution (a combination of concrete and symbolic execution) to overcome hard branch
-conditions like CNC checks that have historically presented a major obstacle for fuzzers~\cite{stephens_driller_2016}
+conditions like CRC checks that have historically presented a major obstacle for fuzzers~\cite{stephens_driller_2016}.
 
 \subsection{Input generation}\label{sec:fuzzing-input-generation}
 
@@ -151,8 +160,8 @@ consuming system call interfaces.
 
 Inferred models don't rely on an explicitly specified model but rather infer it through some automatic means.
 Inference can either take place as a preprocessing step or during a fuzz campaign.
-Test-Miner~\cite{toffola_saying_2017} searches for literals inside of the PUT and derives suitable inputs.
-PULSAR\cite{thuraisingham_pulsar_2015} infers a network protocol from a set of captured network packages generated by the PUT.
+Test-Miner~\cite{toffola_saying_2017} searches for literals inside the PUT and derives suitable inputs.
+PULSAR~\cite{thuraisingham_pulsar_2015} infers a network protocol from a set of captured network packets generated by the PUT.
 
 Encoder-based models interpret the PUT as a decoder for inputs generated by an existing encoder.
 
@@ -161,11 +170,11 @@ Encoder-based models interpret the PUT as a decoder for inputs generated by an e
 Generating purely random inputs is not an effective strategy.
 In general, a PUT contains checks that reject invalid inputs, making it
 difficult to reach code paths that violate a given security policy~\cite{manes_art_2019}.
-This motivates the use of a \emph{seed corpus}, a set of well-structured inputs
-to the PUT like valid network packages or files.
-The seeds inside of the seed corpus are then successively mutated with the goal
+This motivates the use of an \emph{initial corpus}, a set of well-structured inputs
+to the PUT like valid network packets or files.
+The seeds inside the corpus are then successively mutated with the goal
 of triggering abnormal behavior.
-Mutation operators are divided into four sets:
+Mutation operators can be divided into four sets:
 
 \begin{enumerate}
   \item \emph{Bit-flipping:}
@@ -189,26 +198,25 @@ Mutation operators are divided into four sets:
 
 This work will focus primarily on coverage-guided greybox fuzzing, \emph{CGF} for short.
 It is the dominant design among modern general-purpose fuzzers, popularized by
-AFL \todo{cite: original AFL (Zalewski)} and its successor
-AFL++~\cite{fioraldi_afl_nodate}.
+AFL~\cite{zalewski2014afl} and its successor AFL++~\cite{fioraldi_afl_nodate}.
 We will outline the general approach following \textcite{bohme_coverage-based_2016}.
 
 \subsubsection{Overview}
 
 A coverage-guided greybox fuzzer in general uses mutational input generation
 (\cref{sec:fuzzing-input-generation}).
-For this, it keeps a set of test cases $T$ as part of its runtime state.
-This set is initialized from a seed corpus $S$.
-The fuzzer then selects an input $t\in T$ and derives a new input $t^\prime$.
+For this, it keeps a corpus $T$ as part of its runtime state.
+This corpus is initialized from an initial corpus $S$.
+The fuzzer then selects a seed $t\in T$ and derives a new test case $t^\prime$.
 If the fuzzer deems the execution of the PUT under $t^\prime$ to be interesting, $t^\prime$
-is then added to the test case set $T$.
+is retained in the corpus $T$ and is thereafter available as a seed itself.
 
 \begin{algorithm}[H]
   \caption{Coverage-guided greybox fuzzing, following \textcite{bohme_coverage-based_2016}.}
   \label{alg:cgf}
   \begin{algorithmic}[1]
-    \Require Seed corpus $S$, program under test $P$
-    \Ensure Crashing test cases $T_\times$, test case set $T$
+    \Require Initial corpus $S$, program under test $P$
+    \Ensure Crashing test cases $T_\times$, corpus $T$
     \State $T \gets S$
     \State $T_\times \gets \emptyset$
     \If{$T = \emptyset$}
@@ -236,9 +244,9 @@ is then added to the test case set $T$.
 
 \Cref{alg:cgf} states the CGF loop.
 The fuzzer must solve mainly three problems: selecting an appropriate
-test case (\textsc{ChooseNext},\textsc{AssignEnergy}), applying appropriate mutations (\textsc{MutateInput}), and deciding whether to retain the
+seed (\textsc{ChooseNext},\textsc{AssignEnergy}), applying appropriate mutations (\textsc{MutateInput}), and deciding whether to retain the
 mutated input or not based on PUT behavior (\textsc{IsInteresting}).
-In addition, \textsc{AssignEnergy} decides how much of the execution budget the selected test case receives.
+In addition, \textsc{AssignEnergy} decides how much of the execution budget the selected seed receives.
 
 Note that two independent decisions are taken after every execution.
 The bug oracle decides whether the execution is a
@@ -248,7 +256,7 @@ is used to decide whether the execution is \enquote{interesting} and therefore w
 further mutation (line 14).
 
 The fuzzing loop can be interpreted as an evolutionary algorithm~\cite{she_neuzz_2019,manes_art_2019}.
-The test case set $T$ is a population, the mutation operators of
+The corpus $T$ is a population, the mutation operators of
 \cref{sec:fuzzing-input-generation} are the genetic operators, and coverage novelty is the
 fitness function deciding which offspring survive into the next generation.
 Importantly, the fuzzer doesn't form an explicit model of what constitutes a good input.
@@ -259,7 +267,7 @@ extract more information from the same executions.
 
 \subsubsection{Test case selection}
 
-\textsc{ChooseNext} decides which test case $t \in T$ is mutated next, and
+\textsc{ChooseNext} decides which seed $t \in T$ is mutated next, and
 \textsc{AssignEnergy} decides how many mutants are derived from it before the fuzzer moves
 on.
 The two together determine how a finite execution budget is distributed over the test case
@@ -280,15 +288,16 @@ outcome (\emph{exploit}).
 \subsubsection{Test case mutation}
 
 \textsc{MutateInput} derives a new test case $t^\prime$ from the selected test case $t$ by
-applying one or more mutation operators \todo{reference 2.1.4: mutation-based input generation} to it.
+applying one or more mutation operators.
 Each mutation requires a location in the input to mutate as well an actual mutation operation.
 
 The main problem is the size of the mutation space.
-For an input of length $L$ and a mutation set $M$, the space of all possible mutations has size $O(LM)$.
+For an input of length $L$ and a mutation set $M$, the space of all possible mutations has size $O(L\lvert M\rvert)$.
 This presents a challenge for long inputs as the mutation space is very large compared to the number of useful mutations.
 Branch conditions are usually affected by only a few bytes of a given input, making it hard to select appropriate mutations.
-Some fuzzers try to derive that dependency through data-flow analysis
-fuzzing~\cite{gan_greyone_nodate} and through neural surrogates that approximate the
+Some fuzzers try to derive that dependency through data-flow
+analysis~\cite{gan_greyone_nodate} and through neural surrogates that
+approximate the
 byte-to-coverage map and follow its gradient~\cite{she_neuzz_2019,she_mtfuzz_2020}.
 
 Another problem lies in the existence of magic bytes or checksums which are hard to reach by random mutations.
@@ -300,8 +309,6 @@ This has the major drawback that useful mutations are highly target-dependent.
 Some fuzzers like MOpt~\cite{lyu_mopt_nodate} therefore search for a better distribution online using particle swarm
 optimization, and Rainfuzz~\cite{binosi_rainfuzz_2023} learns a heat map over byte positions with
 a policy-gradient method.
-
-\cref{sec:corpus-determinism}.
 
 \subsubsection{Test case retention}
 
@@ -368,9 +375,9 @@ It is therefore a customary baseline in the fuzzing literature.
 
 \subsubsection{Test case selection}\label{sec:afl-test-case-selection}
 
-AFL keeps the retained test cases in a queue and assigns to each a performance score.
+AFL++ keeps the retained test cases in a queue and assigns to each a performance score.
 It maintains a small set of \emph{favored} entries that together account for every edge observed so far.
-\textsc{ChooseNext} is biased towards the favored entries.~\cite{fioraldi_afl_nodate}
+\textsc{ChooseNext} is biased towards the favored entries~\cite{fioraldi_afl_nodate}.
 A complementary \emph{trimming} stage shrinks each queue entry to improve execution speed while preserving coverage.
 
 For implementing \textsc{AssignEnergy}, AFL++ makes use of various power schedules
@@ -386,7 +393,7 @@ It assigns a power proportional to the performance score $\alpha$:
 
 On top of these, AFL++ adds \texttt{mmopt}, which raises the score of the newest queue
 entries to encourage exploration, as well as
-\texttt{rare}, which puts focus on queue entries that hit rare edges.~\cite{fioraldi_afl_nodate}\cite{lemieux_fairfuzz_2018};
+\texttt{rare}, which puts focus on queue entries that hit rare edges~\cite{fioraldi_afl_nodate,lemieux_fairfuzz_2018}.
 It is noteworthy that a fixed schedule is picked before the start of the campaign, disallowing any adaptation to the target during runtime.
 
 \subsubsection{Test case mutation}
@@ -430,7 +437,7 @@ A test case is retained if it enters a new bucket for at least one edge.
 The bitmap has a fixed size, so distinct edges may alias onto the same byte due to hash collisions.
 
 The counter wraps around at 256 edge hits.
-AFL++ offers a \emph{saturated counters} mode in which entries are freezed at 255,
+AFL++ offers a \emph{saturated counters} mode in which entries are frozen at 255,
 as well as a \emph{NeverZero} mode in which the carry flag is folded in so that
 an overflowing counter never reaches zero.
 NeverZero was shown to improve the visibility of hidden edges with a multiple of
@@ -453,25 +460,19 @@ current call context, so that the same edge reached from different callers is co
 separately, improving edge discrimination and reducing aliasing.
 \emph{Ngram} coverage hashes the destination block together with the $N-1$ preceding blocks
 for $N$ between 2 and 16, approximating path coverage.
-\emph{InsTrim} only add instrumentation to blocks that have been deemed interesting
-by a prior static analysis pass, improving information density~\cite{hsu2018instrim}.
+\emph{InsTrim} only adds instrumentation to blocks that have been deemed interesting
+by a prior static analysis pass, reducing instrumentation overhead~\cite{hsu2018instrim}.
 
 \subsection{Strengths and Limitations of Coverage-Guided Fuzzing}\label{sec:fuzzing-limitations}
-
-% Drafting outline. First step of the motivation chain of
-% \cref{sec:introduction-motivation}: establish the standard this thesis has to beat,
-% then isolate the limitations it actually attacks (unassigned feedback, non-adaptive
-% scheduling, statelessness). Throughput is deliberately NOT one of them ---
-% \cref{sec:fuzzing-emulation} makes it worse on purpose.
 
 \subsubsection{Strengths}
 
 Collecting coverage information can usually be done using lightweight instrumentation.
 This makes coverage-guided fuzzing extremely fast, especially in comparison to
 methods using some form of symbolic execution and constraint solving~\cite{godefroid_sage_2012,manes_art_2019}.
-Since execution throughput is usually proportional to the effectiveness of a fuzzer,
+Since execution throughput is usually correlated to the effectiveness of a fuzzer,
 this is an important advantage~\cite{fioraldi_afl_nodate,manes_art_2019}.
-It also does not require an input model: an iteratively refined seed corpus can
+It also does not require an input model: an iteratively refined corpus can
 implicitly generate inputs that adhere to the specification and grammar of the PUT.
 This makes CGF applicable to a wide range of targets~\cite{manes_art_2019}.
 It has been demonstrated to work well at scale and found tens of thousands of
@@ -479,30 +480,29 @@ bugs~\cite{arya_oss-fuzz_nodate} in a wide range of software.
 
 \subsubsection{Limitations}
 
-\textcite{bohme_fuzzing_2020} has shown that although linearly increasing the fuzzing budget
+\textcite{bohme_fuzzing_2020} have shown that although linearly increasing the fuzzing budget
 produces a linear reduction in time required to find a given set of bugs, actually
-discovering new code requires an exponentially increasing fuzzing budget.
-AFLFast attributes this plateau on the budget being spent on high-frequency
+discovering new bugs requires an exponentially increasing fuzzing budget.
+AFLFast attributes this plateau to the budget being spent on high-frequency
 paths~\cite{bohme_coverage-based_2016}.
 
 CGF is also blind to any input-coverage correspondence~\cite{manes_art_2019}, therefore
 discarding a large amount of potentially useful information.
 Gradient-guided optimization techniques have been shown to outperform evolutionary
-techniques like the ones used by AFL.\todo{what to cite?}.
-\textcite{she_neuzz_2019} show that by learning an approximation to a PUT's branching
+techniques like the ones used by AFL.
+\textcite{she_neuzz_2019,she_mtfuzz_2020} show that by learning an approximation to a PUT's branching
 behavior, fuzzing performance can be improved.
-\textcite{she_mtfuzz_2020} use taint analysis to discover more edges than  baseline AFL.
+\textcite{gan_greyone_nodate} use taint analysis to discover more edges than baseline AFL.
 Further approaches are surveyed by~\textcite{wang_systematic_2020} and~\textcite{qiu_survey_2025}.
 
 Magic bytes and checksums present a major barrier to the success of CGF since
 they are highly unlikely to be found by random mutation (\cref{sec:fuzzing-input-generation}).
 Overcoming these checks can be done by augmenting CGF with symbolic
-execution~\cite{stephens_driller_2016}, by learning an input-to-state
-correspondence~\cite{aschermann_redqueen_2019}, or by taint
-tracking~\cite{gan_greyone_nodate}.
+execution~\cite{stephens_driller_2016} or by learned input-coverage
+correspondence using the aforementioned methods~\cite{aschermann_redqueen_2019}.
 
 Coverage itself might also be an insufficient objective to optimize for. While
-it has been empirically proven to be effective for general PUT's, in some use
+it has been empirically proven to be effective for general PUTs, in some use
 cases like embedded systems, corruption of a PUT's state is not related to its
 coverage~\cite{muench_what_2018} or might require additional sanitization
 efforts~\cite{zhang_debloating_nodate}.
@@ -516,8 +516,48 @@ Hand-tuned and precomputed seed, power and mutation schedules can therefore not 
 MOpt~\cite{lyu_mopt_nodate} is included in AFL++ and aims at optimizing the distribution of
 mutation operators using particle swarm optimization, but is still restricted to
 a fixed set of available mutation operators.
-AFL++'s \textsc{ChooseNext} and \textsc{AssignEnergy} are adaptive, but depend on a few hand-crated metrics,
+AFL++'s \textsc{ChooseNext} and \textsc{AssignEnergy} are adaptive, but depend on a few hand-crafted metrics,
 none of which include raw coverage information (\cref{sec:afl-test-case-selection}).
 
 \subsection{Stateful and Protocol Fuzzing}\label{sec:fuzzing-stateful}
 
+CGF models the PUT as a pure function mapping an input to a coverage.
+A new input requires the PUT to be reset to its initial state.
+For stateful PUTs, the coverage depends on the current input as well as the
+history of previous inputs.
+Stateful targets are especially prevalent in IoT applications and present a
+significant attack surface~\cite{zhang_iot_2014,sadeghi_security_2015}.
+Examples include industrial control systems~\cite{borcherding_bandits_2023},
+network protocols like QUIC~\cite{ang_quic-fuzz_2025} and open62541\todo{cref to open62541 target},
+operating system kernels~\cite{wang_syzvegas_2021} or web applications~\cite{doupe_enemy_2012}.
+
+We distinguish three different kinds of state:
+
+\paragraph{Fuzzer state}
+The current fuzzing configuration and corpus.
+
+\paragraph{Program state}
+The state of the PUT as seen from the execution engine. It is made up
+of memory and register file state.
+
+\paragraph{Protocol state}
+The state inside the protocol as given by a protocol specification. For a PUT initiating
+a TCP connection, this might include the protocol state after a \texttt{SYN} has been sent.
+
+\subsubsection{Challenges}
+
+CGF fuzzers like AFL++ were mainly designed to test stateless programs and
+therefore cannot deal natively with highly stateful PUTs.
+Coverage in this case is not enough to identify the state the program is currently
+in since it does not contain enough information about the input history.
+In addition, protocol state is not observable and must be inferred, for instance from response codes,
+which introduces additional uncertainty.
+Further, most execution engines only support execution from the beginning, while
+a stateful fuzzer would ideally have access to an arbitrary snapshot-and-reset
+mechanism\todo{cref to mogi}.
+
+AFLNet~\cite{pham_aflnet_2020} is the canonical greybox fuzzer for network protocols
+and works by combining traditional CGF with automatic state inference to guide exploration
+towards more important code paths.
+Various prior works describe how a protocol state machine can be learned~\cite{dongol_grey-box_2020,marksteiner_learning_2025,giraud_l-scale_2026}.
+A detailed survey of fuzzers that incorporate protocol state information is given by~\textcite{daniele_fuzzers_2023}.

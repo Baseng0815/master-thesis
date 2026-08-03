@@ -1,5 +1,26 @@
 %!TEX root = ../thesis.tex
 
+\chapter{Model Architecture and Training Objective}\label{app:ez-details}
+
+% TODO: The parameterization that \cref{chap:efficientzero} leaves out on purpose,
+% at the level of detail needed to reimplement it:
+%   - the bodies of the five networks of \cref{sec:ez-architecture}: block types,
+%     depths and widths, and the recurrent value-prefix head,
+%   - the projection $P_1$ and prediction $P_2$ heads that \cref{eq:ez-consistency}
+%     refers to,
+%   - the categorical representation of value and value prefix: support size and
+%     the invertible scaling transform
+%     \todo{cite: value-scaling transform (Pohlen et al. 2018) --- not in references/*.bib yet},
+%   - the weighted total loss behind \cref{sec:ez-loss}. The reference
+%     configuration weights policy 1.0, value 0.25, value prefix 1.0 and
+%     consistency 2.0 (\code{efficientzero/src/learner/mod.rs}); the value term is
+%     down-weighted because its reanalyzed bootstrap targets are the noisiest signal,
+%   - gradient scaling across the unroll steps,
+%   - how the value loss becomes the replay priority \cite{schaul_prioritized_2016}.
+%
+% Boundary with \cref{app:configuration}: the formulas belong here, the frozen
+% numeric values belong in the hyperparameter table there.
+
 \chapter{Frozen Configuration}\label{app:configuration}
 
 % TODO: The complete hyperparameter table referenced from
@@ -17,6 +38,6 @@
 
 \chapter{Additional Results}\label{app:results}
 
-% TODO: Per-seed curves, the peripheral ablations labelled indicative in
+% TODO: Per-run curves, the peripheral ablations labelled indicative in
 % \cref{sec:results-ablations}, and the diagnostic series that support
 % \cref{chap:failure-modes} without belonging in it.

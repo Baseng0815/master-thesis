@@ -6,145 +6,14 @@
 % from the class and must not be changed here; see the template README at
 % https://sdq.kastel.kit.edu/wiki/Dokumentvorlagen
 %
-% Build: latexmk -pdf thesis.tex   (bibliography is processed with biber)
+% Metadata, class options and packages live in preamble.tex, which chapter.tex
+% shares; this file defines the document order and nothing else.
+%
+% Build: make          (the complete thesis, output/thesis.pdf)
+%        make chapters (one review PDF per chapter, output/chapters/)
 % ============================================================================
 
-%% The class's ``draft'' option below reaches hyperref as a global option, and
-%% hyperref in draft mode turns every link into plain text. Keep the links: the
-%% option list here is appended after the global options, so ``final'' wins.
-\PassOptionsToPackage{final}{hyperref}
-
-%% Available page modes: oneside, twoside
-%% Available languages: english, ngerman
-%% Available modes: draft, final
-%%   draft -- shows \todo notes and overfull-box markers; use while writing
-%%   final -- hides them; switch before submission
-\documentclass[twoside, english, draft]{sdqthesis}
-
-%% ---------------------------------
-%% | Information about the thesis  |
-%% ---------------------------------
-
-\author{Bastian Engel}
-
-\title{Applications of Reinforcement Learning to Stateful Emulator-Based
-Greybox Fuzzing}
-
-\thesistype{Master's Thesis}
-
-%% Change the institute here, ``KASTEL'' is default
-% \myinstitute{Institute for \dots}
-
-%% A logo can be placed in the ``logos'' directory and included here instead of
-%% the SDQ logo
-% \grouplogo{myfile}
-%% Alternatively, the group logo can be disabled
-% \nogrouplogo
-
-%% The reviewers are the professors that grade the thesis
-\reviewerone{TODO: Prof. A}
-\reviewertwo{TODO: Prof. B}
-
-%% The advisors are PhDs or Postdocs
-\advisorone{TODO: M.Sc. C}
-%% The second advisor can be omitted
-\advisortwo{TODO: M.Sc. D}
-
-%% Start and end date of the thesis
-\editingtime{TODO: xx. Month 20XX}{TODO: xx. Month 20XX}
-
-%% Place of residence of the author; used on the declaration page
-\location{TODO: City}
-
-\settitle
-
-%% --------------------------------
-%% | Packages                     |
-%% --------------------------------
-%% The class already provides booktabs, longtable, array, graphicx, enumitem,
-%% microtype, babel, csquotes, url, hyperref, appendix, import and wallpaper.
-%% Only what the content needs on top of that is loaded here.
-
-% ----- Mathematics ----------------------------------------------------------
-% amssymb is deliberately not loaded: the class pulls in newtxmath, which
-% already provides \mathbb and \mathcal and clashes with amssymb.
-\usepackage{amsmath}
-% newtxmath (loaded by the class, hence before amsthm) already defines \openbox;
-% let amsthm redefine it instead of erroring out.
-\let\openbox\relax
-\usepackage{amsthm}
-\usepackage{mathtools}
-
-% ----- Figures --------------------------------------------------------------
-\graphicspath{{figures/}}
-\usepackage{xcolor}
-\usepackage{subcaption}
-% subcaption loads caption, which disables the class's KOMA caption fonts.
-% Restore them so captions keep the template's appearance (sdqthesis.cls sets
-% \setkomafont{caption}{\small}, \setkomafont{captionlabel}{\sffamily\bfseries\small}
-% and \setcapindent{0em}).
-\captionsetup{format=plain, font=small, labelfont={sf,bf,small}}
-\usepackage{float}
-
-% ----- Diagrams -------------------------------------------------------------
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta,automata,positioning}
-\tikzset{terminal/.style={double,double distance=1.2pt}}
-
-% ----- Tables ---------------------------------------------------------------
-\usepackage{tabularx}
-\usepackage{multirow}
-
-% ----- Units & numbers ------------------------------------------------------
-\usepackage{siunitx}
-
-% ----- Code listings --------------------------------------------------------
-\usepackage{listings}
-\lstset{
-  basicstyle=\ttfamily\small,
-  keywordstyle=\bfseries\color{blue!60!black},
-  commentstyle=\itshape\color{green!40!black},
-  stringstyle=\color{orange!70!black},
-  numbers=left,
-  numberstyle=\tiny\color{gray},
-  frame=single,
-  breaklines=true,
-  showstringspaces=false,
-  captionpos=b,
-  tabsize=4,
-}
-
-% ----- Algorithms -----------------------------------------------------------
-\usepackage{algorithm}
-\usepackage{algpseudocode}
-
-% ----- Draft aids -----------------------------------------------------------
-% Follows the class's draft/final mode: notes are shown in draft, hidden in final.
-% The margin the class leaves is a little under todonotes' 2cm minimum. Widening
-% \marginparwidth changes nothing in the printed thesis --- \marginpar is only
-% ever used by todonotes, which is disabled in final mode.
-\setlength{\marginparwidth}{2cm}
-\ifdraft
-  {\usepackage[colorinlistoftodos]{todonotes}}
-  {\usepackage[disable]{todonotes}}
-
-% ----- Bibliography ---------------------------------------------------------
-%% Use biber instead of BibTeX, see the template README
-\usepackage[citestyle=numeric,style=numeric,sorting=nyt,backend=biber]{biblatex}
-\addbibresource{references/fuzzing.bib}
-\addbibresource{references/reinforcement-learning.bib}
-
-% ----- Cross-references (loaded after hyperref, which the class provides) ----
-\usepackage[capitalise,noabbrev]{cleveref}
-
-% ----- Theorem environments -------------------------------------------------
-\newtheorem{theorem}{Theorem}[chapter]
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{corollary}[theorem]{Corollary}
-\theoremstyle{definition}
-\newtheorem{definition}[theorem]{Definition}
-\newtheorem{example}[theorem]{Example}
-\DeclareMathOperator*{\argmax}{arg\,max}
+\input{preamble}
 
 %% ====================================
 %% ||                                ||
@@ -192,74 +61,34 @@ Greybox Fuzzing}
 
 \mainmatter
 
-% Document order is defined here and only here. The three groups below correspond
-% to background / approach / evaluation; uncomment the \part lines to make that
-% split explicit in the printed document.
+% Document order is defined here and only here: exactly one \input per chapter,
+% in reading order. The Makefile derives the chapter list for `make chapters'
+% from these lines, so a chapter is always one file under sections/ -- chapters
+% that are split over several section files get a wrapper file that holds the
+% \chapter heading and \inputs the sections (e.g. sections/background.tex).
+%
+% The three groups below correspond to background / approach / evaluation;
+% uncomment the \part lines to make that split explicit in the printed document.
 
 % \part{Background}
 \input{sections/introduction}
-
-\chapter{Background}\label{chap:background}
-\input{sections/background/fuzzing}
-\input{sections/background/reinforcement-learning}
-
+\input{sections/background}
 \input{sections/efficientzero}
-
-\chapter{Related Work}\label{chap:related-work}
 \input{sections/related-work}
 
 % \part{Approach}
 \input{sections/platform}
 \input{sections/fuzzing-mdp}
-
-\chapter{Input-Level Action Spaces}\label{chap:input-actions}
-% Keep the section order identical to \cref{chap:corpus-actions} --- the two chapters
-% are meant to be read as a diff.
-\input{sections/fuzzing-input-actions/overview}
-\input{sections/fuzzing-input-actions/action-space}
-\input{sections/fuzzing-input-actions/observation}
-\input{sections/fuzzing-input-actions/reward}
-\input{sections/fuzzing-input-actions/determinism}
-\input{sections/fuzzing-input-actions/prior-work}
-
-\chapter{Corpus-Level Action Spaces}\label{chap:corpus-actions}
-\input{sections/fuzzing-corpus-actions/overview}
-\input{sections/fuzzing-corpus-actions/action-space}
-\input{sections/fuzzing-corpus-actions/observation}
-\input{sections/fuzzing-corpus-actions/reward}
-\input{sections/fuzzing-corpus-actions/determinism}
-\input{sections/fuzzing-corpus-actions/prior-work}
-
+\input{sections/fuzzing-input-actions}
+\input{sections/fuzzing-corpus-actions}
 \input{sections/implementation}
 
 % \part{Evaluation}
-\chapter{Targets}\label{chap:targets}
-\input{sections/targets/overview}
-
-\section{Diagnostic Microbenchmarks}\label{sec:targets-microbenchmarks}
-\input{sections/targets/bandit}
-\input{sections/targets/contextual-bandit}
-\input{sections/targets/sequence}
-\input{sections/targets/branches}
-
-\section{Realistic Targets}\label{sec:targets-realistic}
-\input{sections/targets/cjson}
-\input{sections/targets/open62541}
-
+\input{sections/targets}
 \input{sections/methodology}
-
-\chapter{Results}\label{chap:results}
-\input{sections/results/input-actions}
-\input{sections/results/corpus-actions}
-\input{sections/results/head-to-head}
-\input{sections/results/ablations}
-
+\input{sections/results}
 \input{sections/failure-modes}
-
-\chapter{Discussion}\label{chap:discussion}
-\input{sections/discussion/advantages}
-\input{sections/discussion/disadvantages}
-\input{sections/discussion/threats}
+\input{sections/discussion}
 
 \input{sections/conclusion}
 \input{sections/future-work}
