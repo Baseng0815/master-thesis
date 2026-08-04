@@ -1,0 +1,128 @@
+% ============================================================================
+% preamble-final-setup.tex -- everything that has to come after the metadata
+%
+% From the institute template (~/latex-template-thesis), translated to English
+% and adjusted where this thesis differs; the deviations are marked.
+% ============================================================================
+
+\hypersetup{pdftitle={\worktitle},
+  pdfsubject={\typeofthesis},
+  pdfauthor={\nameofauthor},
+  pdfstartview=Fit,
+  pdfpagemode={UseOutlines},
+  bookmarksnumbered=true,
+  bookmarksopen=false,
+  pdfborder={0 0 0},
+  pdfpagelayout=TwoColumnRight
+}
+
+% ----- Theorem environments -------------------------------------------------
+% ntheorem, loaded by the template. Statements are set in italics, definitions
+% and examples upright.
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+{\theorembodyfont{\upshape}
+  \newtheorem{definition}[theorem]{Definition}
+  \newtheorem{example}[theorem]{Example}
+}
+
+% ----- Cross-reference names ------------------------------------------------
+% The template names chapters, sections, figures and tables in German; in an
+% English document cleveref's own defaults are what is wanted, so only the
+% theorem environments are declared here. Plurals are what cleveref cannot
+% guess.
+\crefname{theorem}{Theorem}{Theorems}
+\crefname{definition}{Definition}{Definitions}
+\crefname{lemma}{Lemma}{Lemmata}
+\crefname{corollary}{Corollary}{Corollaries}
+\crefname{proposition}{Proposition}{Propositions}
+\crefname{example}{Example}{Examples}
+\crefname{algorithm}{Algorithm}{Algorithms}
+
+% ----- Listings -------------------------------------------------------------
+% DEVIATION from the template: Rust rather than Java, the language both
+% companion repositories are written in. listings ships no Rust definition, so
+% here is one --- keywords first, then the types and constructors that are
+% worth setting apart.
+\lstdefinelanguage{Rust}{
+  keywords={as, async, await, break, const, continue, crate, dyn, else, enum,
+    extern, false, fn, for, if, impl, in, let, loop, match, mod, move, mut,
+    pub, ref, return, self, Self, static, struct, super, trait, true, type,
+    union, unsafe, use, where, while},
+  keywords=[2]{bool, char, f32, f64, i8, i16, i32, i64, i128, isize, str, u8,
+    u16, u32, u64, u128, usize, Box, Option, Result, String, Vec, Some, None,
+    Ok, Err},
+  sensitive=true,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]{"},
+}
+
+\lstloadlanguages{
+  C,
+  [ISO]C++,
+  [LaTeX]TeX
+}
+
+\lstset{
+  basicstyle=\small\ttfamily,
+  keywordstyle=\bfseries,
+  commentstyle=\normalfont,
+  numbers=left,
+  numberstyle=\tiny,
+  stepnumber=1,
+  numbersep=5pt,
+  tabsize=2,
+  extendedchars=true,
+  breaklines=true,
+  showspaces=false,
+  showtabs=false,
+  showstringspaces=false,
+  captionpos=b
+}
+\lstdefinestyle{nonumbers}{numbers=none}
+
+\lstnewenvironment{latex}[1][]{%
+  \lstset{%
+    language=[LaTeX]TeX,%
+    morekeywords={cref,%
+      includegraphics,%
+      toprule,%
+      midrule,%
+      bottomrule,%
+      tikzsetnextfilename,%
+      enquote,%
+      newacronym,%
+      longnewglossaryentry,%
+      subfloat},%
+    #1}%
+}{}
+
+\lstnewenvironment{rust}[1][]{%
+  \lstset{language=Rust,#1}%
+}{}
+
+\lstnewenvironment{ccode}[1][]{%
+  \lstset{language=C,#1}%
+}{}
+
+% ----- Margin notes ---------------------------------------------------------
+\renewcommand*{\marginfont}{\raggedright\sffamily\footnotesize}
+\let\omarginnote\marginnote
+\renewcommand{\marginnote}[1]{\leavevmode\omarginnote{#1}\ignorespaces}
+
+% ----- Index, glossary, acronyms --------------------------------------------
+% Built by latexmk, see latexmkrc.
+\makeindex
+
+\setacronymstyle{long-short}
+\makeglossaries
+
+% ----- Bibliography ---------------------------------------------------------
+% Single bibliography, kept in sync with Zotero by the editor: citing a key that
+% is not in here yet appends its entry automatically (:ZoteroSync adds any that
+% were pasted in by hand).
+\addbibresource{references/library.bib}
+% \nocite{*} % activate to make latex print all literature, even the ones that were not cited in the thesis

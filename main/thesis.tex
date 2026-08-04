@@ -1,10 +1,11 @@
 % ============================================================================
 % thesis.tex -- main document
 %
-% Built on the SDQ/KASTEL student thesis template (sdqthesis.cls v1.6, KIT).
-% Layout parameters -- font size, margins, line spacing, caption style -- come
-% from the class and must not be changed here; see the template README at
-% https://sdq.kastel.kit.edu/wiki/Dokumentvorlagen
+% Built on the institute thesis template at ~/latex-template-thesis
+% (Fraunhofer IOSB / KIT IES). Layout parameters -- font size, margins, line
+% spacing, page head -- come from the template's preamble files and must not be
+% changed here; see preamble.tex for how the pieces fit together and which
+% deviations from the template this thesis makes.
 %
 % Metadata, class options and packages live in preamble.tex, which chapter.tex
 % shares; this file defines the document order and nothing else.
@@ -22,37 +23,31 @@
 %% ====================================
 \begin{document}
 
-%% Set PDF metadata
-\setpdf
-
-%% Set the title
-\maketitle
-
-%% The preamble begins here
 \frontmatter
 
-\input{sections/declaration.tex}
+\input{sections/titlepage}
 
-\setcounter{page}{1}
-\pagenumbering{roman}
+\input{sections/declaration}
 
 %% ----------------
 %% |   Abstract   |
 %% ----------------
 %% For theses written in English, an abstract in both English and German is
-%% mandatory. \includeabstract pulls in sections/abstract_en.tex and
-%% sections/abstract_de.tex.
+%% mandatory.
 
-\includeabstract
+\input{sections/abstract_en}
+
+\begin{otherlanguage}{ngerman}
+\input{sections/abstract_de}
+\end{otherlanguage}
+
+\input{sections/notation}
 
 %% ------------------------
 %% |   Table of Contents  |
 %% ------------------------
 \tableofcontents
 
-\listoffigures
-\listoftables
-% \lstlistoflistings
 % \listoftodos
 
 %% -----------------
@@ -93,17 +88,18 @@
 \input{sections/conclusion}
 \input{sections/future-work}
 
-%% --------------------
-%% |   Bibliography   |
-%% --------------------
-
-% \nocite{*}  % uncomment to list every bib entry while drafting
-\printbibliography[heading=bibintoc]
-
 %% ----------------
 %% |   Appendix   |
 %% ----------------
 \appendix
 \input{sections/appendix}
+
+%% -------------------------------------------------------
+%% |   Bibliography, lists of figures, acronyms, index    |
+%% -------------------------------------------------------
+
+\backmatter
+
+\input{sections/backmatter}
 
 \end{document}

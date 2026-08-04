@@ -84,10 +84,10 @@ We will introduce some general definitions that mainly follow \textcite{manes_ar
     as the basis for deriving new test cases by modifying it.
 
   \item \emph{Corpus:}
-    The corpus is the collection of seeds the fuzzer maintains. Coverage-guided
+    The corpus\index{corpus} is the collection of seeds the fuzzer maintains. Coverage-guided
     fuzzers evolve it over the course of a campaign by retaining test cases that
     exhibit new behavior. We write \emph{initial corpus} for the collection the
-    campaign starts from, which is usually supplied by the user.
+    campaign starts from, which is usually supplied by the user.\index{corpus!initial}
 
   \item \emph{Fuzz Configuration:}
     A fuzz configuration comprises the parameter values that control the fuzzing
@@ -117,7 +117,7 @@ This makes it difficult for fuzzers to generate high-coverage inputs.
 In contrast to pure black-box fuzzers, white-box fuzzers have full access to
 the internal logic of the PUT as well as usually any original source code or
 documentation which can greatly aid the fuzzing process.
-In practice, this allows an approach known as \emph{symbolic execution}: instead
+In practice, this allows an approach known as \emph{symbolic execution}\index{symbolic execution}: instead
 of relying on actual execution traces, a white-box fuzzer can gather symbolic
 constraints at branching points and use constraint solving to find inputs that exercise
 a specific path.
@@ -272,8 +272,8 @@ extract more information from the same executions.
 on.
 The two together determine how a finite execution budget is distributed over the test case
 set.
-They are commonly referred to as \emph{seed scheduling} and the \emph{power
-schedule}~\cite{manes_art_2019,bohme_coverage-based_2016}.
+They are commonly referred to as \emph{seed scheduling}\index{seed scheduling} and the \emph{power
+schedule}\index{power schedule}~\cite{manes_art_2019,bohme_coverage-based_2016}.
 
 An optimal seed and power schedule would choose seeds in such a way as to maximize coverage
 after they are mutated.
@@ -321,7 +321,7 @@ The instrumentation can collect coverage at different granularities:
   \item \emph{Basic-block coverage}
     records which blocks were executed.
 
-  \item \emph{Edge} or \emph{branch coverage} records which transitions $(A,B)$
+  \item \emph{Edge} or \emph{branch coverage}\index{coverage!edge} records which transitions $(A,B)$
     between blocks were taken and is strictly more informative.
 
   \item \emph{Path coverage} tracks a sequence of block hits $(A,B,\dots,)$.

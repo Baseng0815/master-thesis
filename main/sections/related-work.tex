@@ -2,142 +2,214 @@
 
 \chapter{Related Work}\label{chap:related-work}
 
-% Drafting outline: bullet points to be fleshed out into prose.
-
-\section{Fuzzing as a Reinforcement Learning Problem}\label{sec:rlfuzz-framing}
-
 Fuzzing is a sequential decision making problem under certainty over a large search space
 with a scalar progress signal.
 This makes it amenable to solving it through reinforcement learning methods.
+We will introduce and classify selected prior works in this area.
 
-\textcite{bottinger_deep_2018} first formalized fuzzing as an MDP and then introduced
-a deep Q-learning-based fuzzer.
-They model the fuzzing problem as an MDP tuple $M_\mathcal{F}=(\mathcal{S},\mathcal{A},p)$
-as follows:
+\textcite{wang_systematic_2020} classify ML-based fuzzers into five categories according
+to the problems they solve.
+In addition, it divides each fuzzer into what learning algorithm it uses.
+These are broadly divided into traditional machine learning, deep learning, and reinforcement learning.
+Reinforcement learning-based fuzzers they survey for each fuzzing step are shown in~\cref{tab:rw-rl-fuzzers}.
 
-\paragraph{State space $\mathcal{S}$}
+\input{figures/rw-rl-fuzzers}
 
-Let $\Sigma$ denote a finite set of symbols. All possible program inputs are then
-defined by the Kleene closure as $\mathcal{I}=\Sigma^*$. The state space then corresponds
-to that set of possible program inputs $\mathcal{S}=\mathcal{I}$.
+\section{Modelling fuzzing as a Markov decision process}\label{sec:rw-mdp-formulations}
 
-\paragraph{Action space $\mathcal{A}$}
+For the six of the seven papers that use a form of Q-Learning or SARSA, we
+outline how they model their corresponding problem as an \gls{mdp} and
+summarize the state, action and reward design.
 
-They define their action space as the set of random variables mapping program inputs
-to probabilistic rewriting rules:
+\begin{description}[style=nextline, leftmargin=0pt, labelindent=0pt, labelwidth=0pt]
+  \item[Becker et al.\ (2010)~\cite{hutchison_autonomic_2010}]
+    They fuzz the IPv6 Neighbor Discovery Protocol with \gls{sarsa}.
 
-% TODO insert boettinger18 figure 8 (or maybe simplify this section a bit)
-
-\paragraph{Rewards}
-
-Rewards are split into an action-dependent component $G(a)$ and an
-execution-dependent component $E(x)$, i.e., $r(x,a)=E(x)+G(a)$ for selected
-action $a$ and execution result $x$.
-
-\begin{itemize}
-  \item Why the fit is natural: fuzzing is sequential decision making under uncertainty over an
-    enormous search space, with a cheap scalar progress signal (new coverage) --- exactly the RL
-    interface of \cref{sec:rl-mdp}; first formalized as an MDP by Böttinger et
-    al.~\cite{bottinger_deep_2018}.
-  \item The generic correspondence (present as a table; concrete instantiation for this thesis in
-    \cref{chap:fuzzing-mdp}):
     \begin{itemize}
-      \item \emph{environment} $=$ the target program (plus harness/emulator),
-      \item \emph{state/observation} $=$ execution feedback: coverage information, program or
-        protocol state, current input~\cite{bottinger_deep_2018,borcherding_bandits_2023},
-      \item \emph{action} $=$ a fuzzing decision: mutation operator/position, seed choice,
-        protocol message~\cite{bottinger_deep_2018,binosi_rainfuzz_2023,borcherding_bandits_2023},
-      \item \emph{reward} $=$ newly discovered coverage (or crashes, execution-time
-        properties)~\cite{bottinger_deep_2018,wang_syzvegas_2021},
-      \item \emph{episode} $=$ one test case or one protocol session, ended by a target reset.
+      \item \textbf{State.}
+        States are modeled as six different fuzzing strategies, thereby
+        avoiding the state explosion problem.
+        Three strategies mutate the content of a message (delete a field, insert a
+        field, modify a field value) and three mutate the message order within a
+        session (insert, repeat, or drop a message according to the behavioural
+        model).
+
+      \item \textbf{Action.}
+        Actions are transitions to other fuzzing strategies.
+
+      \item \textbf{Reward.}
+        The reward consists of a sum of three different rewards
+        \[
+          r(q_t) = r_{\text{trace}}(q_t) + r_{\text{deb}}(q_t) + r_{\text{mon}}(q_t),
+        \]
+
+        where $r_{\text{trace}}$  depends on the entropy of a message and
+        amount of function calls, $r_{\text{deb}}$ depends on whether
+        an error was seen, and $r_{\text{mon}}$ depends on whether a corrupted
+        or delayed messages was monitored.
     \end{itemize}
-\end{itemize}
+    The paper only provides a design and no working proof of concept and therefore
+    no evaluation and empirical studies.
 
-\section{Prior Work}\label{sec:rlfuzz-prior-work}
+  \item[Böttinger et al.\ (2018)~\cite{bottinger_deep_2018}]
+    They provided the first formulation of fuzzing as an \gls{mdp} and applied \gls{dqn}
+    to fuzzing various PDF parsers.
 
-\begin{itemize}
-  \item Organize the survey by \emph{which decision in the fuzzing loop} is learned
-    (following the taxonomy of ML-for-fuzzing surveys~\cite{wang_systematic_2020,qiu_survey_2025}):
-  \item \textbf{Where/how to mutate}:
     \begin{itemize}
-      \item deep Q-learning over mutation actions on input substrings
-        ~\cite{bottinger_deep_2018},
-      \item Rainfuzz: PPO-trained heat maps scoring byte positions by expected
-        usefulness, run collaboratively with AFL++~\cite{binosi_rainfuzz_2023},
-      \item (non-RL baseline for the same problem: MOpt's particle-swarm mutation-operator
-        scheduling~\cite{lyu_mopt_nodate}).
+      \item \textbf{State.}
+        With $\Sigma$ a finite alphabet, all possible program inputs are given
+        by the Kleene closure of $\Sigma$.
+        They define the state space to be equal to the program input space $\mathcal{S}=\mathcal{I}=\Sigma^*$.
+
+      \item \textbf{Action.}
+        Actions are random variables mapping inputs to probabilistic rewriting rules.
+        The implemented rules contain random bit flips, dictionary token insertion,
+        input shifting, shuffling, and copying.
+
+      \item \textbf{Reward.}
+        The reward consists of a sum of two different rewards
+        \[
+          r(x, a) = E(x) + G(a),
+        \]
+
+        where $E$ depends on runtime properties of an execution trace $x$ $G$
+        depends on the chosen action $a$. For $E$ they evaluate the number of
+        newly discovered \glspl{bb}, the execution time, and the sum of both.
     \end{itemize}
-  \item \textbf{Which seed/task to schedule}:
+    They found that neither experience replay nor a persistent history of discovered \glspl{bb}
+    improve on a random baseline.
+
+  \item[Drozd and Wagner (2018)~\cite{drozd_fuzzergym_2018}]
+    FuzzerGym combines libFuzzer with OpenAI Gym, trained with deep double Q-learning and
+    prioritised replay (\cref{fig:rw-fuzzergym}).
+
     \begin{itemize}
-      \item multi-armed-bandit / hierarchical seed scheduling for greybox
-        fuzzing~\cite{wang_reinforcement_2021},
-      \item SyzVegas: MAB-based task and seed selection inside the Syzkaller kernel
-        fuzzer~\cite{wang_syzvegas_2021},
-      \item Alphuzz: MCTS over the seed-mutation tree~\cite{zhao_alphuzz_2022} --- closest prior
-        use of tree search, but over seeds, not program interaction.
+      \item \textbf{State.}
+        They model the whole test input with a maximum input length of
+        \num{4096} bytes as the state space, encoded as a bit-array
+        $\mathcal{S}=\{0,1\}^{32768}$.
+
+      \item \textbf{Action.}
+        libFuzzer's thirteen mutation operators are selected as the action space.
+
+      \item \textbf{Reward.}
+        Reward is modeled as newly unique line coverage:
+        \[
+          R_t = \mathit{cov}_t - \mathit{cov}_{t-1},
+        \]
+        where $\mathit{cov}_t$ denotes the number of unique lines covered at time $t$.
+
     \end{itemize}
-  \item \textbf{Which grammar construct / input token to use}:
-    BanditFuzz for SMT solvers~\cite{christakis_banditfuzz_2020}; BertRLFuzzer combines a language
-    model with RL-chosen attack mutations~\cite{jha_bertrlfuzzer_2024}.
-  \item \textbf{Which protocol state to fuzz} (stateful setting, closest to this thesis):
-    stochastic and adversarial MABs for state selection in industrial-protocol
-    fuzzing~\cite{borcherding_bandits_2023}.
-  \item Adjacent security applications showing the same pattern: curiosity-driven web
-    testing~\cite{zheng_automatic_2021}, Q-learning agents for SQL
-    injection~\cite{erdodi_simulating_2021}, DQN-based autonomous penetration
-    testing~\cite{zhou_autonomous_2021}.
-\end{itemize}
+    To maintain the execution rate of libFuzzer of around \num{100000} executions per
+    second, the authors let the fuzzer loop over a fixed-size circular buffer
+    while new actions are only chosen every n'th fuzzing iteration, mirroring frame
+    skipping in Atari environments.
+    The problem the agent solves is therefore a \gls{pomdp} for which the authors
+    employ an LSTM.
 
-\section{Recurring Difficulties}\label{sec:rlfuzz-difficulties}
+  \item[Fang and Yan (2018)]
+    LEFT, an emulation-instrumented fuzzer for the 4G/LTE stack of Android mobile
+    devices guided by Q-learning --- the one surveyed work whose setting resembles
+    ours, in that the target runs under an emulator rather than natively.
+    The state is the protocol message type, the action is the mutation operator, and
+    the reward combines emulator crashes, information leakage, and loss of network
+    connectivity.
+    \todo{Read the primary source (ESORICS 2018) once the bib entry exists --- the
+    state/action/reward description here is the survey's~\cite{wang_systematic_2020}
+    and is too coarse to be trusted. This paper is worth a subsection of its own
+    given the shared emulation setting.}
 
-\begin{itemize}
-  \item \emph{Reward design}: coverage rewards are sparse and non-stationary --- each edge pays
-    out only once, so the reward distribution decays as the campaign progresses; motivates the
-    adversarial-bandit view~\cite{borcherding_bandits_2023} and reward-model care
-    in~\cite{wang_syzvegas_2021}.
-  \item \emph{Observation design}: what the agent sees (raw bytes, coverage bitmap, protocol
-    responses) is a heavily aliased, partial view of true program state
-    (cf.\ \cref{sec:rl-mdp})~\cite{bottinger_deep_2018}.
-  \item \emph{Throughput mismatch}: a classic fuzzer executes thousands of inputs per second;
-    NN inference per decision must earn back its latency --- one reason prior work often keeps the
-    RL component advisory/parallel to a conventional fuzzer~\cite{binosi_rainfuzz_2023}.
-  \item \emph{Sample cost}: model-free learners need more interactions than a fuzzing campaign
-    can afford, especially under emulation (\cref{sec:rl-sample-efficiency}).
-  \item \emph{Mixed empirical results}: learned components do not consistently beat well-tuned
-    static heuristics --- e.g.\ AFLNet outperformed both bandit models
-    in~\cite{borcherding_bandits_2023}; deep-RL evaluation pitfalls compound
-    this~\cite{henderson_deep_2019}.
-  \item Honest framing for the thesis: these difficulties define the burden of proof for the
-    approach evaluated in \cref{chap:results}.
-\end{itemize}
-
-\section{The Gap Addressed by This Thesis}\label{sec:rlfuzz-gap}
-
-\begin{itemize}
-  \item Common shape of prior work: a \emph{model-free} learner (Q-learning, PPO, bandits) tunes
-    \emph{one heuristic knob} of an otherwise conventional random fuzzer
-    ~\cite{bottinger_deep_2018,binosi_rainfuzz_2023,wang_reinforcement_2021,wang_syzvegas_2021,christakis_banditfuzz_2020}.
-  \item Unexplored combination --- the subject of this thesis:
+  \item[Liu et al.\ (2019)~\cite{authors_reinforcement_nodate}]
+    FuzzBoost, which transplants Böttinger's formulation from file parsers to
+    compilers, with GCC as the environment and C programs as the inputs.
     \begin{itemize}
-      \item a \emph{model-based, planning} algorithm (EfficientZero: learned latent dynamics
-        model + MCTS~\cite{ye_mastering_2021,schrittwieser_mastering_2020}) as the decision maker,
-      \item acting \emph{directly} at the protocol level against a \emph{stateful} target ---
-        the agent drives the session, rather than advising a random mutator
-        (\cref{chap:input-actions}),
-      \item on targets rehosted in an emulator (MOGI, \cref{chap:platform}), whose snapshots
-        provide the exact, cheap episode resets and basic-block coverage observations the MDP
-        framing requires (\cref{sec:fuzzing-emulation}),
-      \item rationale: the learned model lets planning happen in latent space, amortizing
-        expensive real executions --- directly attacking the sample-cost and throughput
-        objections above (\cref{sec:rl-sample-efficiency}).
+      \item \textbf{State.}
+        As in Böttinger: substrings of the seed program, $I := \Sigma^{*}$ with the
+        states drawn from $S(p)$, observed through a window of size $w$ at
+        offset~$s$.
+      \item \textbf{Action.}
+        Again mappings from the observed substring to probabilistic rewrite rules,
+        but split into two families.
+        Content rewrites operate at token level and respect the C lexical grammar
+        --- insertion, replacement, re-ordering, deletion, replication --- so that
+        the mutant has a chance of surviving the front end.
+        Window rewrites shift the window left or right and grow or shrink it by one
+        character, leaving the program untouched.
+        A third, explicit \emph{terminate} action lets the agent end the episode
+        itself.
+      \item \textbf{Reward.}
+        A coverage \emph{ratio} rather than a count:
+        $R(p, I') := |B(T_p)| \,/\, |\bigcup_{\rho \in I'} B(T_\rho)|$, the unique
+        \glspl{bb} on the execution trace $T_p$ of the generated program over all
+        \glspl{bb} the test suite $I'$ has covered so far.
+        This is a continuous scalar in $(0, 1]$ that reaches~$1$ when a single trace
+        covers everything seen so far, and it is discounted by $\gamma$ over the
+        episode.
+        Traces come from Pin.
     \end{itemize}
-  \item Research questions --- promoted to \cref{sec:introduction-rqs} as numbered RQs; keep this list as the motivating form and answer them in \cref{chap:results}:
+    The episodic framing is the real departure from Böttinger, whose loop never
+    terminates: here an episode is the mutation of one seed program and ends either
+    at a hard-coded trace length or when the agent takes the terminate action.
+
+  \item[Kuznetsov et al.\ (2019)~\cite{kuznetsov_automated_2019}]
+    The one entry the survey files under exploitability analysis rather than
+    mutation operator selection, and the only one that observes the program instead
+    of the input.
     \begin{itemize}
-      \item Can EfficientZero learn useful policies on fuzzing-shaped reward landscapes
-        (sparse, decaying, heavily aliased observations)?
-      \item How does the approach scale from toy targets (\cref{chap:targets}) up to a real
-        protocol implementation (open62541, \cref{sec:target-open62541})?
-      \item Where does planning with a learned model help or fail compared to classic greybox
-        baselines (\cref{sec:discussion-advantages,sec:discussion-disadvantages})?
+      \item \textbf{State.}
+        The program's response, gathered black-box through a debugger: execution
+        time, code coverage, code completion and returned error codes, preprocessed
+        into the input layer of the $Q$~network.
+        The agent never sees the test case it is mutating.
+      \item \textbf{Action.}
+        One of \num{45} mutation functions kept in a dictionary --- lengthening and
+        shortening strings, inserting integers, appending format specifiers such as
+        \code{\%s} --- one output unit of the network each.
+      \item \textbf{Reward.}
+        Granted when the execution time exceeds that of the previous step or when an
+        error is observed; an error also terminates the episode.
+        The authors report a reward-hacking failure here that is worth recording:
+        having found one error, the agent learned to trigger it over and over to
+        farm the reward.
+        They counter it with the discount rate ($\gamma = 0.9$) and a high
+        exploration factor ($\varepsilon = 0.5$, decayed by \num{0.99} per epoch)
+        rather than by changing the reward.
     \end{itemize}
-\end{itemize}
+    The evaluation is a microbenchmark, not real software: \num{90} training and
+    \num{10} validation targets, each a chain of \code{if}--\code{else} blocks
+    arranged so that \numrange{20}{30} specific mutations in a row are needed to
+    reach the error.
+    On these, the agent needs about \SI{30}{\percent} fewer mutations than random
+    selection.
+
+\end{description}
+
+Three patterns run through the table.
+The state is almost always the input --- a substring window
+\cite{bottinger_deep_2018, authors_reinforcement_nodate} or the whole test case as a
+bit array \cite{drozd_fuzzergym_2018} --- and where it is not, it is a hand-built
+abstraction of the protocol \cite{hutchison_autonomic_2010} or of the program's
+response \cite{kuznetsov_automated_2019}.
+The actions are, with hardly any exception, the mutation operators the underlying
+fuzzer already had; the learning replaces the uniform random choice among them and
+nothing else.
+And the reward is coverage, occasionally traded off against execution time
+\cite{bottinger_deep_2018, kuznetsov_automated_2019} or against crash and
+error indicators \cite{hutchison_autonomic_2010}.
+
+The gap this leaves is the one this thesis addresses.
+None of these agents observes the state of the \gls{put} itself, so none of them can
+represent where in a stateful protocol or a multi-message session the target
+currently is --- Becker et al.\ come closest, and explicitly discard the protocol
+automaton to avoid a state explosion they have no machinery to handle.
+None of them learns a model of the environment; every one is model-free, and pays for
+it in sample efficiency, which is precisely what makes the millisecond-scale forward
+pass of \textcite{drozd_fuzzergym_2018} such a problem that the \gls{mdp} has to be
+degraded to a \gls{pomdp} to hide it.
+
+% NOTE: the survey's summary of two of these formulations does not match the papers.
+% It reports Becker's state as the protocol message type (the paper uses the fuzzing
+% strategies as states, precisely to avoid the protocol automaton), and it groups
+% Kuznetsov with the input-substring states (the paper's state is the program's
+% response). The descriptions above follow the primary sources.
+

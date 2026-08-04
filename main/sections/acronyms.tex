@@ -1,0 +1,42 @@
+%!TEX root = ../thesis.tex
+% Acronym definitions, printed as the list of acronyms by
+% sections/backmatter.tex. Inputted from preamble.tex, since \newacronym has to
+% run in the preamble.
+%
+% Use them in the text with \gls{mcts} (long at first use, short afterwards),
+% \glspl{mcts} for the plural, \acrlong{mcts} / \acrshort{mcts} to force one
+% form. An acronym that is never used in the text is still printed in the list:
+% sections/backmatter.tex calls \glsaddallunused.
+%
+% TODO: MOGI is the name of the emulation framework, not an acronym with a
+% documented expansion --- add it here once the MOGI paper says what it stands
+% for.
+
+% ----- Fuzzing --------------------------------------------------------------
+\newacronym{cgf}{CGF}{coverage-guided fuzzing}
+\newacronym[longplural={programs under test}, shortplural={PUTs}]
+  {put}{PUT}{program under test}
+\newacronym{afl}{AFL}{American Fuzzy Lop}
+\newacronym{bb}{BB}{basic block}
+
+% ----- Reinforcement learning -----------------------------------------------
+\newacronym{rl}{RL}{reinforcement learning}
+\newacronym[longplural={Markov decision processes}, shortplural={MDPs}]
+  {mdp}{MDP}{Markov decision process}
+\newacronym[longplural={partially observable Markov decision processes},
+  shortplural={POMDPs}]
+  {pomdp}{POMDP}{partially observable Markov decision process}
+\newacronym{td}{TD}{temporal difference}
+\newacronym{mcts}{MCTS}{Monte-Carlo tree search}
+\newacronym{ucb}{UCB}{upper confidence bound}
+\newacronym{uct}{UCT}{upper confidence bounds applied to trees}
+\newacronym{dqn}{DQN}{deep Q-network}
+\newacronym{sarsa}{SARSA}{state-action-reward-state-action}
+\newacronym{per}{PER}{prioritized experience replay}
+
+% ----- Systems --------------------------------------------------------------
+\newacronym{cpu}{CPU}{central processing unit}
+\newacronym{gpu}{GPU}{graphics processing unit}
+\newacronym{mmu}{MMU}{memory management unit}
+\newacronym{rng}{RNG}{random number generator}
+\newacronym{json}{JSON}{JavaScript Object Notation}

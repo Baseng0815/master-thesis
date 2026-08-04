@@ -1,0 +1,48 @@
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{tabulary}
+\usepackage{ltxtable}
+\usepackage{rotfloat}
+% DEVIATION from the template, which loads subfig: the thesis uses the
+% subfigure environment of subcaption (see figures/ez-mcts-simulation.tex), and
+% the two packages cannot be loaded together. subcaption is the maintained one;
+% subfig has been unmaintained for years and clashes with caption. Captions are
+% left at the KOMA defaults the template relies on, see preamble/06-thesis.tex.
+\usepackage{subcaption}
+\usepackage{ntheorem}
+\usepackage{makeidx}
+\usepackage[pdftex,unicode,final]{hyperref}
+% automake would call makeindex through \write18, which needs -shell-escape.
+% latexmkrc teaches latexmk to build the glossary and the acronym list instead.
+% acronym gives the acronyms a list of their own instead of mixing them into
+% the glossary of terms, which is what sections/backmatter.tex prints.
+\usepackage[toc,acronym]{glossaries} % must be loaded after hyperref
+% capitalise/noabbrev: \cref prints ``Chapter 2'', never ``chap. 2''.
+% cleveref has no `american' option --- american is a dialect of its `english'.
+\usepackage[capitalise,noabbrev,ngerman,english]{cleveref}
+\usepackage{url}
+\usepackage{mathtools}
+\usepackage{mathdots} % Scale dots according to surrounding text size
+\usepackage{marginnote} % Enhanced marginpar
+\usepackage{stackrel} % Enhanced stackrel
+\usepackage{xfrac}
+\usepackage{upquote} % Set "proper" quotes in verbatim-environments
+\usepackage[final]{listings}
+% DEVIATION from the template, which uses style=alphabetic and sortlocale=de:
+% numeric citations sorted name-year-title, as they were before the move to
+% this template and as the systems-security literature this thesis cites uses
+% them. The bibliography files are registered in preamble-final-setup.tex.
+\usepackage[%
+  backend=biber,%
+  sortlocale=en,%
+  style=numeric,%
+  citestyle=numeric,%
+  sorting=nyt,%
+  pagetracker=page,%
+  citereset=section,%
+  doi=false,%
+  isbn=false]{biblatex}
+\input{glyphtounicode}
+\pdfgentounicode=1
+
+\usepackage{scrhack}

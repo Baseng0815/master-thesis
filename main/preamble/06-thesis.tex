@@ -1,0 +1,78 @@
+% ============================================================================
+% preamble/06-thesis.tex -- what this thesis needs on top of the template
+%
+% preamble/01..05 are the institute template's own preamble files and are kept
+% as close to upstream as the switch to English allows, so that they stay
+% diffable against ~/latex-template-thesis. Everything this thesis adds lives
+% here.
+% ============================================================================
+
+% ----- Figures --------------------------------------------------------------
+% Figures are \input from the chapter that discusses them and reference images
+% by bare filename.
+\graphicspath{{figures/}}
+
+% The template sets no caption fonts, so KOMA's defaults apply. subcaption
+% loads caption, which would otherwise take over; tell it to keep using them.
+\captionsetup{font=small, labelfont=bf}
+\captionsetup[sub]{font=small, labelfont=bf}
+
+% ----- Diagrams -------------------------------------------------------------
+% preamble/03-graphics.tex already loads tikz with positioning, calc, fit and
+% friends; the automata drawings need these two on top.
+\usetikzlibrary{arrows.meta,automata}
+\tikzset{terminal/.style={double,double distance=1.2pt}}
+
+% ----- Tables ---------------------------------------------------------------
+% tabularx also arrives via the template's ltxtable; loading it by name states
+% the dependency rather than relying on that.
+\usepackage{tabularx}
+
+% ----- Lists ----------------------------------------------------------------
+% Provided by the previous template (sdqthesis.cls). The research questions in
+% sections/introduction.tex use its label/ref keys, which plain enumerate has
+% no equivalent for.
+\usepackage{enumitem}
+
+% ----- Units & numbers ------------------------------------------------------
+\usepackage{siunitx}
+
+% ----- Conditionals ---------------------------------------------------------
+% \ifthenelse, used by the title page (an advisor line that is only printed
+% when there is a second advisor) and by chapter.tex.
+\usepackage{ifthen}
+
+% ----- Algorithms -----------------------------------------------------------
+% float, which algorithm needs for [H], is already loaded by the template's
+% rotfloat.
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% ----- Text macros ----------------------------------------------------------
+% Provided by the previous template (sdqthesis.cls) and used throughout the
+% text: \code for identifiers and paths, \model for model element names.
+\newcommand{\code}[1]{\texttt{\hyphenchar\font45\relax #1}}
+\newcommand{\model}[1]{\textsf{#1}}
+
+% ----- Network names --------------------------------------------------------
+% The EfficientZero networks follow MuZero's notation --- h (representation),
+% g (dynamics), p (policy), v (value), vp (value prefix) --- with the parameter
+% vector as an explicit argument, v(s;\theta), rather than a subscript. The
+% multi-letter names need \mathit: plain math mode would set them as a product
+% of single-letter variables, with the wrong spacing.
+\newcommand{\vpnet}{\mathit{vp}}
+\newcommand{\projnet}{\mathit{proj}}
+\newcommand{\prednet}{\mathit{pred}}
+
+% ----- Draft aids -----------------------------------------------------------
+% Follows the draft switch set in preamble.tex: notes are shown while writing
+% and hidden in the final document. The margin this template leaves is a little
+% under todonotes' 2cm minimum. Widening \marginparwidth changes nothing in the
+% final document --- \marginpar is only ever used by todonotes, which is
+% disabled there.
+\setlength{\marginparwidth}{2cm}
+\ifthesisdraft
+  \usepackage[colorinlistoftodos]{todonotes}
+\else
+  \usepackage[disable]{todonotes}
+\fi

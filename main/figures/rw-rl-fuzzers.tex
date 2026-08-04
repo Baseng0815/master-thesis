@@ -1,0 +1,50 @@
+%!TEX root = ../thesis.tex
+
+% Source: Wang et al., "A systematic review of fuzzing based on machine learning
+% techniques", PLOS ONE 15(8), 2020, Table 2 (primary studies) and Table 3 (studies
+% per fuzzing step). Rows below are the primary studies whose algorithm column names
+% a reinforcement-learning method; the survey's study identifiers are kept here for
+% traceability: SP1 Becker, SP13 Karamcheti, SP17 Boettinger, SP19 Drozd,
+% SP22 Fang, SP30 Liu, SP35 Kuznetsov.
+%
+% TODO: two rows still lack a bib entry. Add them to Zotero, then put the \cite
+% next to the author-year label as done for the others:
+%   SP13 Karamcheti, Mann and Rosenberg, "Adaptive Grey-Box Fuzz-Testing with
+%        Thompson Sampling", AISec 2018 (survey ref. [52]).
+%   SP22 Fang and Yan, "Emulation-Instrumented Fuzz Testing of 4G/LTE Android
+%        Mobile Devices Guided by Reinforcement Learning", ESORICS 2018
+%        (survey ref. [61]). The fuzzer is called LEFT.
+%
+% TODO: the Liu (2019) row cites authors_reinforcement_nodate, which is the
+% anonymous review copy of the paper. The survey's reference [68] gives the real
+% metadata: Liu Xiao, Prajapati Rupesh, Li Xiaoting, Wu Dinghao, "Reinforcement
+% Compiler Fuzzing", 2019, https://openreview.net/pdf?id=r1gCRtIDoE. Fix the
+% entry in Zotero so the citation does not print "Anonymous Authors, n.d.".
+
+\begin{table}[htb]
+  \centering
+  \caption[RL-based fuzzers by fuzzing step]{The reinforcement-learning-based
+    fuzzers surveyed by \textcite{wang_systematic_2020}, arranged by the fuzzing
+  step they address.}
+  \label{tab:rw-rl-fuzzers}
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    Study & Fuzzer type & Algorithm \\
+    \midrule
+    \multicolumn{3}{@{}l@{}}{\itshape Mutation operator selection} \\
+    Becker (2010)~\cite{hutchison_autonomic_2010}    & network  & SARSA \\
+    Karamcheti (2018)~\cite{karamchetiAdaptiveGreyBoxFuzzTesting2018} & software & Thompson sampling \\
+    Böttinger (2018)~\cite{bottinger_deep_2018}      & software & Deep Q-learning \\
+    Drozd (2018)~\cite{drozd_fuzzergym_2018}         & software & Deep double Q-learning \\
+    Fang (2018)~\cite{lopez_emulation-instrumented_2018}                                      & network  & Q-learning \\
+    Liu (2019)~\cite{authors_reinforcement_nodate}   & software & Deep Q-learning \\
+    \addlinespace
+    \multicolumn{3}{@{}l@{}}{\itshape Exploitability analysis} \\
+    Kuznetsov (2019)~\cite{kuznetsov_automated_2019} & software & Deep Q-learning \\
+    \addlinespace
+    \multicolumn{3}{@{}l@{}}{\itshape Seed file generation, testcase generation,
+      testcase filtering} \\
+    \multicolumn{3}{@{}l@{}}{No reinforcement-learning-based work surveyed.} \\
+    \bottomrule
+  \end{tabular}
+\end{table}

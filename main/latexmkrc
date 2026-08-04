@@ -1,0 +1,27 @@
+# ============================================================================
+# latexmkrc -- teach latexmk how to build the glossary and the acronym list
+#
+# latexmk knows about biber (from the .bcf) and about makeindex (from the .idx),
+# but not about the files glossaries writes. The glossaries package can run
+# makeindex by itself with its `automake' option, but only through \write18,
+# which would mean building with -shell-escape; these custom dependencies do the
+# same job without opening the shell to the document.
+#
+# $_[0] is the base name including the directory, so this keeps working with the
+# Makefile's -auxdir: everything stays in output/aux/.
+# ============================================================================
+
+# main glossary: .glo -> .gls, logging to .glg
+add_cus_dep('glo', 'gls', 0, 'makeglo2gls');
+sub makeglo2gls {
+    system("makeindex -q -s '$_[0].ist' -t '$_[0].glg' -o '$_[0].gls' '$_[0].glo'");
+}
+
+# acronyms: .acn -> .acr, logging to .alg
+add_cus_dep('acn', 'acr', 0, 'makeacn2acr');
+sub makeacn2acr {
+    system("makeindex -q -s '$_[0].ist' -t '$_[0].alg' -o '$_[0].acr' '$_[0].acn'");
+}
+
+# `latexmk -C' (make clear) should take these with it.
+push @generated_exts, 'glo', 'gls', 'glg', 'acn', 'acr', 'alg', 'ist', 'thm';

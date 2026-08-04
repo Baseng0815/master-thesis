@@ -40,13 +40,16 @@ FLAGS   := -pdf -interaction=nonstopmode -file-line-error -auxdir=$(AUXDIR)
 
 # ----------------------------------------------------------------------------
 # The chapter list is read out of thesis.tex so that it cannot drift from the
-# document: every \input{sections/...} after \mainmatter is one chapter, and its
-# position in that list is the chapter number the review build has to print.
-# Files inputted after \appendix are appendix chapters, which LaTeX letters by
-# itself, so their number is not used. Each entry is name:number:kind.
+# document: every \input{sections/...} between \mainmatter and \backmatter is
+# one chapter, and its position in that list is the chapter number the review
+# build has to print. Files inputted after \appendix are appendix chapters,
+# which LaTeX letters by itself, so their number is not used. What follows
+# \backmatter is the bibliography and the lists, not a chapter to review.
+# Each entry is name:number:kind.
 # ----------------------------------------------------------------------------
 CHAPTER_SPECS := $(shell awk ' \
 	/^\\mainmatter/ { body = 1; next } \
+	/^\\backmatter/ { body = 0; next } \
 	/^\\appendix/   { kind = "appendix" } \
 	body && /^\\input\{sections\// { \
 		name = $$0; \

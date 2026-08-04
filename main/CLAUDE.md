@@ -22,32 +22,48 @@ describing what belongs there. The primary task in this repo is writing that con
 companion code and the source papers. The document structure, packages, and bibliography are already
 set up.
 
-## The document class
+## The template
 
-The thesis uses **`sdqthesis.cls` v1.6**, the SDQ/KASTEL student-thesis template of the KIT
-(<https://sdq.kastel.kit.edu/wiki/Dokumentvorlagen>); the upstream copy lives in
-`~/abschlussarbeiten`. The class and its assets are vendored next to `thesis.tex`:
+The thesis uses the **institute thesis template of the Fraunhofer IOSB / KIT IES**, whose upstream
+copy lives in `~/latex-template-thesis`
+(`gitlab.cc-asp.fraunhofer.de:fuzzing/student-work/theses/latex-template-thesis`). There is no
+document class: the template is a plain **`scrbook`** (KOMA-Script) setup plus a set of preamble
+files, all vendored next to `thesis.tex`:
 
-- `sdqthesis.cls` — the class. **Do not modify it**, and do not override the layout parameters it
-  sets (font size, margins, line spacing, caption fonts, `\typearea`). A uniform layout across
+- `preamble/01-fonts.tex` … `05-math.tex` — the template's own preamble files. **Keep them as close
+  to upstream as possible** so they stay diffable against `~/latex-template-thesis`; anything this
+  thesis needs on top goes in `preamble/06-thesis.tex`. Do not override the layout parameters they
+  set (font size, `BCOR`/`DIV`, line spacing, page head) — a uniform layout across the institute's
   theses is the point of the template.
-- `logos/` — KIT and SDQ logos for the title page.
-- `title-background.pdf` — the KIT frame drawn behind the title page.
+- `preamble-final-setup.tex` — everything that has to run after the metadata: `\hypersetup`, theorem
+  environments, cleveref names, the `listings` style, `\makeindex`/`\makeglossaries` and the
+  `\addbibresource` lines.
+- `KAcolors.sty` — the KIT corporate colors (`KITblue`, `KITred`, … , `KITblack50`), used by the
+  title page and by the `pgfplots` styles in `preamble/03-graphics.tex`.
+- `logos/` — KIT, Fraunhofer IOSB and IES logos for the title page.
 
-The class is based on **`scrbook`** (KOMA-Script), so KOMA idioms apply: `\frontmatter`/`\mainmatter`,
-`parskip=half` (paragraphs are separated by vertical space, not indented), `\setkomafont`.
+Every place where this thesis departs from the upstream template is marked with a `DEVIATION`
+comment. The deviations are: English instead of German as the main language (and no `icomma`),
+`subcaption` instead of the unmaintained `subfig`, numeric instead of alphabetic citations, Rust
+instead of Java in the `listings` setup, and several `\addbibresource` lines instead of one
+`literature.bib`.
 
-Class-specific commands used in `preamble.tex`: `\thesistype`, `\reviewerone`/`\reviewertwo`,
-`\advisorone`/`\advisortwo`, `\editingtime`, `\location`, `\settitle`, `\setpdf`, and
-`\includeabstract` (the last one from `thesis.tex`). **`\includeabstract` hard-codes the paths
-`sections/abstract_en.tex` and `sections/abstract_de.tex`** — that is why the content directory is
-called `sections/` and why the abstract is split in two files. A German abstract is mandatory for a
-thesis written in English.
+Since the template is `scrbook`, KOMA idioms apply: `\frontmatter`/`\mainmatter`/`\backmatter`,
+`\addchap`/`\addsec`, `\setkomafont`. Note that unlike the previous template (SDQ/KASTEL) this one
+does **not** set `parskip` — paragraphs are indented, not separated by vertical space.
 
-`draft` vs `final` is a `\documentclass` option (currently `draft`): `draft` shows `\todo` notes and
-overfull-box markers, `final` hides them. Switch to `final` before submission — in `preamble.tex`,
-which is the only place the class is loaded, so the chapter builds follow along. `preamble.tex` also
-passes `final` to hyperref explicitly so that draft builds keep working PDF links.
+The title page (`sections/titlepage.tex`) and the declaration (`sections/declaration.tex`) are
+ordinary content files that read the metadata macros defined in `preamble.tex`: `\worktitle`,
+`\typeofthesis`, `\nameofauthor`, `\placeofexam`, `\dateofexam`, `\editingstart`/`\editingend`,
+`\reviewer`, `\advisorA`/`\advisorB` (leave `\advisorB` empty and the line is dropped). A German
+abstract is mandatory for a thesis written in English, which is why the abstract is split into
+`sections/abstract_en.tex` and `sections/abstract_de.tex`.
+
+Draft vs. final is the `\ifthesisdraft` boolean at the top of `preamble.tex`: it drives both the
+class's overfull-box markers and the mode `todonotes` is loaded in. Set it to `\thesisdraftfalse`
+before submission — `preamble.tex` is the only place the class is loaded, so the chapter builds
+follow along. The template passes `final` to `graphicx`, `listings`, `microtype`, `hyperref` and
+`scrlayer-scrpage` explicitly, so draft builds keep their graphics and working PDF links.
 
 ## Building
 
@@ -77,23 +93,33 @@ bibliography are necessarily local to the excerpt. `make chapters` therefore bui
 
 The bibliography backend is **biber** (not bibtex) — biblatex is configured with
 `backend=biber`. `latexmk` invokes it automatically; a manual sequence would be
-`pdflatex → biber → pdflatex → pdflatex`. There is no `latexmkrc`.
+`pdflatex → biber → pdflatex → pdflatex`.
+
+`latexmkrc` teaches `latexmk` the two custom dependencies that build the glossary (`.glo → .gls`)
+and the acronym list (`.acn → .acr`) with `makeindex`. The `glossaries` package could do this
+itself with its `automake` option, but only through `\write18`, which would mean building with
+`-shell-escape`. The index (`.idx → .ind`) and biber need no help. **A `make continuous` that was
+started before `latexmkrc` changed does not see the change** — restart it, otherwise the acronym
+list silently stays stale.
 
 ## Document structure
 
 Three files at the top level carry the document itself:
 
-- `preamble.tex` — class options, thesis metadata, the packages the class does not already load, and
-  the theorem environments. Both master documents `\input` it as their first line, so the class is
-  loaded in exactly one place.
+- `preamble.tex` — the draft/final switch, the class options, the `\input`s of `preamble/*` and
+  `preamble-final-setup.tex`, and the thesis metadata. Both master documents `\input` it as their
+  first line, so the class is loaded in exactly one place.
 - `thesis.tex` — the complete thesis: front matter, then one `\input` per chapter, then the
-  bibliography and appendix. It defines the document order and nothing else.
+  appendix and the back matter. It defines the document order and nothing else.
 - `chapter.tex` — the review-copy master, one chapter per PDF; never built by hand, see
   [Building](#building).
 
 Content lives in `sections/`, one file per section or chapter, mirroring the outline:
 
-- **Front matter** — `sections/{declaration,abstract_en,abstract_de}.tex`
+- **Front matter** — `sections/{titlepage,declaration,abstract_en,abstract_de,notation}.tex`
+- **Back matter** — `sections/backmatter.tex` (bibliography, lists of figures/tables/theorems/
+  listings, acronyms, index) and `sections/acronyms.tex` (the `\newacronym` definitions, `\input`
+  from `preamble.tex` because they have to run in the preamble)
 - **Introduction** — `sections/introduction.tex`
 - **Background** — `sections/background/{fuzzing,reinforcement-learning}.tex`
 - **EfficientZero** — `sections/efficientzero.tex` (the algorithm)
@@ -110,8 +136,8 @@ Content lives in `sections/`, one file per section or chapter, mirroring the out
 
 To reorder, add, or remove a chapter, edit the `\input` lines in `thesis.tex` — it is the single
 source of truth for document order, and `make chapters` derives its chapter list from those lines
-(every `\input{sections/...}` after `\mainmatter`, in order, is one chapter; the ones after
-`\appendix` are appendix chapters).
+(every `\input{sections/...}` between `\mainmatter` and `\backmatter`, in order, is one chapter; the
+ones after `\appendix` are appendix chapters; what follows `\backmatter` is not a chapter).
 
 **One chapter is always one file under `sections/`.** A chapter split over several section files
 gets a wrapper file that holds the `\chapter` heading and `\input`s the sections —
@@ -133,25 +159,41 @@ Conventions to match when editing chapter files:
 - Cite with biblatex numeric style: `\cite{ye_mastering_2021}`. Bib entries live in
   `references/fuzzing.bib` and `references/reinforcement-learning.bib`
   (biber format, exported from Zotero — do not hand-edit; Bastian adds entries via Zotero).
-  During drafting, `\nocite{*}` in `thesis.tex` can list every bib entry.
+  During drafting, `\nocite{*}` in `preamble-final-setup.tex` can list every bib entry.
 - Figures go in `figures/`, one TikZ picture per file, `\input` from the chapter that discusses it;
   `\graphicspath{{figures/}}` is set, so reference images by bare filename.
 - `\todo{...}` uses `\marginpar`, so it must not appear inside a float, `minipage` or `subfigure` —
   LaTeX aborts with "Float(s) lost". Put the note in the surrounding text instead.
+- Acronyms are defined in `sections/acronyms.tex` and used with `\gls{mcts}` (long at first use,
+  short afterwards), `\glspl{}` for the plural, `\acrlong{}`/`\acrshort{}` to force one form. An
+  acronym that is never used still appears in the list — `sections/backmatter.tex` calls
+  `\glsaddallunused`. Most of the existing text still spells acronyms out by hand; converting it is
+  ongoing work, not a rule to enforce retroactively in unrelated edits.
+- Index entries are written as `\index{term}` (`\index{term!subterm}` for a subentry) at the point
+  where a term is *defined*, not at every mention. Only a seed set exists so far, in the two
+  background chapters.
+- `sections/notation.tex` lists the symbols the thesis uses; keep it in sync when a chapter
+  introduces new notation.
 
-Available machinery from `preamble.tex` (already loaded — use rather than re-adding packages): `amsmath`/
-`mathtools` and theorem environments (`theorem`, `lemma`, `corollary`, `definition`, `example`);
-`algorithm`/`algpseudocode` for pseudocode; `listings` (`lstlisting`, styled) for source; `siunitx`
-for numbers/units; `booktabs`/`tabularx` for tables; `subcaption` for subfigures; `tikz` for
-diagrams. The class itself adds `booktabs`, `longtable`, `array`, `enumitem`, `graphicx`, `url`,
-`hyperref` and `csquotes`, plus `\code{...}` and `\model{...}` text macros. Draft aids: `todonotes`
-provides `\todo{...}` and `\listoftodos` (the list is commented out in `thesis.tex`).
+Available machinery from `preamble.tex` (already loaded — use rather than re-adding packages):
+`amsmath`/`amssymb`/`mathtools`/`mathdots`/`xfrac` and the `ntheorem` environments (`theorem`,
+`lemma`, `corollary`, `proposition`, `definition`, `example`); the template's own math macros in
+`preamble/05-math.tex` (`\argmin`/`\argmax`, `\E`, `\Var`, `\Tr`, `\diff`, `\dsR`/`\dsN`, …);
+`algorithm`/`algpseudocode` for pseudocode; `listings` (`lstlisting`, plus `latex`, `rust` and
+`ccode` environments) for source; `siunitx` for numbers/units; `booktabs`/`tabularx`/`tabulary`/
+`multirow`/`ltxtable` for tables; `subcaption` for subfigures; `tikz` and `pgfplots` (with `KIT …
+plot` styles and the `KAcolors` palette) for diagrams; `enumitem` for lists; `glossaries` for
+acronyms; `\code{...}` and `\model{...}` for identifiers and model names in text. Draft aids:
+`todonotes` provides `\todo{...}` and `\listoftodos` (the list is commented out in `thesis.tex`).
 
-`amssymb` is deliberately *not* loaded: the class pulls in `newtxmath`, which provides `\mathbb` and
-`\mathcal` already and clashes with `amssymb`.
+Unlike under the previous template, `amssymb` *is* loaded — `preamble/01-fonts.tex` loads it before
+`newtxmath`, which is the order that works.
 
-Outstanding TODOs in `preamble.tex`: examiners, advisors, editing period and location — all marked
-`TODO:` so they show up on the title and declaration pages until filled in.
+Metadata to re-check in `preamble.tex` before submission: `\dateofexam` is the end of the editing
+period (13 August 2026), which is the submission date, not necessarily the date of the colloquium.
+The template's title page has a single `\reviewer` field where the previous one had a first and a
+second examiner, so only the first examiner is printed; `\advisorB` is empty because there is one
+advisor.
 
 ## Companion repositories
 

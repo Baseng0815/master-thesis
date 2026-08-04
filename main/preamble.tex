@@ -5,150 +5,92 @@
 %   thesis.tex   -- the complete thesis
 %   chapter.tex  -- a single chapter, for review copies (see `make chapters')
 % Both \input this file as their very first line, so the class options (in
-% particular draft/final) are set in exactly one place.
+% particular the draft switch) are set in exactly one place.
+%
+% The typesetting comes from the institute template at
+% ~/latex-template-thesis (Fraunhofer IOSB / KIT IES,
+% gitlab.cc-asp.fraunhofer.de:fuzzing/student-work/theses/latex-template-thesis).
+% This file plays the role of the template's main.tex preamble block plus its
+% preamble.tex; preamble/01..05 are the template's own files, kept as close to
+% upstream as the switch to English allows, and preamble/06-thesis.tex holds
+% what this thesis needs on top. Deviations from the template are marked
+% ``DEVIATION'' where they occur.
 % ============================================================================
 
-%% The class's ``draft'' option below reaches hyperref as a global option, and
-%% hyperref in draft mode turns every link into plain text. Keep the links: the
-%% option list here is appended after the global options, so ``final'' wins.
-\PassOptionsToPackage{final}{hyperref}
-
-%% Available page modes: oneside, twoside
-%% Available languages: english, ngerman
-%% Available modes: draft, final
-%%   draft -- shows \todo notes and overfull-box markers; use while writing
-%%   final -- hides them; switch before submission
-\documentclass[twoside, english, draft]{sdqthesis}
-
 %% ---------------------------------
-%% | Information about the thesis  |
+%% | Draft or final                |
 %% ---------------------------------
+%% draft -- shows \todo notes and marks overfull boxes; use while writing
+%% final -- hides them; switch before submission
+%%
+%% One switch drives both: the class option that marks overfull boxes and the
+%% mode todonotes is loaded in (preamble/06-thesis.tex). KOMA's draft=true is a
+%% key-value option that the ifdraft package cannot see, hence this boolean.
+\newif\ifthesisdraft
+\thesisdrafttrue
 
-\author{Bastian Engel}
+\ifthesisdraft
+  \PassOptionsToClass{draft=true}{scrbook}
+\else
+  \PassOptionsToClass{draft=false}{scrbook}
+\fi
 
-\title{Applications of Reinforcement Learning to Stateful Emulator-Based
-Greybox Fuzzing}
+\PassOptionsToPackage{table,dvipsnames,svgnames}{xcolor}
 
-\thesistype{Master's Thesis}
-
-%% Change the institute here, ``KASTEL'' is default
-% \myinstitute{Institute for \dots}
-
-%% A logo can be placed in the ``logos'' directory and included here instead of
-%% the SDQ logo
-% \grouplogo{myfile}
-%% Alternatively, the group logo can be disabled
-% \nogrouplogo
-
-%% The reviewers are the professors that grade the thesis
-\reviewerone{Prof. Dr.-Ing. Jürgen Beyerer}
-\reviewertwo{Mark Leon Giraud}
-
-\advisorone{Prof. Dr.-Ing. Jürgen Beyerer}
-\advisortwo{Mark Leon Giraud}
-
-%% Start and end date of the thesis
-\editingtime{13. February 2026}{13. August 2026}
-
-%% Place of residence of the author; used on the declaration page
-\location{Karlsruhe}
-
-\settitle
+\documentclass[
+	a4paper,
+	fontsize=11pt,
+	version=last,
+	BCOR=10mm,
+	DIV=11,
+	toc=bibliography,
+	toc=listof,
+	toc=index,
+	hyperref,
+	amsmath,
+	ngerman,
+	twoside,
+	headinclude=true,
+	footnotes=multiple
+ ]{scrbook}
 
 %% --------------------------------
 %% | Packages                     |
 %% --------------------------------
-%% The class already provides booktabs, longtable, array, graphicx, enumitem,
-%% microtype, babel, csquotes, url, hyperref, appendix, import and wallpaper.
-%% Only what the content needs on top of that is loaded here.
+\input{preamble/01-fonts}
+\input{preamble/02-typography}
+\input{preamble/03-graphics}
+\input{preamble/04-aux-packages}
+\input{preamble/05-math}
+\input{preamble/06-thesis}
 
-% ----- Mathematics ----------------------------------------------------------
-% amssymb is deliberately not loaded: the class pulls in newtxmath, which
-% already provides \mathbb and \mathcal and clashes with amssymb.
-\usepackage{amsmath}
-% newtxmath (loaded by the class, hence before amsthm) already defines \openbox;
-% let amsthm redefine it instead of erroring out.
-\let\openbox\relax
-\usepackage{amsthm}
-\usepackage{mathtools}
+%% ---------------------------------
+%% | Information about the thesis  |
+%% ---------------------------------
+%% These are plain macros, not class commands: the template builds its title
+%% page (sections/titlepage.tex) and its declaration (sections/declaration.tex)
+%% from them directly.
 
-% ----- Network names --------------------------------------------------------
-% The EfficientZero networks follow MuZero's notation --- h (representation),
-% g (dynamics), p (policy), v (value), vp (value prefix) --- with the parameter
-% vector as an explicit argument, v(s;\theta), rather than a subscript. The
-% multi-letter names need \mathit: plain math mode would set them as a product
-% of single-letter variables, with the wrong spacing.
-\newcommand{\vpnet}{\mathit{vp}}
-\newcommand{\projnet}{\mathit{proj}}
-\newcommand{\prednet}{\mathit{pred}}
+\newcommand{\worktitle}{Applications of Reinforcement Learning to Stateful
+Emulator-Based Greybox Fuzzing}
+\newcommand{\typeofthesis}{Master's Thesis}
+\newcommand{\nameofauthor}{Bastian Engel}
+\newcommand{\placeofexam}{Karlsruhe}
+%% Date on the title page and the declaration: the submission date.
+\newcommand{\dateofexam}{13. August 2026}
+%% Start and end of the editing period, printed on the title page.
+\newcommand{\editingstart}{13. February 2026}
+\newcommand{\editingend}{13. August 2026}
+%% The professor who grades the thesis, then the advisors. Leave \advisorB
+%% empty if there is only one advisor; the title page then omits the line.
+\newcommand{\reviewer}{Prof. Dr.-Ing. Jürgen Beyerer}
+\newcommand{\advisorA}{Mark Leon Giraud}
+\newcommand{\advisorB}{}
 
-% ----- Figures --------------------------------------------------------------
-\graphicspath{{figures/}}
-\usepackage{xcolor}
-\usepackage{subcaption}
-% subcaption loads caption, which disables the class's KOMA caption fonts.
-% Restore them so captions keep the template's appearance (sdqthesis.cls sets
-% \setkomafont{caption}{\small}, \setkomafont{captionlabel}{\sffamily\bfseries\small}
-% and \setcapindent{0em}).
-\captionsetup{format=plain, font=small, labelfont={sf,bf,small}}
-\usepackage{float}
+%% --------------------------------
+%% | Setup that needs the metadata |
+%% --------------------------------
+\input{preamble-final-setup}
 
-% ----- Diagrams -------------------------------------------------------------
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta,automata,positioning}
-\tikzset{terminal/.style={double,double distance=1.2pt}}
-
-% ----- Tables ---------------------------------------------------------------
-\usepackage{tabularx}
-\usepackage{multirow}
-
-% ----- Units & numbers ------------------------------------------------------
-\usepackage{siunitx}
-
-% ----- Code listings --------------------------------------------------------
-\usepackage{listings}
-\lstset{
-  basicstyle=\ttfamily\small,
-  keywordstyle=\bfseries\color{blue!60!black},
-  commentstyle=\itshape\color{green!40!black},
-  stringstyle=\color{orange!70!black},
-  numbers=left,
-  numberstyle=\tiny\color{gray},
-  frame=single,
-  breaklines=true,
-  showstringspaces=false,
-  captionpos=b,
-  tabsize=4,
-}
-
-% ----- Algorithms -----------------------------------------------------------
-\usepackage{algorithm}
-\usepackage{algpseudocode}
-
-% ----- Draft aids -----------------------------------------------------------
-% Follows the class's draft/final mode: notes are shown in draft, hidden in final.
-% The margin the class leaves is a little under todonotes' 2cm minimum. Widening
-% \marginparwidth changes nothing in the printed thesis --- \marginpar is only
-% ever used by todonotes, which is disabled in final mode.
-\setlength{\marginparwidth}{2cm}
-\ifdraft
-  {\usepackage[colorinlistoftodos]{todonotes}}
-  {\usepackage[disable]{todonotes}}
-
-% ----- Bibliography ---------------------------------------------------------
-%% Use biber instead of BibTeX, see the template README
-\usepackage[citestyle=numeric,style=numeric,sorting=nyt,backend=biber]{biblatex}
-\addbibresource{references/fuzzing.bib}
-\addbibresource{references/reinforcement-learning.bib}
-
-% ----- Cross-references (loaded after hyperref, which the class provides) ----
-\usepackage[capitalise,noabbrev]{cleveref}
-
-% ----- Theorem environments -------------------------------------------------
-\newtheorem{theorem}{Theorem}[chapter]
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{corollary}[theorem]{Corollary}
-\theoremstyle{definition}
-\newtheorem{definition}[theorem]{Definition}
-\newtheorem{example}[theorem]{Example}
-\DeclareMathOperator*{\argmax}{arg\,max}
+%% Acronyms and glossary entries, printed by sections/backmatter.tex.
+\input{sections/acronyms}

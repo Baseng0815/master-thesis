@@ -1,0 +1,40 @@
+% DEVIATION from the template: icomma is not loaded. It makes a comma that is
+% not followed by a space a decimal separator, which is what German needs and
+% what English does not: this thesis writes intervals and tuples such as
+% $[0,1]$ or $(a,r,p)$, and icomma would set those without the thin space
+% English typography puts after the comma.
+\usepackage{fnpct}
+\usepackage[final]{microtype}
+
+% DEVIATION from the template: the thesis is written in English, so American
+% English is the main language and German is only the secondary one, needed for
+% the mandatory German abstract. The template has it the other way round.
+\usepackage[ngerman,main=american]{babel}
+\newcommand*{\ngerman}[1]{\foreignlanguage{ngerman}{#1}}
+\newcommand*{\usenglish}[1]{\foreignlanguage{american}{#1}}
+
+\usepackage[autostyle,german=quotes,english=american]{csquotes}
+
+\usepackage{setspace}
+\setstretch{1.2}
+
+\usepackage[headsepline,plainheadsepline,draft=false]{scrlayer-scrpage}
+\pagestyle{scrheadings}
+\ohead[\pagemark]{\pagemark}
+\chead[]{}
+\ihead[]{\headmark}
+\ifoot[]{}
+\cfoot[]{}
+\ofoot[]{}
+\setkomafont{pageheadfoot}{\normalfont\sffamily}
+\setkomafont{pagenumber}{\sffamily\bfseries}
+\setkomafont{descriptionlabel}{\normalfont\slshape}
+\deffootnote[2em]{2.5em}{1.5em}{\thefootnotemark\ }
+
+%set a penality to prevent Schusterjungen und Hurenkinder
+\widowpenalties=4 10000 10000 150 0 
+
+% If you have the problem that many graphics are pushed at the end of the chapter try enabling the next line.
+%\raggedbottom
+
+\KOMAoptions{DIV=last}

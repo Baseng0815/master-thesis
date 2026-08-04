@@ -28,7 +28,7 @@
 % ----- Cross-references into the rest of the thesis -------------------------
 % xr pulls in every label of the full thesis, so a \cref to another chapter
 % shows the number that chapter has in thesis.pdf. hyperref is already loaded
-% by the class, hence plain xr rather than xr-hyper: references into the other
+% by the preamble, hence plain xr rather than xr-hyper: references into the other
 % chapters are correct but not clickable, which is what a chapter excerpt can
 % offer anyway.
 \usepackage{xr}
@@ -50,8 +50,7 @@
 
 \begin{document}
 
-\setpdf
-\hypersetup{pdftitle={\thethesistype{} (draft excerpt): \ChapterFile}}
+\hypersetup{pdftitle={\typeofthesis{} (draft excerpt): \ChapterFile}}
 
 \mainmatter
 
@@ -61,9 +60,9 @@
 \thispagestyle{empty}
 \begin{center}
   \sffamily
-  {\large\bfseries\thetitle\par}
+  {\large\bfseries\worktitle\par}
   \vskip 1em
-  {\thethesistype{} of \theauthor\par}
+  {\typeofthesis{} of \nameofauthor\par}
   \vskip .3em
   {Draft excerpt, \today\par}
 \end{center}

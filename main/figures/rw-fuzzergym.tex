@@ -1,0 +1,115 @@
+%!TEX root = ../thesis.tex
+% FuzzerGym for \cref{sec:rw-mdp-formulations}: redrawn after the architecture
+% overview of Drozd and Wagner, "FuzzerGym" (arXiv:1807.07490).
+% Layout rule: the fuzzing loop is a rectangular cycle traversed
+% counter-clockwise --- up the left column, right along the top, down the right
+% column and back left along the bottom --- so that every edge stays horizontal
+% or vertical. The two arrows between the panels are what fixes the vertical
+% placement of everything else: the state arrow runs at y=0, the height of both
+% the environment box and the instrumented target, and the action arrow at
+% y=-4.1, the height of both the Q-value output and the mutator selection. Move
+% one of those four nodes and an arrow goes diagonal.
+% Spacing constraint: an edge label sits in the 1.6cm gap between the two
+% columns of the loop, so it must be narrower than that gap or it slides under
+% the boxes; "select a random input" is stacked over two lines for that reason.
+% The whole picture is 14.3cm wide against a 14.56cm text width, so there is no
+% room to widen a column without taking the width back somewhere else.
+% Deviations from the original: its promotional bullet lists ("competitive
+% fuzzing via OpenAI Gym", "leverage numerous RL implementations", ...) are
+% dropped, its separate "corpus input" box is folded into the edge label
+% "select a random input", and the layer stack is drawn as boxes rather than as
+% unit graphs.
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[
+      >={Stealth[round]}, font=\footnotesize,
+      panel/.style  = {draw=black!45, densely dashed, rounded corners=3pt,
+                       inner sep=3.5mm},
+      ptitle/.style = {font=\footnotesize\bfseries},
+      agent/.style  = {draw, rounded corners=2pt, fill=blue!8, align=left,
+                       text width=39mm, font=\scriptsize, inner sep=2mm},
+      layer/.style  = {draw, rounded corners=1pt, fill=blue!8, align=center,
+                       font=\scriptsize, minimum height=4.5mm,
+                       minimum width=30mm, inner sep=1pt},
+      netbox/.style = {draw=black!45, rounded corners=2pt, inner sep=1.5mm},
+      sig/.style    = {align=center, font=\scriptsize, inner sep=1.5pt},
+      proc/.style   = {draw, fill=white, align=center, text width=17mm,
+                       minimum height=9mm, font=\scriptsize, inner sep=1.5mm},
+      store/.style  = {draw, fill=black!8, align=center, text width=17mm,
+                       minimum height=9mm, font=\scriptsize, inner sep=1.5mm},
+      act/.style    = {draw, fill=blue!8, align=center, text width=17mm,
+                       minimum height=9mm, font=\scriptsize, inner sep=1.5mm},
+      dec/.style    = {draw, ellipse, fill=black!8, align=center,
+                       font=\scriptsize, inner sep=1pt},
+      bridge/.style = {draw, rounded corners=2pt, fill=black!5, align=center,
+                       font=\scriptsize, text width=20mm, inner sep=1.5mm},
+      flow/.style   = {->, thick, black!70},
+      link/.style   = {->, very thick, KITgreen},
+      lbl/.style    = {font=\scriptsize, inner sep=2.5pt, align=center},
+    ]
+    % --- the agent: one Gym environment and the network behind it ------------
+    \node[ptitle] (gymtitle) at (2.15, 1.75) {FuzzerGym};
+    \node[agent]  (env)      at (2.15, 0)    {%
+      \frenchspacing\raggedright  % no extra space after the colons, at 7pt it reads as a gap
+      \textbf{OpenAI Gym environment}
+      \begin{itemize}[label=\textbullet, nosep, topsep=2pt,
+                      leftmargin=1.1em, labelsep=0.3em]
+        \item state: the test input as a bit array
+        \item reward: newly covered lines
+        \item action: a libFuzzer mutation operator
+      \end{itemize}};
+
+    \node[sig]   (qtitle) at (2.15,-1.65) {deep double $Q$-network};
+    \node[layer] (l1)     at (2.15,-2.15) {LSTM, $64\times 64$};
+    \node[layer] (l2)     at (2.15,-2.70) {MLP, $64\times 64$};
+    \node[layer] (l3)     at (2.15,-3.25) {MLP, $64\times 64$};
+    \node[netbox, fit=(qtitle)(l1)(l3)] (qnet) {};
+    \node[sig]   (q)      at (2.15,-4.10) {a $Q$-value per operator};
+
+    \draw[flow] (env)  -- (qnet);
+    \draw[flow] (qnet) -- (q);
+
+    % --- the fuzzer: libFuzzer's own loop, one step of it given away --------
+    \node[ptitle] (libtitle) at (10.6, 1.75) {libFuzzer};
+    \node[proc]   (code)     at ( 8.8, 0)    {instrumented\\target};
+    \node[dec]    (covq)     at (12.4, 0)    {new\\coverage?};
+    \node[store]  (corpus)   at (12.4,-2.05) {input\\corpus};
+    \node[proc]   (test)     at ( 8.8,-2.05) {test input};
+    \node[act]    (mut)      at ( 8.8,-4.10) {select a\\mutator};
+
+    \draw[flow] (mut)  -- node[lbl,right] {mutate the input}   (test);
+    \draw[flow] (test) -- node[lbl,right] {run the test}       (code);
+    \draw[flow] (code) --                                      (covq);
+    \draw[flow] (covq) -- node[lbl,left]  {add to the\\corpus} (corpus);
+    \draw[flow,rounded corners=3pt] (corpus.south) -- (12.4,-4.10)
+                       -- node[lbl,above] {select a\\random input} (mut.east);
+
+    % --- the two panels, drawn once every node inside them exists ------------
+    \coordinate (gymfoot) at (2.15,-4.55);   % keeps both panels the same height
+    \node[panel, fit=(gymtitle)(env)(qnet)(q)(gymfoot)]              (gym) {};
+    \node[panel, fit=(libtitle)(code)(covq)(corpus)(test)(mut)]      (lib) {};
+
+    % --- the bridge, and the only two messages that cross it -----------------
+    \node[bridge] (grpc) at (6.05,-2.05) {gRPC bridge:\\asynchronous\\streaming};
+    \draw[dotted,black!55] (grpc.north) -- (6.05, 0);
+    \draw[dotted,black!55] (grpc.south) -- (6.05,-4.10);
+
+    \draw[link] (lib.west |- code) --
+                node[lbl,above] {state and reward}          (gym.east |- env);
+    \draw[link] (gym.east |- q)    --
+                node[lbl,below] {action:\\a mutation operator} (lib.west |- mut);
+  \end{tikzpicture}
+  \caption[The FuzzerGym architecture]{%
+    FuzzerGym, redrawn after \textcite{drozd_fuzzergym_2018}.
+    libFuzzer keeps its own fuzzing loop, and the single step it hands over ---
+    the choice of the mutation operator --- becomes the action of an OpenAI Gym
+    environment.
+    The agent observes the test input as a bit array together with the program
+    state the LLVM sanitizers expose, is rewarded with the number of newly
+    covered lines, and scores the thirteen operators with a deep double
+    $Q$-network whose first layer is recurrent.
+    Both directions cross the language boundary through an asynchronous gRPC
+    bridge, so that libFuzzer never has to block on a forward pass.
+  }
+  \label{fig:rw-fuzzergym}
+\end{figure}

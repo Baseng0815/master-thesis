@@ -57,7 +57,8 @@ its charge level as a noisy voltage measurement.
 Observing the environment may therefore introduce uncertainty.
 The Markov property then still holds for the underlying state, but not for what the agent sees.
 
-This situation is modeled through a \emph{partially observable Markov decision process}
+This situation is modeled through a \emph{partially observable Markov decision process}%
+\index{Markov decision process!partially observable}
 (POMDP)~\cite{ASTROM1965174,kaelbling_planning_1998}, which
 extends the original 3-tuple MDP $(\mathcal{S},\mathcal{A},p)$ to a 5-tuple $\mathit{POMDP}=(\mathcal{S},\mathcal{A},p,\mathcal{O},o)$, by adding
 
@@ -72,7 +73,7 @@ The environment still evolves as an MDP over $\mathcal{S}$ according to $p$.
 However, the agent must act on observation $O_t$ instead of on the true state $S_t$.
 An ordinary MDP is the special case $\mathcal{O}=\mathcal{S}$ with $o=\operatorname{id}(\cdot)$.
 
-POMDPs introduce the problem of \emph{state aliasing}.
+POMDPs introduce the problem of \emph{state aliasing}.\index{state aliasing}
 If two states that require different actions map to the same observation, then no deterministic
 memoryless policy $\pi:\mathcal{O}\times\mathcal{A}\rightarrow[0,1]$ can act correctly in both,
 and the best achievable memoryless policy can be arbitrarily worse than a policy that is
@@ -82,7 +83,7 @@ A POMDP can be made Markovian by treating not the actual observations, but the
 entire observation-action history $H_t=O_0,A_0,O_1,A_1,\dots,O_t$ as the state space.
 Another classical solution is to summarize the observation-action history in a probability distribution
 and treat this distribution as the actual state.
-This state is called a \emph{belief state} $b_t(s)=\Pr\{S_t=s|H_t\}$ and suffices
+This state is called a \emph{belief state}\index{belief state} $b_t(s)=\Pr\{S_t=s|H_t\}$ and suffices
 to allow the agent to act optimally~\cite{puterman_markov_2009}.
 Practically speaking, the belief-state approach is restricted in that it presupposes
 the existence of a known model $(p,o)$. Solving the resulting belief MDP is also intractable
@@ -133,7 +134,7 @@ Moreover, even after the estimate has converged, the agent keeps exploring.
 This is typically countered by decaying $\varepsilon$ over time~\cite{sutton_reinforcement_2020}.
 
 \paragraph{Upper confidence bounds}
-Directed exploration makes use of the \emph{upper confidence bounds} rule to estimate which arms
+Directed exploration makes use of the \emph{upper confidence bounds}\index{upper confidence bound} rule to estimate which arms
 could still yield a high reward given how little it has been tried.
 The rule is formulated in terms of the current estimate plus the visit count of each action
 and prioritizes high-value actions with low visit count.
@@ -181,7 +182,7 @@ The \emph{return} at time step $t$ is the discounted sum of all future rewards,
 where the \emph{discount factor} $\gamma\in[0,1)$ controls how far-sighted the agent is
 by exponentially discounting future rewards.
 
-A \emph{value function} measures how good a state is under a given policy.
+A \emph{value function}\index{value function} measures how good a state is under a given policy.
 It is defined as the expected return when starting in $s$ and following $\pi$:
 
 \begin{equation}\label{eq:value-function}

@@ -1,0 +1,27 @@
+%!TEX root = ../thesis.tex
+% The institute template's back matter (content/99-backmatter.tex in
+% ~/latex-template-thesis), in English and without the glossary of terms: only
+% acronyms are defined so far (sections/acronyms.tex), and \printglossary would
+% add an empty chapter. Uncomment the last two lines once there are
+% \longnewglossaryentry definitions to print.
+
+\printbibliography
+
+\listoffigures
+
+\listoftables
+
+% \listtheorems does not create a chapter on its own.
+\addchap{List of Theorems}
+\listtheorems{theorem,definition,lemma,corollary,proposition,example}
+
+\lstlistoflistings
+
+% Acronyms, including those that are defined but not used in the text yet.
+\glsaddallunused[\acronymtype]
+\printglossary[type=\acronymtype,title={List of Acronyms}]
+
+\printindex
+
+% \glsaddallunused[main]
+% \printglossary

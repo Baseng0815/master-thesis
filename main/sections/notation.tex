@@ -1,0 +1,58 @@
+%!TEX root = ../thesis.tex
+% The institute template's notation chapter (content/00d-notation.tex in
+% ~/latex-template-thesis), rewritten for the notation this thesis actually
+% uses: Sutton and Barto's convention for the reinforcement-learning part and
+% MuZero's for the search and the networks, rather than the template's
+% bold-face convention for random variables and vectors.
+%
+% TODO: keep this in sync as the chapters are written --- in particular the
+% fuzzing-specific symbols, which are still those of the MDP formulation only.
+
+\addchap*{Notation}
+\markboth{Notation}{}
+
+\addsec*{General conventions}
+
+\begin{tabular}{p{2.5cm} p{11cm}}
+$s$, $a$, $r$ & Realized value of a state, an action and a reward \\
+$S_t$, $A_t$, $R_t$ & The corresponding random variables at time step $t$ \\
+$\mathcal{S}$, $\mathcal{A}$, $\mathcal{O}$ & Sets: state, action and observation space \\
+$x_t$ & Subscript $t$ counts steps taken in the environment \\
+$x^k$ & Superscript $k$ counts steps taken inside the search tree \\
+$\theta$ & Parameters of the learned networks \\
+$\Delta(\mathcal{X})$ & Set of probability distributions over $\mathcal{X}$ \\
+$\mathbb{E}[\Cdot]$ & Expected value \\
+$\mathbb{R}$ & Set of real numbers \\
+\end{tabular}
+
+\addsec*{Markov decision processes}
+
+\begin{tabular}{p{2.5cm} p{11cm}}
+$(\mathcal{S},\mathcal{A},p)$ & Markov decision process \\
+$p$ & Transition dynamics, $p(s',r \mid s,a)$ \\
+$r(s,a)$ & Expected immediate reward of taking action $a$ in state $s$ \\
+$\gamma$ & Discount factor, $\gamma\in[0,1)$ \\
+$\pi$ & Policy; $\pi(a \mid s)$ is the probability of choosing $a$ in $s$ \\
+$\pi^*$ & Optimal policy \\
+$G_t$ & Return from time step $t$ onwards \\
+$v_\pi$, $q_\pi$ & State-value and action-value function under $\pi$ \\
+$v^*$, $q^*$ & Optimal value functions, $v^*=v_{\pi^*}$ \\
+$\delta_t$ & Temporal-difference error \\
+$\alpha$ & Step size of a learning update, $\alpha\in(0,1]$ \\
+$H_t$, $b_t$ & History and belief state of a partially observable process \\
+\end{tabular}
+
+\addsec*{Search and networks}
+
+\begin{tabular}{p{2.5cm} p{11cm}}
+$h$ & Representation network, $h:\mathcal{O}\to\mathcal{S}$ \\
+$g$ & Dynamics network, $s^{k+1}=g(s^k,a^k;\theta)$ \\
+$p$, $v$ & Policy and value head of the prediction network \\
+$\vpnet$ & Value-prefix network \\
+$\projnet$, $\prednet$ & Projection and prediction head of the consistency loss \\
+$s^k$ & Latent state at search depth $k$ \\
+$N(s,a)$ & Visit count of the edge $(s,a)$ in the search tree \\
+$Q(s,a)$, $\bar{Q}(s,a)$ & Action value in the tree and its normalized form \\
+$c_1$, $c_2$ & Exploration constants of the pUCT rule \\
+$T$ & Temperature of the visit-count policy \\
+\end{tabular}

@@ -19,3 +19,17 @@ output/
 *.toc
 *-SAVE-ERROR
 /thesis.pdf
+
+# Index, glossary/acronyms, list of theorems and list of listings.
+*.idx
+*.ilg
+*.ind
+*.glo
+*.gls
+*.glg
+*.acn
+*.acr
+*.alg
+*.ist
+*.lol
+*.thm
