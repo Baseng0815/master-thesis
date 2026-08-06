@@ -1,0 +1,30 @@
+%!TEX root = ../../thesis.tex
+
+\section{States and Observations}\label{sec:mdp-states}
+
+For a given PUT, we model the state space as the joint state of process memory,
+kernel state plus register file and other execution state necessary to PUT execution.
+This constitutes a full description of the PUT and therefore suffices to fully predict future
+behavior of the PUT given new inputs.
+Although this state space formulation is straightforward, it is too large to serve as a
+base for a fuzzing implementation.
+In practice, this state is contained in the execution environment and even though it
+is accessible to us, we will not use it directly.
+Adhering to the approach of \gls{cgf}, the fuzzer instead observes coverage information $\mathcal{C}$.
+In our case, this can either be block or edge coverage.
+We therefore model the observation function $o_F:\mathcal{S}\rightarrow\mathcal{C}$ to map
+true PUT state $\mathcal{S}_F$ to coverage feedback $\mathcal{C}$.
+Depending on the action model, we extend the observation function to
+include additional information.
+
+Observations must be encoded so that the representation network $h$ can properly
+consume them.
+The block hit tracker has a predetermined number of buckets, one for
+each coverage input dimension of $h$.
+For a given bucket, we convert its value from an integer to floating point and
+feed this to the representation network, allowing it to encode which
+blocks or edges have been hit and how often.
+Another valid approach for smaller binaries lies in bucketing the hit count and then
+$k$-hot encoding these buckets.
+This is in theory a more correct approach, but causes an increase in the input dimensions of $h$
+proportional to the number of hit count buckets.

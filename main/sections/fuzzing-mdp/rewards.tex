@@ -1,0 +1,22 @@
+%!TEX root = ../../thesis.tex
+
+\section{Rewards}\label{sec:mdp-rewards}
+
+We will design our reward signal as a combination of a stateless reward $r_\alpha$
+and a stateful reward $r_\beta$.
+The stateless reward for time step $t$ is calculated from the observation $o_t$
+while the stateful reward is allowed to integrate information from previous observations
+$o_1,\dots,o_t$.
+The optimization objective is similar to that of other \gls{cgf} fuzzers.
+In general, the stateless reward will be some function of the immediate coverage,
+steering the learner towards high-coverage states.
+The stateful reward will be some function of the coverage history, giving a measure
+of \emph{marginal coverage}, i.e., newly attained coverage in comparison to the
+previous seed, steering the learner towards high-coverage actions.
+This is similar to the formulation~\textcite{bottinger_deep_2018} use.
+
+\begin{align*}
+  r_\alpha:\mathcal{C}&\rightarrow\mathbb{R}, \\
+  r_\beta:\cup_{n=0}^{\infty}\mathcal{C}^n&\rightarrow\mathbb{R}, \\
+  r&=r_\alpha+\omega r_\beta
+\end{align*}

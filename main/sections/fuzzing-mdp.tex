@@ -1,31 +1,10 @@
-%!TEX root = ../thesis.tex
-
-\chapter{Approach}\label{chap:fuzzing-mdp}
-
-% This is the design chapter and the answer to RQ2 (\cref{sec:introduction-rqs}).
-% Its shape: state ONCE what both action-space formulations have in common --- the
-% interface the learner demands, the constraints that interface imposes on any
-% fuzzing MDP, and the axes along which formulations can differ --- then develop the
-% two formulations against that common frame, then relate both to prior work.
-%
-% \cref{sec:input-actions,sec:corpus-actions} use the SAME five subsections in the
-% SAME order (Overview / Action Space / Observation / Reward and Episode Structure /
-% Determinism), so the two formulations can be read as a diff. Keep them aligned when
-% editing --- that alignment is the whole reason they live in one chapter.
-%
-% Nothing target-specific belongs here (targets are \cref{chap:targets}) and nothing
-% about the code belongs here (that is \cref{chap:implementation}). Where this chapter
-% needs a property of the execution environment --- an exact reset, a fixed-width
-% coverage vector, determinism --- it states it as a REQUIREMENT the formulation
-% places on the platform; \cref{chap:implementation} shows that MOGI supplies it.
+\chapter{Approach}
 
 Building a fuzzer on top of EfficientZero requires modeling the fuzzing process
 as a \gls{pomdp} $M_F=(\mathcal{S}_F,\mathcal{A}_F,p_F,\mathcal{O}_F,o_F)$ that respects
 the capabilities of the underlying execution environment.
+All approaches are situated inside an episodic, discounted setting.
 
-\input{sections/fuzzing-mdp/interface}
-\input{sections/fuzzing-mdp/constraints}
-\input{sections/fuzzing-mdp/design-space}
-\input{sections/fuzzing-mdp/input-actions}
-\input{sections/fuzzing-mdp/corpus-actions}
-\input{sections/fuzzing-mdp/prior-work}
+\input{sections/fuzzing-mdp/states-observations}
+\input{sections/fuzzing-mdp/actions}
+\input{sections/fuzzing-mdp/rewards}
