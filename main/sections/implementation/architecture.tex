@@ -1,0 +1,58 @@
+%!TEX root = ../../thesis.tex
+
+\section{Architecture Overview}\label{sec:impl-architecture}
+
+\input{figures/system-architecture}
+
+\begin{itemize}
+  \item The system is three Rust workspaces stacked on top of each other and cut
+        at two trait seams (\cref{fig:system-architecture}). Neither seam is
+        incidental: the upper one is the Markov decision process of
+        \cref{chap:fuzzing-mdp} made concrete, and the lower one is what lets the
+        same fuzzer run on a different execution backend.
+  \item \code{efficientzero} --- a general-purpose implementation of the
+        algorithm of \cref{chap:efficientzero} (\cref{sec:impl-efficientzero}).
+        It contains no fuzzing code at all: it reaches its environment only
+        through the traits of its \code{abstraction} module, and the same crate
+        drives the classical control environments it was validated against.
+        That separation is what makes the fuzzer's design a consequence of the
+        learner's demands rather than a negotiation with them --- the constraints
+        C1--C5 of \cref{sec:mdp-constraints} are exactly the shape of this seam.
+  \item \code{mugiwara} --- the fuzzer (\cref{sec:impl-abstraction} onwards). It
+        is the only layer that knows both sides: it implements
+        \code{Environment} for a target program above, and drives the emulator
+        below. Its four parts map onto the design chapter one to one:
+    \begin{itemize}
+      \item the per-target environments, one per program of
+            \cref{chap:targets}, which realize the two formulations of
+            \cref{sec:input-actions,sec:corpus-actions},
+      \item the generic corpus module (\cref{sec:impl-corpus}), which holds the
+            corpus state machine, the action packing and the mutation operators,
+            and contains no emulator code,
+      \item the instrumentation that turns executed basic blocks into the
+            coverage vector the agent observes (\cref{sec:platform-coverage}),
+      \item the experiment infrastructure (\cref{sec:impl-probes}), which
+            observes the learner rather than the target.
+    \end{itemize}
+  \item MOGI --- the execution environment (\cref{sec:impl-platform}). It is
+        reached through one interface: run the guest under a budget, read and
+        write its standard input and sockets, register hooks, capture and restore
+        a snapshot. Presented this way it is one layer of a system rather than a
+        framework in its own right; \cref{fig:platform-architecture} expands it.
+  \item The guest is an unmodified binary. Nothing in the stack requires source
+        access, recompilation or a sanitizer build, which is what admits the
+        targets of \cref{chap:targets}.
+  \item Read the figure as the environment loop of \cref{sec:rl-mdp} drawn
+        vertically: an action index crosses the upper seam downwards, becomes one
+        or more executions of the guest, and the block hits it produced cross back
+        up as an observation and a scalar reward. Everything in
+        \cref{chap:fuzzing-mdp} is a statement about what those two crossings
+        carry.
+\end{itemize}
+
+% TODO: Two things this section should state once the numbers are in:
+%   - the size of each layer (crates, and lines of code written for this thesis
+%     versus reused), because the implementation is claimed as a contribution in
+%     \cref{sec:introduction-contributions} and a reader will want it quantified,
+%   - which parts are reusable beyond this thesis --- \code{efficientzero} and the
+%     corpus module are target-agnostic, the environments are not.

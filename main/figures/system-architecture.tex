@@ -1,0 +1,88 @@
+%!TEX root = ../thesis.tex
+% System overview for \cref{sec:impl-architecture}: the whole stack from the agent
+% down to the guest binary, and the two trait seams it is cut at. The MOGI internals
+% are one box here and are expanded in \cref{fig:platform-architecture}.
+%
+% Layout rules (kept deliberately consistent with figures/platform-architecture.tex,
+% so the two figures read as one system at two zoom levels):
+%  * A pure layered stack, agent at the top and guest binary at the bottom. The stack
+%    is 106mm wide, rows are stacked with 1mm gaps, and the four component boxes in a
+%    layer are 24mm on 2mm gaps --- the same numbers as the platform figure. Keep them
+%    if boxes are added: they are what makes the two figures line up.
+%  * The ONLY arrows are the two flanking the abstraction seam, because that is the
+%    one flow this figure is about: an action goes down, an observation and a reward
+%    come back up. Every other relation is adjacency, as in the platform figure.
+%  * Grey rows are trait seams: the layer above is written against them and does not
+%    name the layer below.
+%  * Text in a 24mm box wraps by hand at ~14 characters per \scriptsize line. Re-check
+%    the line lengths after editing a label.
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[
+      font=\small,
+      layer/.style = {draw, rounded corners=2pt, fill=blue!8, align=center,
+                      minimum width=106mm},
+      svc/.style   = {draw, rounded corners=1.5pt, fill=white, align=center,
+                      font=\scriptsize, minimum width=24mm, minimum height=13mm},
+      seam/.style  = {draw, fill=black!8, align=center, font=\scriptsize,
+                      minimum height=9mm},
+      flow/.style  = {align=center, font=\scriptsize, minimum width=14mm,
+                      minimum height=9mm},
+      mogi/.style  = {draw, rounded corners=2pt, fill=blue!8, align=center,
+                      font=\scriptsize, minimum width=106mm, minimum height=12mm},
+      guest/.style = {draw, fill=white, align=center, font=\scriptsize,
+                      minimum width=106mm, minimum height=9mm},
+    ]
+    % --- the agent: reusable, knows nothing about fuzzing ---------------------
+    \node[layer, minimum height=26mm] (ez) at (0,3.5) {};
+    \node[font=\small] at (0,4.45) {\code{efficientzero} --- the learning agent};
+    \node[svc] at (-3.9,3.15) {\code{driver}\\run orchestration,\\checkpoints};
+    \node[svc] at (-1.3,3.15) {\code{learner}\\self-play workers,\\replay buffer};
+    \node[svc] at ( 1.3,3.15) {\code{mcts}\\search over the\\learned model};
+    \node[svc] at ( 3.9,3.15) {\code{model}\\representation,\\dynamics, policy,\\value,
+                               value prefix};
+
+    % --- seam 1: the MDP interface, and the only flow worth drawing -----------
+    \node[seam, minimum width=74mm] (abs) at (0,1.65)
+      {\code{efficientzero::abstraction}: \code{Environment}, \code{Action},
+       \code{Observation}, \code{StepResult}};
+    \node[flow] at (-4.6,1.65) {$\downarrow$\\action};
+    \node[flow] at ( 4.6,1.65) {$\uparrow$\\observation,\\reward};
+
+    % --- the fuzzer: implements the seam above against the seam below ---------
+    \node[layer, minimum height=26mm] (mug) at (0,-0.2) {};
+    \node[font=\small] at (0,0.75) {\code{mugiwara} --- the fuzzing environments};
+    \node[svc] at (-3.9,-0.55) {targets\\one \code{Environment}\\per program};
+    \node[svc] at (-1.3,-0.55) {\code{corpus}\\seeds, mutation,\\action packing};
+    \node[svc] at ( 1.3,-0.55) {\code{instrument}\\block hits into\\coverage buckets};
+    \node[svc] at ( 3.9,-0.55) {\code{experiments}\\probes, campaign\\database};
+
+    % --- seam 2: the emulator's driving interface ----------------------------
+    \node[seam, minimum width=106mm] at (0,-2.05)
+      {\code{Emulator}: \code{run} $\to$ \code{ExitReason}; stdin and socket handles;
+       block hooks; snapshot capture and restore};
+
+    % --- the platform, expanded in the next figure ---------------------------
+    \node[mogi] at (0,-3.2) {MOGI --- Linux user-space system emulation,
+                             \cref{fig:platform-architecture}};
+
+    % --- the guest -----------------------------------------------------------
+    \node[guest] at (0,-4.35)
+      {guest: an unmodified x86-64 Linux user-space binary};
+  \end{tikzpicture}
+  \caption[System architecture]{%
+    The system, from the agent down to the program under test.
+    \code{efficientzero} is a general-purpose EfficientZero implementation that
+    knows nothing about fuzzing: it reaches its environment only through the
+    traits of its \code{abstraction} module, which is where the Markov decision
+    process of \cref{chap:fuzzing-mdp} is made concrete --- an action goes down,
+    an observation and a reward come back up.
+    \code{mugiwara} sits between the two seams. It implements those traits for a
+    fuzzing target, turns executed basic blocks into the coverage vector the
+    agent observes, and drives the guest through the emulator's \code{run}
+    interface and its snapshot pair.
+    MOGI supplies the execution environment itself and is expanded in
+    \cref{fig:platform-architecture}.
+  }
+  \label{fig:system-architecture}
+\end{figure}

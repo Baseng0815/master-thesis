@@ -124,10 +124,18 @@ Content lives in `sections/`, one file per section or chapter, mirroring the out
 - **Background** — `sections/background/{fuzzing,reinforcement-learning}.tex`
 - **EfficientZero** — `sections/efficientzero.tex` (the algorithm)
 - **Related Work** — `sections/related-work.tex`
-- **Platform / MDP formulation** — `sections/{platform,fuzzing-mdp}.tex`
-- **Action spaces** — `sections/fuzzing-input-actions/` and `sections/fuzzing-corpus-actions/`
-  (the two chapters share a section order and are meant to be read as a diff)
-- **Implementation** — `sections/implementation.tex`
+- **MDP formulation / action spaces** — `sections/fuzzing-mdp.tex` and `sections/fuzzing-mdp/`.
+  One chapter, and the thesis's design chapter: three shared sections (`interface`,
+  `constraints`, `design-space`), then the two action-space formulations as parallel sections
+  (`input-actions.tex` and `corpus-actions.tex`, each `\input`ing five `input-*`/`corpus-*`
+  subsection files in the same order), then one shared `prior-work.tex`. **The `input-*` and
+  `corpus-*` files are meant to be read as a diff — keep the two sets aligned, same headings in
+  the same order, when editing either.**
+- **Architecture / Implementation** — `sections/implementation.tex` and `sections/implementation/`.
+  `architecture.tex` is the whole-system overview (`fig:system-architecture`); `platform.tex`
+  describes MOGI as one layer of it (`fig:platform-architecture`); the rest is the software
+  written for this thesis. MOGI has no chapter of its own — introduce it in its role, not as a
+  standalone tour.
 - **Targets** — `sections/targets/*.tex` (evaluation targets, from microbenchmark to real-world)
 - **Methodology / Results** — `sections/methodology.tex`, `sections/results/*.tex`
 - **Failure modes / Discussion** — `sections/failure-modes.tex`, `sections/discussion/*.tex`
@@ -141,8 +149,10 @@ ones after `\appendix` are appendix chapters; what follows `\backmatter` is not 
 
 **One chapter is always one file under `sections/`.** A chapter split over several section files
 gets a wrapper file that holds the `\chapter` heading and `\input`s the sections —
-`sections/background.tex`, `sections/fuzzing-{input,corpus}-actions.tex`, `sections/targets.tex`,
-`sections/results.tex`, `sections/discussion.tex`. Nothing but chapter-level `\input` lines belongs
+`sections/background.tex`, `sections/fuzzing-mdp.tex`, `sections/implementation.tex`,
+`sections/targets.tex`, `sections/results.tex`, `sections/discussion.tex`. A section that is
+itself split (the two action-space formulations, the platform) gets the same treatment one level
+down. Nothing but chapter-level `\input` lines belongs
 in `thesis.tex`; a `\chapter` or `\section` heading written there would be invisible to the chapter
 builds.
 
@@ -211,8 +221,9 @@ its behavior, and keep the prose consistent with what the code actually does.
 
 - **`~/mugiwara`** — the RL-driven fuzzer. It combines `efficientzero` with the **Mogi Emulator
   Framework** (`~/fuzzyemu`: `mogi_emulator`, `mogi_fuzzer`, `mogi_unicorn`, `mogi_system`) to fuzz
-  binaries running under emulation. This is the source for the *Fuzzing with EfficientZero*, *MOGI
-  Setup*, *Targets*, and *Analysis* chapters. Key pieces to read when writing those chapters:
+  binaries running under emulation. This is the source for the *Fuzzing as a Markov Decision
+  Process*, *System Architecture and Implementation*, *Targets*, and *Results* chapters. Key pieces
+  to read when writing those chapters:
   - A fuzzing target is an `efficientzero` `Environment` (traits `Environment`/`Action`/
     `Observation`/`StepResult` from `efficientzero::abstraction`). `step` feeds an action into the
     emulated program and runs it; `reset` restores an emulator snapshot. See `mugiwara/examples/`
@@ -220,9 +231,9 @@ its behavior, and keep the prose consistent with what the code actually does.
     toy targets the thesis's *Targets* chapter describes.
   - `mugiwara/src/instrument/` (`BlockHitTracker`) computes the **coverage signal**: basic-block hit
     addresses are FNV-hashed into a fixed bucket array, giving the reward/observation vector. This is
-    the concrete "coverage feedback" the *Fuzzing with EfficientZero* chapter should explain.
+    the concrete "coverage feedback" behind `sec:platform-coverage`.
   - `mugiwara/src/lib.rs` builds and snapshots the emulator (`build_emulator`/`setup_emulator`,
-    `EmulatorArgs`) — the MOGI experimental setup.
+    `EmulatorArgs`) — the MOGI experimental setup, described in `sections/implementation/platform.tex`.
 
 When you need a fact about the implementation that isn't in this repo, read the companion source or
 its `CLAUDE.md`/`guidelines/` rather than inferring it from the thesis prose (which may still be a

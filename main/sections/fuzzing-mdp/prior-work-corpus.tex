@@ -1,23 +1,20 @@
 %!TEX root = ../../thesis.tex
 
-\section{Relation to Prior Work}\label{sec:corpus-prior-work}
+\subsection{The Corpus-Level Formulation}\label{sec:corpus-prior-work}
 
 % TODO: This formulation is a direct descendant of \cite{bottinger_deep_2018}, so give
 % it a proper comparison table --- one row per MDP component, one column per approach.
 % Rows: RL algorithm, state, action, mutation randomness, reward, corpus, horizon,
 % target and instrumentation, reported result.
 %
-% What is inherited: the MDP formulation of fuzzing itself --- states as input
-% fragments, actions as rewrite rules, reward from runtime coverage. This thesis
-% extends the canonical formulation rather than proposing a new one; say that plainly.
-%
-% What differs, and why each difference is forced rather than cosmetic:
+% What differs, beyond the shared departure in the learner stated above, and why each
+% difference is forced rather than cosmetic:
 %   1. model-based planning instead of model-free DQN, which forces the determinism
 %      of \cref{sec:corpus-determinism},
 %   2. a learned corpus --- selection *and* retention/eviction --- instead of a single
 %      seed; note that the extension to a multi-seed corpus is mentioned there as future work with
 %      a *random* choice of seed, never learned and never evaluated. This is the novel
-%      core of the chapter,
+%      core of this formulation,
 %   3. a long horizon with seed lineage instead of a reset after every mutation.
 %
 % Also inherit the cautions, and state them before presenting any result:

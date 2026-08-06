@@ -218,41 +218,4 @@ This thesis aims to address these issues as follows:
     but can flexibly shape the reward signal in a way that is conducive to the fuzzing goal.
     One could easily imagine a reward signal that includes promoting the execution of
     specific system calls or regions of code.
-
 \end{itemize}
-
-
-Three patterns run through the table.
-The state is almost always the input --- a substring window
-\cite{bottinger_deep_2018, authors_reinforcement_nodate} or the whole test case as a
-bit array \cite{drozd_fuzzergym_2018} --- and where it is not, it is a hand-built
-abstraction: of the fuzzing strategy \cite{hutchison_autonomic_2010}, of the
-protocol's message alphabet \cite{lopez_emulation-instrumented_2018}, or of the
-program's response \cite{kuznetsov_automated_2019}.
-The actions are, with hardly any exception, the mutation operators the underlying
-fuzzer already had --- in LEFT, the message handlers the emulator already had ---
-and the learning replaces the uniform random choice among them and nothing else.
-And the reward is coverage, occasionally traded off against execution time
-\cite{bottinger_deep_2018, kuznetsov_automated_2019} or against crash and
-error indicators \cite{hutchison_autonomic_2010}; only LEFT dispenses with a
-coverage term entirely, its target being a black box that cannot be instrumented.
-
-The gap this leaves is the one this thesis addresses.
-None of these agents observes the state of the \gls{put} itself, so none of them can
-represent where in a stateful protocol or a multi-message session the target
-currently is --- Becker et al.\ come closest, and explicitly discard the protocol
-automaton to avoid a state explosion they have no machinery to handle.
-LEFT gets nearest to a protocol state and still falls short of one, for the same
-reason: a message type is not a position in the automaton, and the handset whose
-state decides whether a perturbation lands is never observed at all.
-None of them learns a model of the environment; every one is model-free, and pays for
-it in sample efficiency, which is precisely what makes the millisecond-scale forward
-pass of \textcite{drozd_fuzzergym_2018} such a problem that the \gls{mdp} has to be
-degraded to a \gls{pomdp} to hide it.
-
-% NOTE: the survey's summary of two of these formulations does not match the papers.
-% It reports Becker's state as the protocol message type (the paper uses the fuzzing
-% strategies as states, precisely to avoid the protocol automaton), and it groups
-% Kuznetsov with the input-substring states (the paper's state is the program's
-% response). The descriptions above follow the primary sources.
-

@@ -1,0 +1,92 @@
+%!TEX root = ../../thesis.tex
+
+\section{The Emulation Platform}\label{sec:impl-platform}
+
+We implement our fuzzer on top of the MOGI emulation framework\todo{cite mogi}.
+MOGI supports CPU and MMU emulation for various architectures and includes
+instrumentation support as well as the possibility for emulating Linux userspace
+binaries.
+
+\input{figures/platform-architecture}
+
+\begin{itemize}
+  \item MOGI is a multi-crate Rust workspace for emulator-based binary analysis;
+        \cref{fig:platform-architecture} shows the layers it is built from ---
+        the lower half of the stack of \cref{fig:system-architecture}.
+        \todo{cite: MOGI itself --- no entry in the bibliography yet}
+  \item The layers, top to bottom:
+    \begin{itemize}
+      \item \emph{Setup} --- \code{mogi\_sysroots} composes a guest root
+            filesystem from checked-in Dockerfiles, one staged \code{Case} per
+            target (\cref{chap:targets}); \code{mogi\_quickstart} assembles CPU,
+            MMU, scheduler and system services behind a single builder and fixes
+            the defaults: an Ubuntu~25.10 base, an x86-64 guest, a
+            \SI{1}{\gibi\byte} in-memory guest filesystem, a fixed clock epoch
+            and a fixed PRNG seed (\cref{sec:platform-determinism}).
+      \item \emph{Emulator core} --- \code{mogi\_emulator} models a Linux
+            user-space system: an ELF loader, a scheduler with syscall dispatch,
+            a virtual filesystem, a file-descriptor table, standard I/O, a TCP/UDP
+            stack with netlink and event polling, a clock, seeded per-task PRNGs,
+            and a task manager that parks and wakes tasks
+            (\cref{sec:platform-emulation}).
+      \item \emph{Seam} --- \code{mogi\_system} holds only traits: \code{CPU},
+            \code{Hooks}, \code{MMU} and \code{Restorable}. Everything above the
+            seam is written against them, which is what makes the execution
+            backend interchangeable without touching the guest model.
+      \item \emph{Backends} --- \code{mogi\_unicorn} wraps the external Unicorn
+            engine, itself built on QEMU's dynamic
+            translator~\cite{bellard_qemu_2005}
+            \todo{cite: Unicorn (Quynh and Vu, Black Hat 2015) --- missing}; the
+            native alternative is \code{mogi\_cpu} (interpreter plus an x86-64
+            JIT) over \code{mogi\_mem}, lifting guest code from Ghidra SLEIGH
+            processor specifications through \code{mogi\_sleigh} and
+            \code{mogi\_lifter} \todo{cite: Ghidra / SLEIGH --- missing}.
+      \item \emph{Guest} --- an unmodified x86-64 Linux user-space binary; no
+            source instrumentation and no recompilation are required, which is
+            what admits the targets of \cref{chap:targets}.
+    \end{itemize}
+  \item The emulator is driven through one interface: \code{Emulator::run},
+        bounded by a timeout or an instruction budget, returning one of five
+        \code{ExitReason}s --- all tasks exited, budget exhausted, every task
+        blocked on I/O, a runtime error, or a breakpoint. Around it sit the
+        handles to the system components (standard input, sockets, filesystem,
+        clock), the hook registration of \cref{sec:platform-coverage}, and the
+        snapshot pair of \cref{sec:platform-snapshots}.
+  \item Emulating the system rather than only the CPU is what makes the platform
+        usable here: the guest's I/O has no host counterpart, so its standard
+        input and its sockets are buffers the host writes into and reads out of
+        directly, and its clock and random sources are fixed rather than
+        ambient.
+  \item Scope --- MOGI is larger than what this thesis uses: it also carries
+        fuzzing components, state-learning crates and the \code{lscale}
+        application, none of which the experiments reported here build on.
+        \todo{cite: L-SCALE (AST 2026) --- missing, if it is to be mentioned}
+\end{itemize}
+
+\subsection{Emulation and the Guest Model}\label{sec:platform-emulation}
+
+% TODO: Backends (only Unicorn dispatches the block hooks the coverage signal needs),
+% the guest environment, syscall handling, and how input reaches the PUT --- the
+% stdin/scheduler path for the byte-fed targets and the socket path for open62541.
+% Note the harness style each target uses (run-to-exit vs.\ persistent-mode loop) and
+% why it matters for snapshot restore.
+
+\subsection{Coverage Instrumentation}\label{sec:platform-coverage}
+
+% TODO: BlockHitTracker: a CPU block hook fires on every executed basic block and its
+% address is hashed into a fixed bucket array. This discharges requirement P2 of
+% \cref{sec:mdp-interface}, so state the bucket count actually used per target and be
+% explicit about the consequences, since both formulations depend on this vector:
+%   - hash collisions alias distinct blocks (same aliasing critique as AFL's bitmap,
+%     \cref{sec:fuzzing-cgf}),
+%   - it is a block, not an edge, signal,
+%   - the fixed width bounds the observation size --- a scaling limit to carry into
+%     \cref{sec:discussion-threats}.
+
+\subsection{Snapshots and the Reset Primitive}\label{sec:platform-snapshots}
+
+% TODO: Snapshot capture and restore (build_emulator / setup_emulator, EmulatorArgs),
+% what is and is not restored, and the cost of a restore. Make the connection
+% explicit: this discharges requirement P1 of \cref{sec:mdp-interface} --- it is
+% exactly the environment reset an episodic MDP assumes (\cref{sec:rl-mdp}), and it is
+% what makes per-episode experimentation on a stateful target tractable at all.

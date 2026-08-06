@@ -1,0 +1,22 @@
+%!TEX root = ../../thesis.tex
+
+\section{Relation to Prior Work}\label{sec:mdp-prior-work}
+
+% TODO: Position both formulations against the survey in \cref{chap:related-work}.
+% This section is common to \cref{sec:input-actions,sec:corpus-actions} because the
+% two formulations descend from the same literature and the comparison table below
+% would otherwise be built twice.
+%
+% Open with what BOTH inherit, stated once: the MDP formulation of fuzzing itself ---
+% states as input fragments, actions as rewrite rules or symbols, reward from runtime
+% coverage \cite{bottinger_deep_2018}. This thesis extends the canonical formulation
+% rather than proposing a new one; say that plainly.
+%
+% Then what both depart from, also once: the learner. Model-based planning over a
+% learned latent model, rather than a model-free learner tuning one knob of a
+% conventional fuzzer. Every difference in the two subsections below is downstream of
+% that single choice --- which is the argument the chapter has been building since
+% \cref{sec:mdp-constraints}.
+
+\input{sections/fuzzing-mdp/prior-work-input}
+\input{sections/fuzzing-mdp/prior-work-corpus}

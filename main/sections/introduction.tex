@@ -114,13 +114,13 @@ reinforcement learning, \cref{chap:efficientzero} describes EfficientZero, and
 \cref{chap:related-work} surveys prior applications of RL to fuzzing and the
 difficulties they report.
 
-\cref{chap:platform} presents MOGI, the emulation platform this thesis builds
-on, and the coverage and snapshot primitives it provides.
 \cref{chap:fuzzing-mdp} models emulator-based fuzzing as a Markov decision
-process.
-\cref{chap:input-actions,chap:corpus-actions} introduce the two different ways
-we model the action space.
-\cref{chap:implementation} describes the resulting system.
+process: it states the interface a model-based learner demands, the constraints
+that interface imposes on any fuzzing MDP, and the two different ways we model
+the action space.
+\cref{chap:implementation} describes the resulting system, from the learning
+agent down to the MOGI emulation platform and the coverage and snapshot
+primitives it provides.
 
 \cref{chap:targets} introduces the fuzzing targets, and \cref{chap:methodology}
 the experimental methodology.

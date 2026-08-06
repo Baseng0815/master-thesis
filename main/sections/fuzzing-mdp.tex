@@ -1,72 +1,31 @@
 %!TEX root = ../thesis.tex
 
-\chapter{Fuzzing as a Markov Decision Process}\label{chap:fuzzing-mdp}
+\chapter{Approach}\label{chap:fuzzing-mdp}
 
-% This chapter states ONCE what both action-space formulations
-% (\cref{chap:input-actions,chap:corpus-actions}) have in common: the interface the
-% learner demands, the constraints that interface imposes on any fuzzing MDP, and
-% the axes along which the two formulations differ. Nothing target-specific belongs
-% here --- targets are \cref{chap:targets}.
-
-\section{The Environment Interface}\label{sec:mdp-interface}
-
-% TODO: Define the contract the agent and the fuzzer meet at. Ground this in
-% efficientzero::abstraction (Environment / Action / Observation / StepResult) and
-% in the MOGI primitives of \cref{chap:platform}:
-%   - one environment step = one (or several) execution(s) of the emulated PUT,
-%   - reset = snapshot restore, exact and cheap (\cref{sec:platform-snapshots}),
-%   - observation = a fixed-width vector derived from the block-hit tracker,
-%   - reward = a scalar derived from coverage.
-% Present as a table mapping MDP component -> fuzzing artefact, and forward-reference
-% the two instantiations.
-
-\section{Constraints Imposed by the Learner}\label{sec:mdp-constraints}
-
-% TODO: This is the load-bearing section --- the design decisions in
-% \cref{chap:input-actions,chap:corpus-actions} are consequences of it, so state the
-% constraints crisply and cite the implementation:
+% This is the design chapter and the answer to RQ2 (\cref{sec:introduction-rqs}).
+% Its shape: state ONCE what both action-space formulations have in common --- the
+% interface the learner demands, the constraints that interface imposes on any
+% fuzzing MDP, and the axes along which formulations can differ --- then develop the
+% two formulations against that common frame, then relate both to prior work.
 %
-%   C1  Single flat categorical action. The action fed to the dynamics network is a
-%       one-hot of width Action::size(), and MCTS branches over 0..action_count
-%       using the index directly. Any composite action must be packed into one
-%       integer.
-%   C2  No action masking. legal_actions is asserted to be the identity 0..action_size
-%       (efficientzero learner/mcts.rs) --- subset or phase-dependent legal sets are
-%       not wired end to end. Every encodable action must be legal in every state.
-%   C3  Fixed-width observation. Observation::to_vec() has a constant length, so the
-%       corpus, the coverage map and any per-slot features must be encoded at a fixed
-%       size.
-%   C4  Deterministic transitions. MCTS plans over learned latent dynamics and
-%       therefore wants a deterministic (state, action) -> next_state. Stochastic
-%       mutation operators break the planner's model, which is why
-%       \cref{sec:corpus-determinism} replaces randomness with an exhaustive sweep.
-%   C5  Branching factor. The policy head is one softmax of width action_size and
-%       MCTS enumerates every child, so the action space must stay enumerable
-%       (order 10^3), not merely representable.
+% \cref{sec:input-actions,sec:corpus-actions} use the SAME five subsections in the
+% SAME order (Overview / Action Space / Observation / Reward and Episode Structure /
+% Determinism), so the two formulations can be read as a diff. Keep them aligned when
+% editing --- that alignment is the whole reason they live in one chapter.
 %
-% Note explicitly that C4 and C5 are the price of choosing a planning algorithm over
-% a model-free one such as the DQN of \cite{bottinger_deep_2018} --- they are forced,
-% not stylistic.
+% Nothing target-specific belongs here (targets are \cref{chap:targets}) and nothing
+% about the code belongs here (that is \cref{chap:implementation}). Where this chapter
+% needs a property of the execution environment --- an exact reset, a fixed-width
+% coverage vector, determinism --- it states it as a REQUIREMENT the formulation
+% places on the platform; \cref{chap:implementation} shows that MOGI supplies it.
 
-\section{Design Axes}\label{sec:mdp-axes}
+Building a fuzzer on top of EfficientZero requires modeling the fuzzing process
+as a \gls{pomdp} $M_F=(\mathcal{S}_F,\mathcal{A}_F,p_F,\mathcal{O}_F,o_F)$ that respects
+the capabilities of the underlying execution environment.
 
-% TODO: Lay out the space, then place the two formulations in it. This is the map the
-% reader carries into the next two chapters, so use the same axis names as the section
-% headings there:
-%   - action granularity: one input symbol per step vs.\ one corpus operation per step,
-%   - what the observation must expose (raw bytes / coverage / per-slot features),
-%   - reward: absolute per-execution coverage vs.\ marginal new coverage,
-%   - episode structure: fixed input length vs.\ bounded iteration budget,
-%   - how determinism is obtained,
-%   - executions per agent decision (1 vs.\ up to 256) --- the lever that decides
-%     whether MCTS overhead is amortized.
-
-\section{The Two Formulations}\label{sec:mdp-two-formulations}
-
-% TODO: One page. State both formulations side by side (a table with one row per
-% design axis above), say which prior work each descends from --- input-level from the
-% protocol/state-selection line \cite{borcherding_bandits_2023}, corpus-level from
-% \cite{bottinger_deep_2018} --- and state the hypothesis the comparison tests
-% (RQ2, \cref{sec:introduction-rqs}). Then hand off:
-% \cref{chap:input-actions} and \cref{chap:corpus-actions} develop them in the same
-% order of sections; \cref{sec:results-head-to-head} compares them on one target.
+\input{sections/fuzzing-mdp/interface}
+\input{sections/fuzzing-mdp/constraints}
+\input{sections/fuzzing-mdp/design-space}
+\input{sections/fuzzing-mdp/input-actions}
+\input{sections/fuzzing-mdp/corpus-actions}
+\input{sections/fuzzing-mdp/prior-work}

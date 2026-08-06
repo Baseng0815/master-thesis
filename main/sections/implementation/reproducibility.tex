@@ -1,0 +1,37 @@
+%!TEX root = ../../thesis.tex
+
+\section{Determinism, Reproducibility and Throughput}\label{sec:impl-reproducibility}
+
+% This section discharges the remaining requirements the design chapter placed on the
+% platform (P3 and P4, \cref{sec:mdp-interface}) and states how far a whole campaign
+% reproduces. The three belong together: they are one question asked at three scopes
+% --- does a single execution repeat, does a whole run repeat, and how many executions
+% fit in a wall-clock budget.
+
+\subsection{Determinism of the Environment}\label{sec:platform-determinism}
+
+% TODO: The evidence that the same input yields an identical block-coverage vector on
+% every execution --- no address drift, clean snapshot/restore, no RNG in the guest.
+% This is a short subsection but a load-bearing one: it discharges P3 and it is what
+% licenses the claim in \cref{chap:methodology} that all run-to-run variance is
+% algorithmic rather than environmental. Report the check that was actually run.
+
+\subsection{Throughput}\label{sec:platform-throughput}
+
+% TODO: Executions per second under emulation, and the split between emulation,
+% network inference and training. This is the honest counterweight to the
+% sample-efficiency argument (P4 of \cref{sec:mdp-interface}) and feeds the wall-clock
+% currency of \cref{sec:methodology-currencies}. Quantify what the operator sweep of
+% \cref{sec:corpus-determinism} buys against these numbers.
+
+\subsection{Reproducibility of a Campaign}\label{sec:impl-seeds}
+
+% TODO: RNG seed handling (one master seed deriving all substreams; the seed and the
+% commit hash recorded with every run), the pinned toolchain, and an honest statement
+% of how far bit-for-bit reproduction actually holds --- GPU non-determinism and
+% worker scheduling may break it, and any residue counts as algorithmic variance in
+% \cref{sec:methodology-runs}.
+%
+% Distinguish this from the determinism above: the environment is exactly repeatable
+% (\cref{sec:platform-determinism}); the learner on top of it may not be. Conflating
+% the two is what would make the variance argument of \cref{chap:methodology} circular.
