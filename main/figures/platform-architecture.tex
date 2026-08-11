@@ -80,19 +80,13 @@
   \end{tikzpicture}
   \caption[The MOGI platform]{%
     The MOGI platform.
-    \code{mogi\_emulator} models a Linux user-space system --- process
-    scheduling, system calls, a virtual filesystem, sockets, and the clock and
-    random sources a guest observes --- and exposes it as one \code{Emulator}
-    that runs until a budget is exhausted or the guest blocks or exits.
-    It is written entirely against the traits in \code{mogi\_system}, which is
-    the seam that makes the execution backend interchangeable: the same guest
-    model runs on the external Unicorn engine or on MOGI's own interpreter and
-    JIT, which lift guest code from Ghidra SLEIGH processor specifications.
-    All experiments in this thesis use the Unicorn backend
-    (\cref{sec:platform-emulation}); the native stack (dashed) is the
-    alternative implementation of the same traits.
-    The setup crates (top) compose the guest root filesystem and assemble the
-    emulator once, before any guest instruction executes.
+    \code{mogi\_emulator} models a Linux user-space system including process
+    scheduling, system call handling, a virtual filesystem, network sockets, and the clock and
+    random sources.
+    The platform is exposed in a trait \code{Emulator}
+    that runs guest binaries until a budget is exhausted or the guest blocks.
+    The execution backend is defined through traits and therefore generic.
+    We use the Unicorn backend (\cref{sec:impl-platform}).
   }
   \label{fig:platform-architecture}
 \end{figure}

@@ -1,88 +1,138 @@
 %!TEX root = ../thesis.tex
 % System overview for \cref{sec:impl-architecture}: the whole stack from the agent
-% down to the guest binary, and the two trait seams it is cut at. The MOGI internals
-% are one box here and are expanded in \cref{fig:platform-architecture}.
+% down to the guest binary, the two trait seams it is cut at, and the environment
+% loop of \cref{sec:rl-mdp} drawn vertically through all three layers. The MOGI
+% internals are one box here and are expanded in \cref{fig:platform-architecture}.
 %
 % Layout rules (kept deliberately consistent with figures/platform-architecture.tex,
 % so the two figures read as one system at two zoom levels):
 %  * A pure layered stack, agent at the top and guest binary at the bottom. The stack
-%    is 106mm wide, rows are stacked with 1mm gaps, and the four component boxes in a
-%    layer are 24mm on 2mm gaps --- the same numbers as the platform figure. Keep them
-%    if boxes are added: they are what makes the two figures line up.
-%  * The ONLY arrows are the two flanking the abstraction seam, because that is the
-%    one flow this figure is about: an action goes down, an observation and a reward
-%    come back up. Every other relation is adjacency, as in the platform figure.
-%  * Grey rows are trait seams: the layer above is written against them and does not
-%    name the layer below.
-%  * Text in a 24mm box wraps by hand at ~14 characters per \scriptsize line. Re-check
-%    the line lengths after editing a label.
+%    is 106mm wide and the four component boxes in a layer are 24mm on 2mm gaps ---
+%    the same numbers as the platform figure. Keep them if boxes are added: they are
+%    what makes the two figures line up.
+%  * Rows are chained with `below=1.5mm of', and everything else is placed relative to
+%    a node border (yshift off .north, xshift off .south). Do NOT reintroduce absolute
+%    coordinates: an edited label changes a row's height, and with absolute y values
+%    every row below it has to be re-derived by hand.
+%  * DEVIATION from the platform figure's adjacency-only rule: this figure DOES draw
+%    arrows, because its subject is a flow --- one action down, one observation and
+%    reward back up --- rather than a component inventory. The two channels (descent
+%    on the left at -47.5mm, ascent on the right at +47.5mm) are the same circuit
+%    crossing both seams, so the eye reads them as one loop. Keep them in those two
+%    columns; a third arrow anywhere breaks the reading.
+%  * There is deliberately NO edge between \code{efficientzero} and MOGI. That
+%    \code{mugiwara} is the only layer touching both sides is a claim of the chapter,
+%    not an omission.
+%  * Fill encodes provenance: blue = written for this thesis, grey = existing
+%    framework, white = the program under test. The caption says so; do not add a
+%    legend row.
+%  * The seams use `text width' rather than `minimum width'. This is not cosmetic:
+%    minimum width does not clip, so an earlier draft's one-line trait list grew the
+%    node past the stack and printed on top of the flow labels. The fixed 58mm is what
+%    keeps the 20mm label slots on either side free.
+%  * Seam lines are broken BY HAND. Automatic wrapping hyphenates identifiers --- an
+%    earlier draft printed `ExitRea-son' --- so keep every seam line under ~58mm and
+%    re-measure after editing one. A 24mm box wraps at ~14 characters per \scriptsize
+%    line, a flow label at ~11.
+%  * The phantom \path on the left balances the replication bracket on the right.
+%    Without it the bounding box is asymmetric and the stack no longer sits on the
+%    same page centre as \cref{fig:platform-architecture}.
 \begin{figure}[htbp]
   \centering
   \begin{tikzpicture}[
+      >={Stealth[round]},
       font=\small,
       layer/.style = {draw, rounded corners=2pt, fill=blue!8, align=center,
-                      minimum width=106mm},
+                      minimum width=106mm, minimum height=26mm},
       svc/.style   = {draw, rounded corners=1.5pt, fill=white, align=center,
                       font=\scriptsize, minimum width=24mm, minimum height=13mm},
       seam/.style  = {draw, fill=black!8, align=center, font=\scriptsize,
-                      minimum height=9mm},
-      flow/.style  = {align=center, font=\scriptsize, minimum width=14mm,
-                      minimum height=9mm},
-      mogi/.style  = {draw, rounded corners=2pt, fill=blue!8, align=center,
+                      text width=58mm, inner sep=3pt},
+      mogi/.style  = {draw, rounded corners=2pt, fill=black!5, align=center,
                       font=\scriptsize, minimum width=106mm, minimum height=12mm},
       guest/.style = {draw, fill=white, align=center, font=\scriptsize,
                       minimum width=106mm, minimum height=9mm},
+      flow/.style  = {->, thick, black!70},
+      lbl/.style   = {align=center, font=\scriptsize, text width=15mm, inner sep=1pt},
     ]
-    % --- the agent: reusable, knows nothing about fuzzing ---------------------
-    \node[layer, minimum height=26mm] (ez) at (0,3.5) {};
-    \node[font=\small] at (0,4.45) {\code{efficientzero} --- the learning agent};
-    \node[svc] at (-3.9,3.15) {\code{driver}\\run orchestration,\\checkpoints};
-    \node[svc] at (-1.3,3.15) {\code{learner}\\self-play workers,\\replay buffer};
-    \node[svc] at ( 1.3,3.15) {\code{mcts}\\search over the\\learned model};
-    \node[svc] at ( 3.9,3.15) {\code{model}\\representation,\\dynamics, policy,\\value,
-                               value prefix};
+    % --- the rows, chained top to bottom -------------------------------------
+    \node[layer] (ez) at (0,0) {};
 
-    % --- seam 1: the MDP interface, and the only flow worth drawing -----------
-    \node[seam, minimum width=74mm] (abs) at (0,1.65)
-      {\code{efficientzero::abstraction}: \code{Environment}, \code{Action},
-       \code{Observation}, \code{StepResult}};
-    \node[flow] at (-4.6,1.65) {$\downarrow$\\action};
-    \node[flow] at ( 4.6,1.65) {$\uparrow$\\observation,\\reward};
+    \node[seam, below=1.5mm of ez] (abs)
+      {\code{efficientzero::abstraction}\\
+       \code{Environment}, \code{Action},\\
+       \code{Observation}, \code{StepResult}\\[1pt]
+       {\color{black!55}\itshape discrete $\cdot$ deterministic $\cdot$ episodic}};
+
+    \node[layer, below=1.5mm of abs] (mug) {};
+
+    \node[seam, below=1.5mm of mug] (emu)
+      {\code{Emulator}: \code{run} under a budget $\to$ \code{ExitReason}\\
+       stdin and socket buffers; block hooks;\\
+       snapshot capture and restore; fixed seeds};
+
+    \node[mogi, below=1.5mm of emu] (mogi)
+      {MOGI --- Linux user-space system emulation on Unicorn/QEMU\\
+       \cref{fig:platform-architecture}};
+
+    \node[guest, below=1mm of mogi] (guest)
+      {guest: an unmodified x86-64 Linux user-space binary};
+
+    % --- the agent: reusable, knows nothing about fuzzing ---------------------
+    \node[font=\small] at ([yshift=-3.5mm]ez.north)
+      {\code{efficientzero} --- the RL agent};
+    \node[svc] at ([xshift=-39mm,yshift=-16.5mm]ez.north)
+      {\code{driver}\\training, evaluation,\\checkpoints};
+    \node[svc] at ([xshift=-13mm,yshift=-16.5mm]ez.north)
+      {\code{learner}\\workers,\\replay buffer};
+    \node[svc] at ([xshift= 13mm,yshift=-16.5mm]ez.north)
+      {\code{mcts}\\planning using the\\learned model};
+    \node[svc] at ([xshift= 39mm,yshift=-16.5mm]ez.north)
+      {\code{model}\\representation,\\dynamics, policy,\\value, value prefix};
 
     % --- the fuzzer: implements the seam above against the seam below ---------
-    \node[layer, minimum height=26mm] (mug) at (0,-0.2) {};
-    \node[font=\small] at (0,0.75) {\code{mugiwara} --- the fuzzing environments};
-    \node[svc] at (-3.9,-0.55) {targets\\one \code{Environment}\\per program};
-    \node[svc] at (-1.3,-0.55) {\code{corpus}\\seeds, mutation,\\action packing};
-    \node[svc] at ( 1.3,-0.55) {\code{instrument}\\block hits into\\coverage buckets};
-    \node[svc] at ( 3.9,-0.55) {\code{experiments}\\probes, campaign\\database};
+    \node[font=\small] at ([yshift=-3.5mm]mug.north)
+      {\code{mugiwara} --- the fuzzing environment};
+    \node[svc] at ([xshift=-39mm,yshift=-16.5mm]mug.north)
+      {targets\\one \code{Environment}\\per program};
+    \node[svc] at ([xshift=-13mm,yshift=-16.5mm]mug.north)
+      {\code{corpus}\\seeds, mutation,\\action packing};
+    \node[svc] at ([xshift= 13mm,yshift=-16.5mm]mug.north)
+      {\code{instrument}\\block/edge hits,\\coverage buckets};
+    \node[svc] at ([xshift= 39mm,yshift=-16.5mm]mug.north)
+      {\code{experiments}\\probes, campaign\\persistence};
 
-    % --- seam 2: the emulator's driving interface ----------------------------
-    \node[seam, minimum width=106mm] at (0,-2.05)
-      {\code{Emulator}: \code{run} $\to$ \code{ExitReason}; stdin and socket handles;
-       block hooks; snapshot capture and restore};
+    % --- the circuit: one action down the left, observation and reward up the
+    %     right. Both seams are crossed by the same two columns. ---------------
+    \draw[flow] ([xshift=-47.5mm]ez.south)  -- ([xshift=-47.5mm]mug.north);
+    \draw[flow] ([xshift= 47.5mm]mug.north) -- ([xshift= 47.5mm]ez.south);
+    \node[lbl, left =1.5mm of abs] {action\\$a_t$};
+    \node[lbl, right=1.5mm of abs] {$o_t$, $r_t$,\\done};
 
-    % --- the platform, expanded in the next figure ---------------------------
-    \node[mogi] at (0,-3.2) {MOGI --- Linux user-space system emulation,
-                             \cref{fig:platform-architecture}};
+    \draw[flow] ([xshift=-47.5mm]mug.south)  -- ([xshift=-47.5mm]mogi.north);
+    \draw[flow] ([xshift= 47.5mm]mogi.north) -- ([xshift= 47.5mm]mug.south);
+    \node[lbl, left =1.5mm of emu] {input bytes,\\run, restore};
+    \node[lbl, right=1.5mm of emu] {block hits,\\exit reason};
 
-    % --- the guest -----------------------------------------------------------
-    \node[guest] at (0,-4.35)
-      {guest: an unmodified x86-64 Linux user-space binary};
+    % --- replication: one environment, emulator and guest per self-play worker
+    \draw[black!55, thin]
+      ([xshift=1.5mm]mug.north east) -- ([xshift=3.5mm]mug.north east) --
+      ([xshift=3.5mm]guest.south east) -- ([xshift=1.5mm]guest.south east);
+    \node[lbl, text width=14mm, align=left, anchor=west]
+      at ([xshift=4.5mm]$(mug.north east)!0.5!(guest.south east)$)
+      {one per self-play worker};
+
+    % --- keeps the stack on the page centre despite the bracket --------------
+    \path (-7.15,0);
   \end{tikzpicture}
   \caption[System architecture]{%
-    The system, from the agent down to the program under test.
-    \code{efficientzero} is a general-purpose EfficientZero implementation that
-    knows nothing about fuzzing: it reaches its environment only through the
-    traits of its \code{abstraction} module, which is where the Markov decision
-    process of \cref{chap:fuzzing-mdp} is made concrete --- an action goes down,
-    an observation and a reward come back up.
-    \code{mugiwara} sits between the two seams. It implements those traits for a
-    fuzzing target, turns executed basic blocks into the coverage vector the
-    agent observes, and drives the guest through the emulator's \code{run}
-    interface and its snapshot pair.
-    MOGI supplies the execution environment itself and is expanded in
-    \cref{fig:platform-architecture}.
+    The main system architecture and the fuzzing loop of~\cref{sec:rl-mdp}.
+    \code{mugiwara} wraps each PUT into an environment as expected by \code{efficientzero}.
+    \code{efficientzero} generates an action, \code{mugiwara} converts it to a concrete
+    input, forwards the input to MOGI and receives raw execution feedback like
+    block hits and the exit reason.
+    \code{mugiwara} then converts this raw execution feedback to a structured observation
+    and reward and forwards it to \code{efficientzero}, completing the loop.
   }
   \label{fig:system-architecture}
 \end{figure}

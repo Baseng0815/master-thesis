@@ -2,8 +2,238 @@
 
 \section{An EfficientZero Implementation in Rust}\label{sec:impl-efficientzero}
 
-% TODO: The reusable crate: module map (model, mcts, learner, driver, abstraction),
-% the choice of the burn framework and the backends it gives (ndarray, CUDA, wgpu),
-% and the parts of \cref{chap:efficientzero} that are and are not implemented.
-% State deviations from the reference implementation explicitly --- an examiner will
-% ask whether the algorithm evaluated here is the published one.
+In addition to the fuzzer, we provide an EfficientZero implementation in Rust
+using the Burn deep learning framework.
+The implementation provides a flexible interface which enables training agents for
+various environments as well as a unified way to specify parameters and a dashboard
+to monitor training progress.
+
+\subsection{The Environment Model}
+
+EfficientZero is a RL algorithm and therefore formally interacts with a MDP.
+Making use of the rich type system of Rust, we model the MDP via an \code{Environment} trait
+with associated \code{Action} and \code{Observation} types.
+Actions and Observations must be representable as a list of floats for model inference and training.
+The environment supports stepping its current state using an action and then returns
+a reward and observation to the caller, as well as a flag \code{done} that indicates
+that the episode has finished.
+It also supports resetting its state to the beginning which returns an initial observation.
+
+\begin{rust}[caption={The environment interface of the EfficientZero
+    implementation.},label={lst:ez-abstraction}]
+pub trait Observation: Clone {
+    fn to_vec(&self) -> Vec<f32>;
+    fn size() -> usize;
+}
+
+pub trait Action: Into<usize> + From<usize> + Copy {
+    fn size() -> usize;
+}
+
+pub struct StepResult<O> {
+    pub reward: f32,
+    pub done: bool,
+    pub observation: O,
+}
+
+pub trait Environment {
+    type Action: Action;
+    type Observation: Observation;
+
+    fn step(&mut self, action: Self::Action) -> StepResult<Self::Observation>;
+    fn reset(&mut self) -> Self::Observation;
+    fn legal_actions() -> impl Iterator<Item = Self::Action>;
+}
+\end{rust}
+
+Both associated types are constrained by nothing but what the networks need
+from them.
+An \code{Observation} must flatten into a vector of \code{f32} whose length is
+fixed and known without an instance at hand, since it is the input width of the
+representation network $h$.
+An \code{Action} must map onto the index range $0, \dots, n - 1$, where $n$ is
+the number of categories of the policy head $p$; the conversions to and from
+\code{usize} are what allows the tree search and the replay buffer to store
+actions as plain integers.
+Note that \code{legal\_actions} is an associated function rather than a method
+on the environment: beyond the root, \gls{mcts} descends through latent states
+that have no environment behind them~(\cref{sec:ez-mcts}), so the set of
+available actions cannot depend on the current state.
+
+The environments for training and evaluating an agent are usually
+different.
+In the case of fuzzing, an evaluation environment might have different hooks
+attached to extract information from the fuzzing campaign compared to a
+training environment.
+We therefore keep construction out of \code{Environment} itself and put it into
+the two subtraits \code{TrainingEnvironment} and \code{EvaluationEnvironment},
+each providing its own constructor.
+Training is generic over the former, evaluation over the latter, and a target
+that implements both can be trained and evaluated by the same driver.
+
+\subsection{The Learner}
+
+The \code{Learner} makes up the core of the implementation.
+It contains an implementation of batched \gls{mcts}, the replay buffer, various
+workers, and hook firing.
+
+\subsubsection{MCTS}
+
+\gls{mcts} was introduced in~\cref{sec:ez-mcts}.
+While implementing basic \gls{mcts} is straightforward, some tweaks must be
+introduced to guarantee a good throughput since \gls{mcts} is the main bottleneck of
+training and self-play.
+The core issue any \gls{mcts} implementation with imagined rollouts encounters
+is the quick alternation between model inference on the GPU and using said inference
+results for CPU work.
+Node selection requires policy priors as well as state value and therefore
+necessitates evaluating the policy and value heads $p$ and $v$.
+Repeatedly running model inference on very small, unbatched inputs introduces major
+kernel launch overhead and is therefore very inefficient.
+The solution lies in batching as many GPU calls as possible.
+This can be achieved for \gls{mcts} by stepping $n$ environments in parallel,
+reducing the kernel launch overhead by a factor of $n$.
+In practice, we implement this by keeping a pool of $n$ active environments and step
+them in parallel while resetting any environments that have terminated.
+
+Another bottleneck are host-device transfers between CPU and GPU.
+For example, when evaluating multiple model heads, we concatenate their outputs
+and transfer the result to the host in a single call instead of multiple calls.
+Other general optimizations include reusing buffers as much as possible and precalculating
+tables like the pUCT scaling term introduced in~\cref{eq:ez-puct}.
+We also make use of rayon for simple task parallelism during backup.
+
+\subsubsection{Replay Buffer}
+
+The replay buffer stores past episodes including observations, actions and rewards,
+as well as \gls{mcts} results like the root visit count distribution.
+Because it must be efficiently sampleable for training, we use a struct-of-array representation
+over ring buffers.
+Since episodes may have different lengths, we additionally keep metadata such
+as the offset of an episode into the data arrays as well as the episode length
+and their initial observations.
+The capacity of the replay buffer is fixed once at the beginning and can be
+adjusted to fit the memory available on the system.
+For example, a single cjson (\todo{cref to cjson}) environment step carries with it
+
+If the replay buffer is full, the oldest trajectory is evicted. Sampling
+happens per step rather than per in accordance to \gls{per}. Freshly inserted
+episodes receive the largest priority observed so far, so that new data is
+sampled at least once. Priorities are updated by the reanalyze workers once the
+value error of a position is known.
+Importantly, a sampled batch is assembled on the host and contains no GPU data.
+
+The replay buffer is shared between the data workers that generate new
+episodes, the rollout workers that sample raw batches, and the reanalyze
+workers that re-run \gls{mcts} on the raw batches to produce finished batches.
+It is guarded by a Mutex.
+
+\subsubsection{Workers}
+
+We make use of four different kinds of workers, of which a fixed number of instances
+is spawned once in the beginning.
+\Cref{fig:impl-ez-workers} shows the four kinds and the channels between them.
+They communicate via message passing except for the replay buffer which is shared via a Mutex.
+In general, each worker has access to a shared task queue on which it blocks and waits for
+new tasks.
+Once a task is finished, it publishes its result to a result queue that can then be consumed by other workers.
+Since we assume the GPU to always be the bottleneck for training as well as data generation,
+we run the workers in two phases: data collection and training.
+
+\paragraph{Data workers}
+They have access to a copy of a recent model and generate new episodes by interacting with the environment.
+Each data worker contains a pool of active games that it steps in parallel using batched \gls{mcts}.
+Once an episode is finished, it inserts the result into the replay buffer.
+The learner generates a fixed number of data worker tasks so that the workers stop generating
+new data after a limit is reached.
+
+\paragraph{Rollout workers}
+They sample the replay buffer, prepare raw batches and forward them to the reanalyze workers.
+The number of raw batches is restricted by the learner in a similar manner as for the data workers.
+
+\paragraph{Reanalyze workers}
+They consume raw batches that have been prepared by the rollout workers and re-run \gls{mcts}
+using the updated model parameters.
+
+\paragraph{GPU workers}
+All GPU work is done by GPU workers.
+This has two reasons.
+First, we found the Burn implementation to be extremely slow when relying on its internal
+task queue due to contention.
+Second, in its current implementation, Burn spawns a new CUDA stream for each thread.
+We found that sending data between threads causes a lot of unwanted tensor data synchronization
+which in turn breaks kernel fusion, causing a major slowdown.
+Wrapping all GPU work in a explicit GPU worker allows to better control queue
+contention and data synchronization.
+It also allows adding a second GPU by spawning a second worker in the future.
+
+\input{figures/impl-ez-workers}
+
+\subsubsection{Hooks}
+
+To allow better diagnostics and instrumentation, the implementation
+includes a way to add various kinds of hooks to different parts of the learning process.
+This allows to build things like a visualization dashboard or persistence layer
+on top of the learner without needing to modify the learner itself.
+\Cref{tab:impl-ez-hooks} contains a list of the hooks and where they are fired.
+
+\begin{table}[htbp]
+  \centering
+  \caption[The instrumentation hooks of the learner]{%
+    The instrumentation hooks of the learner, where they are fired and what
+    context information the callback receives.
+  }
+  \label{tab:impl-ez-hooks}
+  \footnotesize
+  \begin{tabularx}{\textwidth}{@{}llX@{}}
+    \toprule
+    Hook & Fired by & Context \\
+    \midrule
+    \code{on\_env\_step}
+      & data worker
+      & action, reward and \code{done} of one environment step \\
+    \code{on\_finished\_trajectory}
+      & data worker
+      & the finished episode, as inserted into the replay buffer \\
+    \code{on\_finished\_data\_collection}
+      & data worker
+      & transitions produced by one data task \\
+    \code{on\_finished\_mcts}
+      & GPU worker
+      & tree count, iterations per tree, root value of every tree \\
+    \code{on\_search\_roots}
+      & GPU worker
+      & root priors next to the visit counts they were improved into,
+        the only point at which the two coexist \\
+    \code{on\_sampled\_batch}
+      & rollout worker
+      & the raw batch and the occupancy of the replay buffer \\
+    \code{on\_finished\_reanalyze}
+      & reanalyze worker
+      & duration of one reanalyze task \\
+    \code{on\_reanalyzed\_batch}
+      & reanalyze worker
+      & the training-ready batch, its scalar value targets, the root value
+        predictions and the priorities written back \\
+    \code{on\_finished\_training\_batch}
+      & GPU worker
+      & the four loss terms and the total loss of one gradient step \\
+    \addlinespace
+    \code{on\_finished\_data\_iteration}
+      & learner
+      & model snapshot after data collection, replay buffer \\
+    \code{on\_finished\_training\_iteration}
+      & learner
+      & model snapshot after training, replay buffer \\
+    \code{on\_finished\_learner\_iteration}
+      & learner
+      & iteration index, replay buffer length \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Evaluation runs outside the learner and has three hooks of its own, fired per
+step, per episode and once per run.
+Because evaluation is single-threaded, they are generic over the concrete
+\code{EvaluationEnvironment} and may therefore read target state that the
+observation does not carry.

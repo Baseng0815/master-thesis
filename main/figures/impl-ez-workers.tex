@@ -1,0 +1,123 @@
+%!TEX root = ../thesis.tex
+% Thread and channel layout for \cref{sec:impl-efficientzero}: the four worker
+% kinds, the one piece of shared mutable state they contend for, and the learner
+% that drives them phase by phase. The algorithm-level counterpart is
+% \cref{fig:ez-workers}, which draws the same loop as data flow; this one draws
+% what is actually spawned and how the threads talk to each other.
+%
+% Layout rules:
+%  * Three bands. The middle band is the pipeline in execution order, left to
+%    right --- data workers, replay buffer, rollout workers, reanalyze workers
+%    --- so every stage-to-stage edge is a short horizontal arrow between
+%    neighbours. The GPU workers are the band above (every device request goes
+%    straight up into it), the learner the band below (every task and status goes
+%    straight down).
+%  * Putting the replay buffer *inside* the row rather than into a band of its
+%    own is what makes the figure crossing-free: it leaves exactly one
+%    non-neighbour edge, the priority write-back from the reanalyze workers,
+%    which is routed through the top lane at y=1.4 --- and the one column it
+%    flies over, the rollout workers, is the one column with no GPU edge. Move
+%    the buffer out of the row and that edge has nowhere left to go.
+%  * Columns are 3.8cm apart and boxes are 2.6cm wide, so an edge label sitting
+%    in a gap has 1.2cm (34pt) of room: at \scriptsize that is about nine
+%    characters per line, which is why the in-row labels are stacked and terse.
+%    "updated priorities" is single-line because it rides the long detour lane
+%    rather than a gap. The picture is 14cm wide against a 14.56cm \textwidth
+%    --- widen the columns before lengthening any in-row label.
+%  * Blue = a worker kind, and there are deliberately exactly four of them.
+%    Grey = shared state, white = the orchestrating thread.
+%  * Solid arrows carry data or requests, dashed arrows carry parameters.
+%  * The phase divider sits at x=5.7, which is exactly where the "sampled
+%    positions" label already sits, and that label is wider than the 34pt gap
+%    it nominally occupies. So the divider is two segments with the label in
+%    between rather than one line behind a fill=white label: a fill wide enough
+%    to hide the line also reaches into the two boxes either side, and one
+%    anchored tight enough not to would eat the arrow it labels. The upper
+%    segment starts at samplbl.north so it tracks the label if it is reworded.
+%  * The divider is drawn after the pipeline arrows but before the priority
+%    lane, so the lane crosses over it rather than under.
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[
+      >={Stealth[round]}, font=\small,
+      worker/.style = {draw, rounded corners=2pt, fill=blue!8,
+                       minimum height=15mm, minimum width=26mm, align=center},
+      store/.style  = {draw, fill=black!8,
+                       minimum height=15mm, minimum width=26mm, align=center},
+      band/.style   = {draw, rounded corners=2pt, fill=blue!8, align=center},
+      engine/.style = {draw, rounded corners=1.5pt, fill=white, align=center,
+                       font=\scriptsize, minimum width=56mm, minimum height=11mm},
+      orch/.style   = {draw, rounded corners=2pt, fill=white, align=center,
+                       minimum width=140mm, minimum height=12mm},
+      flow/.style   = {->, thick, black!70},
+      param/.style  = {->, thick, black!70, densely dashed},
+      lbl/.style    = {font=\scriptsize, inner sep=2.5pt, align=center},
+    ]
+    % --- the device band: the only threads that touch the GPU ----------------
+    \node[band, minimum width=140mm, minimum height=20mm] (gpu) at (5.7,3.6) {};
+    \node at (5.7,4.28) {GPU workers};
+    \node[engine] (inf)   at (2.4,3.25) {model inference\\
+                                         read-only model snapshot};
+    \node[engine] (train) at (9.0,3.25) {model training\\
+                                         autodiff, optimizer, gradient steps};
+    \draw[param] (train.west) -- node[lbl,above] {$\theta$} (inf.east);
+
+    % --- the pipeline, in execution order ------------------------------------
+    \node[worker] (data) at (0,0)    {Data\\workers\\[1pt]
+                                      \scriptsize self-play episodes};
+    \node[store]  (buf)  at (3.8,0)  {Replay\\buffer\\[1pt]
+                                      \scriptsize Mutex-guarded};
+    \node[worker] (roll) at (7.6,0)  {Rollout\\workers\\[1pt]
+                                      \scriptsize sample batches};
+    \node[worker] (rean) at (11.4,0) {Reanalyze\\workers\\[1pt]
+                                      \scriptsize refresh targets};
+
+    \draw[flow] (data) -- node[lbl,above] {finished\\episodes}  (buf);
+    \draw[flow] (buf)  -- node[lbl,above] (samplbl) {sampled\\positions} (roll);
+    \draw[flow] (roll) -- node[lbl,above] {raw\\batches}        (rean);
+
+    % --- the phase divider ---------------------------------------------------
+    % Cuts the row between the replay buffer and the rollout workers, which is
+    % where the two phases actually part: everything from the rollout workers
+    % rightwards runs only in the training phase. It stops short of the GPU band
+    % and the learner --- both are live in both phases, so extending it through
+    % them would claim a split that does not exist.
+    \draw[black!35, densely dashed] (5.7,-1.6) -- (5.7,0);
+    \draw[black!35, densely dashed] (samplbl.north) -- (5.7,2.15);
+    \node[lbl, black!55, anchor=south east] at (5.6,2.2) {data phase};
+    \node[lbl, black!55, anchor=south west] at (5.8,2.2) {training phase};
+
+    % --- device requests: straight up, one per column that needs one ---------
+    \draw[flow] (data.north) --
+      node[lbl,right,pos=0.62] {batched\\MCTS} (data.north |- gpu.south);
+    \draw[flow] ([xshift=7mm]rean.north) --
+      node[lbl,left,pos=0.7] {target MCTS,\\gradient step}
+      ([xshift=7mm]rean.north |- gpu.south);
+
+    % --- the one non-neighbour edge, routed through the top lane -------------
+    \draw[flow,rounded corners=3pt]
+      ([xshift=-7mm]rean.north) -- (10.7,1.4)
+      -- node[lbl,fill=white] {updated priorities} (3.8,1.4) -- (buf.north);
+
+    % --- the orchestrator: tasks down, statuses up ---------------------------
+    \node[orch] (learner) at (5.7,-2.35) {Learner\\[1pt]
+      \scriptsize one iteration = a data phase, then a training phase};
+
+    \draw[<->,thick,black!70] (data.south) --
+      node[lbl,right] {tasks,\\statuses} (learner.north -| data.south);
+    \draw[flow] (learner.north -| roll.south) --
+      node[lbl,right] {tasks} (roll.south);
+    \draw[flow] (rean.south) --
+      node[lbl,right] {statuses} (learner.north -| rean.south);
+  \end{tikzpicture}
+  \caption[The worker threads of the EfficientZero implementation]{%
+    The workers spawned by the learner and how they interact.
+    Data workers receive data generation tasks and save episodes in the replay buffer.
+    Rollout workers receive rollout tasks, sample raw batches from the replay buffer
+    and forward them to reanalyze workers.
+    Reanalyze workers refresh the raw batches using the latest model and then use
+    backpropagation to calculate losses and step the model optimizer.
+    The dashed line separates the data collection and training phases of a single iteration.
+  }
+  \label{fig:impl-ez-workers}
+\end{figure}
