@@ -2,21 +2,79 @@
 
 \section{Rewards}\label{sec:mdp-rewards}
 
-We will design our reward signal as a combination of a stateless reward $r_\alpha$
-and a stateful reward $r_\beta$.
-The stateless reward for time step $t$ is calculated from the observation $o_t$
-while the stateful reward is allowed to integrate information from previous observations
-$o_1,\dots,o_t$.
-The optimization objective is similar to that of other \gls{cgf} fuzzers.
-In general, the stateless reward will be some function of the immediate coverage,
-steering the learner towards high-coverage states.
-The stateful reward will be some function of the coverage history, giving a measure
-of \emph{marginal coverage}, i.e., newly attained coverage in comparison to the
-previous seed, steering the learner towards high-coverage actions.
-This is similar to the formulation~\textcite{bottinger_deep_2018} use.
+Executing the \gls{put} produces a list of block hit counts from which the reward is built.
+We do not use the hit counts directly, but rather map them to an \gls{afl}-style hit count \emph{level}
 
-\begin{align*}
-  r_\alpha:\mathcal{C}&\rightarrow\mathbb{R}, \\
-  r_\beta:\cup_{n=0}^{\infty}\mathcal{C}^n&\rightarrow\mathbb{R}, \\
-  r&=r_\alpha+\omega r_\beta
-\end{align*}
+\begin{equation*}
+  \ell(n)=
+  \begin{cases}
+    0 & n=0, \\
+    \min\left(1+\lfloor\log_2 n\rfloor,\ \ell_{\max}\right) & n>0,
+  \end{cases}
+\end{equation*}
+
+and a \emph{coverage score} is derived from the hit count levels by summing over all buckets:
+$\sigma(c)=\sum_i\ell(c_i)$ of an execution $c\in\mathcal{C}$.
+At 4096 buckets and $\ell_{\max}=8$, a single execution scores between 0 and 32768.
+Compressing the raw counts into exponentially spaced buckets make the coverage score less sensitive
+to the exact hit count and allows to represent a wider range of hit counts.
+
+\subsection{Input-level actions}
+
+In the input-level actions setting, the fuzzer executes single inputs and keep no execution history around.
+Rewards are designed in a simple and straightforward manner that serves the purpose of the target.
+For example, the sequence (\cref{sec:target-sequence}) example receives a fixed liveliness reward for
+each step it keeps the environment alive, as well as a final coverage reward
+whenever it manages to reach its goal.
+The high-and-low (\cref{sec:target-high-and-low}) example is awarded a raw coverage score.
+
+\subsection{Corpus-level actions}
+
+In general, rewards for corpus-level actions can either be \emph{memoryless}
+or \emph{marginal}.
+Memoryless rewards depend only on the coverage score of each execution and ignore
+any coverage reached by previous seeds.
+In contrast, marginal coverage pays only for the levels that have not been reached before.
+\Textcite{bottinger_deep_2018} evaluate both and report that only the memoryless variant
+beats a random baseline, while the variant built on coverage history does not.
+
+The memoryless variant can be interpreted as steering the seed mutation towards high-coverage
+regions.
+A problem is mutations producing the same high-coverage seed over and over again.
+Paying out the same high-coverage reward for seeds that already reach a high coverage
+discourages exploration into new regions.
+
+We solve this problem by introducing a marginal reward.
+By keeping track of a union of all coverage seen during an episode, we can
+subtract this union from a new coverage to get a marginal coverage.
+This contains only newly found coverage and thus encourages exploration into yet underexplored regions.
+A disadvantage of marginal coverage is its time dependency.
+A seed that achieves new coverage early in the run when the coverage union is still sparse
+achieves a higher marginal reward than the same seed later on in the run, even though
+the later seed might produce a new coverage high score.
+We therefore include a depth term that rewards executions with a coverage score
+larger than any previous execution.
+
+An episode maintains two running coverage maxima over its executions: the
+\emph{union coverage} and the \emph{depth record}.
+Each bucket $i$ of the union coverage $u_t$ contains the maximum of the $i$th bucket of all previous
+executions, $u_{t,i}=\max_{k<t}c_{k,i}$, while the depth record $d_t=\max_{k<t}\sigma(c_k)$
+represents the highest coverage score a single execution has produced.
+
+The reward of an execution $c_t$ is then expressed as the combination of a marginal term
+that encourages exploration breadth by rewarding new levels and of a depth term
+that encourates exploration depth by rewarding \emph{deep} executions
+that improve on the previous executions with the highest coverage score.
+
+\begin{equation*}
+  r_t=\lambda\left[\sum_i\bigl(\ell(c_{t,i})-\ell(u_{t,i})\bigr)_+
+  \;+\;\omega\bigl(\sigma(c_t)-d_t\bigr)_+\right],
+\end{equation*}
+
+where $\omega$ is a parameter that adjusts the weight between exploration breadth
+versus depth and $\lambda$ rescales the reward to better fit the value support.
+For the default choice of $\omega=1$, we end up with a reward signal that values a
+seed that reaches exactly one level deeper than the union of all previous seeds equally to a seed that 
+reaches exactly one level deeper than the best previous seed.
+For $\omega=0$, the depth term disappears and the reward collapses to a pure measure
+of marginal novelty, i.e., of how much a new seed improves on the union of all previously attained coverage.

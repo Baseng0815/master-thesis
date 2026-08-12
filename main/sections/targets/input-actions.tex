@@ -5,17 +5,18 @@
 Since the main goal is evaluating applications of \gls{rl} to \gls{cgf}, the input
 action model targets serve mainly as baseline checks for the correctness of our
 EfficientZero learner.
-We include two targets \emph{high-and-low} poses a pure bandit-like problem to the learner,
-while \emph{sequence} requires the learner to solve a full POMDP problem.
+We include three targets: \emph{high-and-low} poses a pure bandit-like problem to the learner,
+while \emph{sequence} and \emph{open62541} require the learner to solve a full POMDP problem.
 
 \subsection{High-and-low}\label{sec:target-high-and-low}
 
 This target represents a bandit-like example.
-It reads a single byte and depending on the value, executes either a high-coverage
+It reads a single byte and depending on its value, executes either a high-coverage
 or low-coverage region.
 Importantly, it does not change program state.
 This makes it easy to learn since EfficientZero must only internalize what inputs
 produce what coverage.
+The reward is marginal coverage.
 \Cref{lst:target-high-and-low} shows an excerpt of the program.
 
 \begin{ccode}[float=htbp,
@@ -40,10 +41,10 @@ int main(void) {
 }
 \end{ccode}
 
-As described in~\cref{sec:input-level-actions}, we model actions as actual program input
+As described in~\cref{sec:input-level-actions}, we model actions as actual PUT input
 and a single environment step then consists of supplying a single byte to the PUT.
 The action space therefore has a size of $\lvert\mathcal{A}\rvert=256$.
-Observations are the new block hit counts compared to the previous input.
+Observations are the marginal block hit counts.
 
 \subsection{Sequence}\label{sec:target-sequence}
 
@@ -53,6 +54,7 @@ Whenever a wrong byte was provided, the program terminates.
 Otherwise, at the end, we execute a high-coverage function.
 The main goal is for the learner to successively learn the passcode by following
 the non-terminating, coverage-increasing path of choosing correct bytes.
+The reward in this case is marginal coverage plus a flat survival bonus per step.
 \Cref{lst:target-sequence} shows a program excerpt.
 
 \begin{ccode}[float=htbp,

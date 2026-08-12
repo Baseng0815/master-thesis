@@ -42,6 +42,22 @@ $\alpha$ & Step size of a learning update, $\alpha\in(0,1]$ \\
 $H_t$, $b_t$ & History and belief state of a partially observable process \\
 \end{tabular}
 
+\addsec*{Fuzzing}
+
+\begin{tabular}{p{2.5cm} p{11cm}}
+$M_F$ & The fuzzing process as a partially observable Markov decision process \\
+$\mathcal{S}_F$, $\mathcal{A}_F$ & State and action space of the fuzzing process \\
+$\mathcal{C}$ & Coverage space; one hit count per bucket of the block hit tracker \\
+$o_F$ & Observation function of the fuzzing process, $o_F:\mathcal{S}_F\to\mathcal{C}$ \\
+$c_t$ & Coverage of the execution performed at step $t$ \\
+$\ell(n)$ & Hit-count level of a raw count $n$, capped at $\ell_{\max}$ \\
+$\sigma(c)$ & Coverage score of an execution, $\sigma(c)=\sum_i\ell(c_i)$ \\
+$u_t$ & Union coverage of an episode, per-bucket maximum over its executions \\
+$d_t$ & Depth record of an episode, best single-execution score so far \\
+$\omega$ & Weight of the depth term against the breadth term \\
+$\lambda$ & Scale converting coverage levels into reward \\
+\end{tabular}
+
 \addsec*{Search and networks}
 
 \begin{tabular}{p{2.5cm} p{11cm}}

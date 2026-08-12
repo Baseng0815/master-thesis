@@ -42,17 +42,17 @@ Block hits are then converted to a reward.
 First, a \code{Coverage} converts raw block hit counts into exponentially
 spaced hit-count levels.
 Hit-count level $n$ in this case spans $2^{n-1}$ to $2^n-1$ raw block hits and
-saturates at level 8, so the maximum number of raw block hit counts that can be registered
-is $2^8=256$.
+saturates at level 8, so hit counts of 128 and above are no longer distinguished.
 The block hit score is the sum of the levels over all buckets.
-For a maximum number of 4096 blocks, the highest possible reward is therefore
+For a maximum number of 4096 blocks, the highest possible score is therefore
 $4096\times 8=32768$.
-The stateful reward $r_\beta$ introduced in~\cref{sec:mdp-rewards} can be
-implemented by deriving the reward from the cumulative block hit tracker in the
-way described above, while the stateless reward $r_\alpha$ can be implemented
-by the \emph{marginal coverage} i.e., the difference between the coverage of
-the previous execution and the current execution.
-Accumulation of coverage happens by taking the per-bucket maximum.
+Both terms of the reward introduced in~\cref{sec:mdp-rewards} are computed from
+this score.
+The breadth term compares the levels of the current execution against those of
+the union coverage, and the depth term compares its score against the highest
+score of any single execution of the episode so far.
+Accumulation of coverage into the union happens by taking the per-bucket maximum,
+which is what makes both terms telescope.
 
 \subsection{The Seed Corpus}\label{sec:impl-corpus}
 
