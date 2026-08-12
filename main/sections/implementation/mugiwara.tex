@@ -26,7 +26,7 @@ similar to AFL++.
 The bucket count trades memory against collisions and is target-dependant.
 Usually, it is calibrated once manually before starting a larger fuzzing campaign,
 since all buffer sizes need to be known beforehand.
-For example, cjson\todo{cref to cjson} hits 495 unique blocks on startup, so a bucket
+For example, cjson (\cref{sec:target-cjson} hits 495 unique blocks on startup, so a bucket
 size of 512 would lead to almost every block hit colliding with another one, distorting
 the observation and derived reward signal.
 Coverage numbers are therefore only comparable between runs at the same bucket count.
@@ -38,21 +38,10 @@ blocks $h_\text{cur}\oplus(h_\text{prev}\gg 1)$, so that for any two basic
 blocks $A$ and $B$,, $A\rightarrow B$ and $B\rightarrow A$ land in different
 buckets and can therefore be differentiated.
 
-Block hits are then converted to a reward.
-First, a \code{Coverage} converts raw block hit counts into exponentially
-spaced hit-count levels.
-Hit-count level $n$ in this case spans $2^{n-1}$ to $2^n-1$ raw block hits and
-saturates at level 8, so hit counts of 128 and above are no longer distinguished.
-The block hit score is the sum of the levels over all buckets.
-For a maximum number of 4096 blocks, the highest possible score is therefore
-$4096\times 8=32768$.
-Both terms of the reward introduced in~\cref{sec:mdp-rewards} are computed from
-this score.
-The breadth term compares the levels of the current execution against those of
-the union coverage, and the depth term compares its score against the highest
-score of any single execution of the episode so far.
-Accumulation of coverage into the union happens by taking the per-bucket maximum,
-which is what makes both terms telescope.
+Block hits are then converted to a reward according to~\cref{sec:mdp-rewards}.
+First, a \code{Coverage} converts raw block hit counts into exponentially spaced levels.
+Both terms of the reward introduced in~\cref{sec:mdp-rewards} are then computed from
+this score and any additional necessary state.
 
 \subsection{The Seed Corpus}\label{sec:impl-corpus}
 
@@ -63,12 +52,7 @@ This is implemented via \code{SeedCorpus}.
 Although it is possible for \code{SeedCorpus} to have an arbitrary fixed length,
 we evaluate our approach with a single seed only.
 In addition to the currently active seeds, the \code{SeedCorpus} also stores the union coverage
-of all seeds seen so far.
-This means even seeds that have been discarded before will have their coverage included in
-the union.
-While this might seem wrong at first, this approach is important to guarantee that
-the marginal coverage contains a proper novelty signal, and that the learner is not
-just re-deriving already tested seeds.
+of all seeds seen so far as well as the coverage score record.
 
 What the agent practically controls is therefore the position and value of the mutation,
 as well as the retain-or-discard decision.

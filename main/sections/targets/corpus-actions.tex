@@ -90,101 +90,28 @@ Every reset rebuilds the corpus from uniformly random bytes, so the agent has to
 apply mutations to reach valid JSON syntax on its own.
 The reward is the coverage an execution adds to the corpus union plus a bonus per level by
 which it out-parses the deepest execution of its episode (\cref{sec:mdp-rewards}).
-
-Coverage carries signal on this target before any agent is involved.
-A valid document walks into the value, string and number branches of the parser, while a
-malformed record bails out early, and because a coverage level is the log2 bucket of a
-block's hit count, nesting one level deeper is itself new coverage rather than the same
-blocks again.
-That is the axis the campaign's best inputs climb (\cref{tab:best-inputs}).
-
-The ablation is what earns cJSON the space.
-Fifteen arms of four seeds each run on it: a frozen baseline, thirteen arms exactly one
-factor away from it, and a structure-blind random mutator as the control
-(\cref{tab:campaign-inventory}).
-The factors are what the agent sees (\code{NOCOV} zeroes the coverage bitmaps in the
-observation, \code{NOSEED} the seed bytes), what coverage means (\code{EDGE} counts
-transitions instead of blocks), what the agent is paid (\code{W0} disables the depth
-term), how it explores (\code{T15} and \code{T25} replace the annealed self-play
-temperature by a constant, \code{ALPHA004} and \code{ALPHA010} change the root Dirichlet
-concentration $\xi$), how wide it searches (\code{SIMS50} and \code{SIMS100} against the
-baseline's 200 simulations), how much it trains per sample (\code{REUSE4} doubles the gradient
-steps per iteration and so quadruples the sample reuse) and how much capacity it has
-(\code{SMALL}, \code{MEDIUM}).
-\Cref{tab:cjson-arms} gives each arm's setting against the baseline's.
-Since the baseline is a cell of every factor, a difference is attributable to a single
-setting.
-A sixteenth arm, eightfold sample reuse, was queued but never run.
-
-Runs are bounded by learner iterations rather than by wall-clock time
-(\cref{sec:impl-campaigns}).
-At 128 episode completions per iteration and 64 executions per episode, each of the 200
-iterations costs the same 8192 guest executions whatever an arm's temperature, search
-width or gradient-step count, so every arm fuzzes with the same budget of about
-\num{1.6e6} executions and the campaign compares fuzzing rather than compute.
-It is also why the wall-clock column of \cref{tab:campaign-inventory} spans
-\SIrange{7.6}{30.6}{\hour} per run.
-One caveat travels with the campaign: the six arms decided after it launched ran on a
-later revision than the first nine, so a difference between the two waves is not
-attributable to the factor alone (\cref{sec:discussion-threats}).
+Because the target executes additional blocks for each correctly guessed
+character and therefore rewards guesses in proportion to the length of the
+correct prefix, it can successively learn the password character-by-character.
 
 \subsection{libxml2}\label{sec:target-libxml2}
 
-libxml2 is the XML stack most of the Linux userspace parses with, and the largest target
-in this thesis.
-We configure it down to what an in-memory parse reaches: \code{ICONV}, \code{MODULES} and
-\code{CATALOG} are disabled because each needs a runtime dependency the guest rootfs does
-not stage, threads are disabled so that a run stays deterministic, and \code{HTML},
-\code{XPATH} and the validation stack above it are unreachable from \code{xmlReadMemory}
-anyway.
+libxml2 v2.15.3. is an XML parser commonly used in Linux.
+We disable threads for deterministic execution as well as unreachable and out-of-scope
+features like \code{ICONV}, \code{MODULES} \code{CATALOG}, \code{HTML} and \code{XPATH}.
+The library entry point the harness makes use of is \code{xmlReadMemory}.
+It is structured almost identically as~\cref{lst:target-cjson}.
+Instead of 16 bytes, we chose 32 byte seeds to allow richer seed structure.
+We also use parse with recovery mode (\code{XML\_PARSE\_RECOVER}).
+This causes the parser to ignore errors and instead return a partial tree of successfully parsed input,
+yielding a richer coverage signal than simple early abort.
 
-The harness has the shape of \cref{lst:target-cjson} with three differences.
-It hands a 32-byte record to \code{xmlReadMemory}, it calls \code{xmlInitParser} before the
-snapshot point so that the one-time parser setup is not paid inside the first measured
-parse, and it parses with \code{XML\_PARSE\_RECOVER}.
-Recovery mode is a harness decision that shapes the reward landscape: the parser walks past
-a well-formedness error and returns the partial tree, so a mutation that breaks
-well-formedness still yields coverage that differs from its neighbours instead of
-collapsing every malformed record onto one early-abort path.
-This makes the target more gradient-rich than a strict parser would be, and any conclusion
-drawn from it inherits that.
-
-Scale is the reason it is included.
-An environment accumulates a median block score of 5281 against cJSON's 645 to 958, and
-the best single execution of the campaign scores 4382 on 32 bytes
-(\cref{tab:campaign-inventory,tab:best-inputs}).
-The coverage map holds 4096 buckets, so a target of this size collides and coverage here
-is a lossier measurement than on cJSON (\cref{sec:discussion-threats}).
-
-Its role is transfer.
-Nothing about this target informs the configuration: it runs for 400 iterations at the
-constant temperature $T=2$ and the action-space-scaled concentration $\xi=0.039$ that the
-cJSON ablation selects.
-Two caveats travel with it.
-There is no random control arm, so its curves are read against the untrained structural
-byte rate of \cref{fig:structural-rate} instead, and its four seeds ran on two revisions,
-which makes them four samples of two configurations rather than of one.
+Due to its higher block count, we increase the block hit tracker bucket count
+to \num{16384} to reduce collisions.
+We do not include a random control baseline.
 
 \subsection{picohttpparser}\label{sec:target-picohttpparser}
 
-picohttpparser is a header-only HTTP/1.x request parser, and the smallest target in this
-thesis.
-Its harness feeds a 32-byte record to \code{phr\_parse\_request} per execution.
-A request parse is a single bounded pass over the request line and the header block with
-no recursion and no nesting, where cJSON and libxml2 are recursive-descent parsers whose
-coverage grows with the structural depth of the input.
-
-The consequence is a property of the target rather than a result.
-An environment's union saturates at a block score of 81, with 80 to 81 across the four
-seeds, and the best single execution scores 68
-(\cref{tab:campaign-inventory,tab:best-inputs}).
-The depth term of the reward presumes that parsing further means executing further, so
-half the reward signal is structurally unavailable here.
-A target whose entire reachable surface is that small is one on which a planner and a
-random mutator have to converge, because there is nothing left to plan towards.
-We include it to bound the claim the other two targets support: coverage-driven mutation
-planning pays where coverage is a function of input structure and buys nothing where it is
-not (\cref{sec:discussion-disadvantages}).
-
-Its role is transfer, under the configuration and the two caveats
-of~\cref{sec:target-libxml2}.
+picohttpparser is a header-only HTTP/1.x request parser.
+We use the latest version from the master branch with commit hash $\texttt{f4d94b4}$.
+The setup is identical to libxml2 except the block count of \num{4096}, since this is a smaller target.
