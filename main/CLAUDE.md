@@ -22,6 +22,10 @@ describing what belongs there. The primary task in this repo is writing that con
 companion code and the source papers. The document structure, packages, and bibliography are already
 set up.
 
+**Read [`guidelines/writing.md`](guidelines/writing.md) before writing or editing prose** — voice and
+sentence-per-line convention, section scope, information density. This file covers the LaTeX
+mechanics; that one covers the text.
+
 ## The template
 
 The thesis uses the **institute thesis template of the Fraunhofer IOSB / KIT IES**, whose upstream

@@ -23,7 +23,80 @@
 
 \chapter{Frozen Configuration}\label{app:configuration}
 
-% TODO: The complete hyperparameter table referenced from
+\Cref{tab:app-ez-params} lists the EfficientZero parameters every run of this thesis uses.
+
+\begin{table}[htbp]
+  \centering
+  \caption[EfficientZero parameters]{%
+    The EfficientZero parameters of this work next to the Atari configuration of the reference
+    implementation~\cite{ye_mastering_2021}.
+    The three search parameters $\xi$, $\rho$ and $T$ are the exploration change of
+    \cref{sec:methodology-setup}; every other difference follows from the scale of the targets.
+  }
+  \label{tab:app-ez-params}
+  \footnotesize
+  \begin{tabularx}{\textwidth}{@{}ll>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+    \toprule
+    Parameter & & This work & EfficientZero (Atari) \\
+    \midrule
+    \multicolumn{4}{@{}l}{\emph{Search}} \\
+    Simulations per search
+      & & 100 & 50 \\
+    pUCT constants
+      & $c_1$, $c_2$ & 1.25, \num{19652} & 1.25, \num{19652} \\
+    Discount
+      & $\gamma$ & 0.99 & 0.988 \\
+    Value-prefix LSTM horizon
+      & & 5 & 5 \\
+    Root Dirichlet concentration
+      & $\xi$ & 1.0 & 0.3 \\
+    Root noise fraction
+      & $\rho$ & 0.4 & 0.25 \\
+    Visit-count temperature
+      & $T$ & $1 \to 0.5 \to 0.25$ at \SI{20}{\percent} and \SI{40}{\percent} of the run
+      & $1 \to 0.5 \to 0.25$ at \SI{50}{\percent} and \SI{75}{\percent} of training \\
+    \addlinespace
+    \multicolumn{4}{@{}l}{\emph{Targets and replay}} \\
+    Unroll steps
+      & $K$ & 5 & 5 \\
+    TD steps
+      & $n$ & 5 & 5 \\
+    Off-policy correction of $n$
+      & & scaled by the buffer capacity & $0.3 \times$ training steps \\
+    Reanalyzed policy targets
+      & & \SI{99}{\percent} of a batch & \SI{99}{\percent} of a batch \\
+    Replay capacity
+      & & \num{10000} trajectories & \num{1000000} transitions \\
+    Priority and importance-sampling exponents
+      & & 0.6, 0.4 & 0.6, 0.4 \\
+    \addlinespace
+    \multicolumn{4}{@{}l}{\emph{Loss weights}} \\
+    Policy, value, value-prefix, consistency
+      & $\lambda_p$, $\lambda_v$, $\lambda_x$, $\lambda_c$ & 1, 0.25, 1, 2 & 1, 0.25, 1, 2 \\
+    \addlinespace
+    \multicolumn{4}{@{}l}{\emph{Optimization}} \\
+    Optimizer
+      & & AdamW & SGD, momentum 0.9 \\
+    Learning rate
+      & & \num{1e-3}, constant & 0.2, warm-up and step decay \\
+    Weight decay
+      & & \num{1e-4} & \num{1e-4} \\
+    Gradient-norm clip
+      & & 5 & 5 \\
+    Batch size
+      & & 128 & 256 \\
+    \addlinespace
+    \multicolumn{4}{@{}l}{\emph{Model}} \\
+    Trunk
+      & & residual MLP, latent width 128 & convolutional ResNet, 64 channels \\
+    Value and value-prefix support
+      & & 71 bins on $[-30, 30]$, resized per target & 601 bins on $[-300, 300]$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+% TODO: \cref{tab:app-ez-params} covers the EfficientZero parameters only. What is
+% still missing is the complete hyperparameter table referenced from
 % \cref{sec:methodology-hyperparameters}, annotated by justification tier (inherited,
 % derived, sensitivity-analyzed) so the main text can cite it instead of reproducing
 % it. Include the commit hash and the date the configuration was frozen.

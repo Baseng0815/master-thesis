@@ -2,11 +2,47 @@
 
 \chapter{Experimental Methodology}\label{chap:methodology}
 
+Due to the high variance of RL algorithms, we run each experiment using four different seeds.
+We first show that the input-action targets can be successfully learned.
+This serves as a correctness test for our EfficientZero implementation.
+Since we will mainly focus on corpus-level actions, we will not do a parameter study,
+but instead stop once the target was successfully learned.
+For the corpus-level action targets, we will do a detailed ablation study on the cjson target.
+We then use its parameters to test two additional targets, libxml2 as well as picohttpparser.
+
+Experiment results are extracted using hooks (see~\cref{hooks}), either
+during training for metrics like losses, or after training and during
+evaluation for more expensive data collection like seed persistence.
+Because of our architecture, we can easily evaluate new targets by using the existing
+hook and evaluation infrastructure.
+
 % Everything about HOW results are produced and judged lives here, so that
 % \cref{chap:results} can be pure findings. Written before the results are read, and
 % not revised to fit them --- say so.
 
 \section{Experimental Setup}\label{sec:methodology-setup}
+
+The Burn deep learning framework itself supports multiple backends.
+We run our experiments on devices that all have access to NVIDIA GPUs and therefore use
+the CUDA backend.
+Experiments were run on two VMs with an Intel(R) Xeon(R) Gold 5418Y processor as
+well as an NVIDIA L40S and 500 GiB of RAM.
+This allows to run about two to four experiments of a campaign at once.
+
+\subsection{Parameters}
+
+There are many possible parameters to tune in this work.
+We decide to mostly adopt the default EfficientZero parameters without any further studies
+since the authors have already done a detailed investigation and found these to be good.
+Two things we change is the temperature schedule $T:\mathbb{N}\rightarrow\mathbb{R}$ as well as
+the root Dirichlet noise of \cref{eq:ez-dirichlet}, both its concentration $\xi$ and the fraction
+$\rho$ it is mixed into the priors with, since we found fuzzing with large action spaces to require
+more exploration.
+The default EfficientZero parameters we adopt can be found in \cref{tab:app-ez-params}.
+The remaining differences to the reference configuration are consequences of the scale of our
+targets rather than of tuning: our observations are flat coverage vectors instead of stacked Atari
+frames, and our rewards live on a much smaller scale (\cref{sec:mdp-rewards}).
+\Cref{sec:methodology-hyperparameters} justifies each of them.
 
 % TODO: The run configuration that \cref{chap:implementation} deliberately left out:
 % hardware, backend, software versions, what a single run costs in wall-clock, and

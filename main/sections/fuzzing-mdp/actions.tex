@@ -19,19 +19,22 @@ that must be reconciled into a single observation since the mutation operator is
 as a single action, even if it generates multiple test cases.
 \todo{explore reconciliation strategies}
 
-\subsection{Input-level Actions}
+\subsection{Input-level Actions}\label{sec:input-level-actions}
 
 One way to model actions is as actual PUT inputs.
 This is a viable approach for PUTs that consume their inputs byte-by-byte.
 The learned policy $\pi$ in this case represents a generative model for inputs
 that conform to the PUT's grammar.
 
-\subsection{Corpus-level Actions}
+\subsection{Corpus-level Actions}\label{sec:corpus-level-actions}
 
 An action model that is comparable to traditional \gls{cgf} approaches is that of
 corpus-level actions.
+In general, we keep track of a seed corpus $\mathcal{S}$ that is evolved during an episode.
+A single action then decides three things: whether to retain the previous seed,
+which seed to select next, and how to mutate the current seed.
 In the simplified corpus setting, we only keep track of a single seed $s$ of fixed length $l$.
-Actions then represent mutations on $s$.
+Actions then represent a binary retain/discard decision, as well as mutations on $s$.
 Further, we include $s$ in the observations to allow the agent to base its decisions
 on the coverage as well as the input that produced this coverage.
 In theory, coverage is fully determined by $s$, which is why~\textcite{bottinger_deep_2018}

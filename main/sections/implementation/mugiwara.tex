@@ -1,1 +1,237 @@
-\section{Mugiwara}
+%!TEX root = ../../thesis.tex
+
+\section{Mugiwara}\label{sec:impl-mugiwara}
+
+\code{mugiwara} connects the EfficientZero agent with the MOGI execution environment.
+It does this by implementing the \code{Environment} trait for each PUT.
+This necessitates the mapping of generic learner actions to executable input and
+generated MOGI instrumentation to observations as well as providing an adequate
+reward signal.
+
+The project is split into a core library as well as a single binary per target.
+The core library includes basic functions common to every target like coverage instrumentation,
+a target-agnostic model of a seed corpus, helpers to drive the emulator, diagnostic probes,
+and the runner that orchestrates execution of fuzzing campaigns with multiple parameters.
+Target binaries only add target-specific functionality.
+This includes setup of the emulator with the specified program, executing learner-generated
+actions and routing observations and environments from MOGI to the learner.
+
+\subsection{Coverage Instrumentation}\label{sec:impl-coverage}
+
+Coverage is collected by a single block hook that is registered with MOGI.
+The hook receives the block address and passes it to a \code{BlockHitTracker},
+which hashes it, folds the hash into one of 4096 buckets and increments that bucket's counter,
+similar to AFL++.
+
+The bucket count trades memory against collisions and is target-dependant.
+Usually, it is calibrated once manually before starting a larger fuzzing campaign,
+since all buffer sizes need to be known beforehand.
+For example, cjson\todo{cref to cjson} hits 495 unique blocks on startup, so a bucket
+size of 512 would lead to almost every block hit colliding with another one, distorting
+the observation and derived reward signal.
+Coverage numbers are therefore only comparable between runs at the same bucket count.
+
+The tracker counts either blocks or edges.
+Block granularity counts basic block hits, while edge granularity counts
+transitions between consecutive blocks like \acrshort{afl}, by hashing the
+blocks $h_\text{cur}\oplus(h_\text{prev}\gg 1)$, so that for any two basic
+blocks $A$ and $B$,, $A\rightarrow B$ and $B\rightarrow A$ land in different
+buckets and can therefore be differentiated.
+
+Block hits are then converted to a reward.
+First, a \code{Coverage} converts raw block hit counts into exponentially
+spaced hit-count levels.
+Hit-count level $n$ in this case spans $2^{n-1}$ to $2^n-1$ raw block hits and
+saturates at level 8, so the maximum number of raw block hit counts that can be registered
+is $2^8=256$.
+The block hit score is the sum of the levels over all buckets.
+For a maximum number of 4096 blocks, the highest possible reward is therefore
+$4096\times 8=32768$.
+Two \code{Coverage}s can be merged by taking the per-bucket maximum.
+This operation is useful when accumulating coverage information generated
+successively by a sequence of mutated seeds, like in the corpus-level action
+targets.
+
+\subsection{The Seed Corpus}\label{sec:impl-corpus}
+
+The \code{corpus} module implements a target-agnostic seed corpus as described in \cref{sec:mdp-actions}.
+As outlined in~\cref{sec:corpus-level-actions}, the goal is a seed corpus with multiple seeds
+at a time that can be selected, mutated and retained or discarded.
+This is implemented via \code{SeedCorpus}.
+Although it is possible for \code{SeedCorpus} to have an arbitrary fixed length,
+we evaluate our approach with a single seed only.
+In addition to the currently active seeds, the \code{SeedCorpus} also stores the union coverage
+of all seeds seen so far.
+This means even seeds that have been discarded before will have their coverage included in
+the union.
+While this might seem wrong at first, this approach is important to guarantee that
+the marginal coverage contains a proper novelty signal, and that the learner is not
+just re-deriving already tested seeds.
+
+What the agent practically controls is therefore the position and value of the mutation,
+as well as the retain-or-discard decision.
+Since actions are represented as categorical variables, a single seed of length $n=16$
+has an associated action space of size $2\times 16\times 256=8192$ which is too large
+for \gls{mcts} with a few hundred rollout iterations.
+We therefore split a single environment step artifically into two steps, where the
+action of the first step decides on whether to retain or discard the previous seed as well
+as on the mutation position, while the second step decides on the value of the mutation.
+The emulator is only run every second step, while the first step returns an empty
+observation and plain reward of 0.
+This makes the action space size additive and yields a final size of $\max(2\times 16,256)=256$.
+For the first step that only has $2\times 16=32$ distinct actions, we reduce the 256 categories
+modulo 32.
+An episode is fixed at 64 mutations, which equals 128 MDP steps and 64 guest
+executions under this model.
+The reward is implemented as described in~\cref{sec:mdp-rewards} and derived from the
+collected \code{Coverage}.
+
+\subsection{Targets}\label{sec:impl-targets}
+
+Targets are implemented as \code{case}s in \code{mogi\_sysroots}.
+Building these targets is done via Dockerfiles and integrated into the default
+\code{Cargo} build process.
+Each target is wrapped inside an \code{Environment} that implements the interface
+to convert EfficientZero actions to inputs for MOGI and to convert information collected by
+MOGI to observations for EfficientZero.
+
+The \code{Environment} also describes how MOGI is set up and what hooks are registered.
+Each program is run once until it yields and then a snapshot is created.
+An environment reset can then be implemented as a simple snapshot restore.
+
+\subsubsection{Input-level action execution}
+
+The execution loop for the input-level action model as introduced in~\cref{sec:input-level-actions}
+consists of pushing a single input, usually a byte, into the input stream of the PUT
+and then waking it up via MOGI.
+The environment is only reset on episode end, i.e., whenever an error condition is
+encountered or the step limit of the episode is exceeded.
+A single execution step is illustrated in~\cref{lst:mugiwara-step}.
+
+\begin{rust}[caption={One guest execution in the input-action setting},label={lst:mugiwara-step}]
+fn execute(&mut self, action: Action) -> (Vec<f32>, bool) {
+    push_stdin(&self.setup.emulator, &[action.input]);
+    self.block_hit_tracker.borrow_mut().reset();
+
+    let reason = wake_and_run(&mut self.setup.emulator);
+
+    let counts = self.block_hit_tracker.borrow().to_float_vec();
+    (counts, reason == ExitReason::Stopped)
+}
+\end{rust}
+
+\subsubsection{Corpus-level action execution}
+
+During each step, the PUT is re-executed with a given seed.
+This is done by resetting the environment and block hit trackers, pushing the
+seed data, waking and running the PUT, and collecting any observations and is
+illustrated in~\cref{lst:mugiwara-execution}.
+
+\begin{rust}[caption={One guest execution in the corpus-action setting},label={lst:mugiwara-execution}]
+fn execute(&mut self, seed: &Seed) -> Coverage {
+    restore_snapshot(&mut self.setup.emulator);
+    self.block_hit_tracker.borrow_mut().reset();
+    push_stdin(&self.setup.emulator, seed);
+
+    wake_and_run(&mut self.setup.emulator);
+
+    let counts = self.block_hit_tracker.borrow().to_float_vec();
+    Coverage::from_counts(&counts)
+}
+\end{rust}
+
+\subsection{Probes}\label{sec:impl-probes}
+
+A probe in this context is a set of hooks (~\cref{hooks} that collect different
+kinds of information during execution.
+Adding a diagnostic is therefore a matter of attaching a new probe at startup.
+
+Probes are usually backed by a persistent storage, in our case an SQLite database, and contain
+names as well as DDLs of the tables they write into, encoded as SQL statements for creating
+said tables.
+The actual SQLite connection is owned by a background thread which batches multiple
+records into transactions and handles shared counters like \code{env\_steps} and \code{train\_batches}
+that are included in all tables.
+\Cref{tab:impl-probes} lists the probes and what each is for.
+
+\begin{table}[htbp]
+  \centering
+  \caption[The diagnostic probes]{%
+    The diagnostic probes together with the hooks they use and the purpose they serve.
+  }
+  \label{tab:impl-probes}
+  \footnotesize
+  \begin{tabularx}{\textwidth}{@{}llX@{}}
+    \toprule
+    Probe & Hook & Purpose \\
+    \midrule
+    \code{LossProbe}
+      & \code{on\_finished\_training\_batch}
+      & the five loss terms of one gradient step \\
+    \code{ReturnProbe}
+      & \code{on\_finished\_trajectory}
+      & return and length of every episode \\
+    \code{ActionRateProbe}
+      & \code{on\_finished\_trajectory}
+      & share of plays landing in a named action set, pooled over the steps where
+        that set has a meaning \\
+    \code{SeedProbe}
+      & \code{on\_finished\_trajectory}
+      & the inputs a run produced, recovered from the stored observations \\
+    \addlinespace
+    \code{CollapseProbe}
+      & \code{on\_finished\_trajectory}
+      & action played and visit-count entropy per episode-step position --- the
+        policy-collapse matrix \\
+    \code{ActionIntrospectProbe}
+      & \code{on\_finished\_trajectory}
+      & the trie of action prefixes self-play actually walked, and how often \\
+    \code{PolicyImprovementProbe}
+      & \code{on\_search\_roots}
+      & divergence of the root visit distribution from the policy prior --- whether
+        search improves on the prior or echoes it \\
+    \code{ModelIntrospectProbe}
+      & \code{on\_finished\_training\_iteration}
+      & value, value prefix and prior of every action along a fixed latent rollout,
+        per iteration \\
+    \addlinespace
+    \code{BufferStateProbe}
+      & \code{on\_finished\_data\_iteration}
+      & replay-buffer occupancy, priority distribution and reward content \\
+    \code{SampledBatchProbe}
+      & \code{on\_sampled\_batch}
+      & what \gls{per} selected: rewarded steps, padding, degeneracy \\
+    \code{ReanalyzedBatchProbe}
+      & \code{on\_reanalyzed\_batch}
+      & the policy and value targets and the priority updates the next gradient step
+        sees \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Three more probes can be installed to dump the episodes as well as pre- and post-reanalyze batches.
+They are disabled by default since they produce lots of data in a short amount of time and slow down fuzzing.
+To save space in case these probes are required, observations are deduplicated
+through a content-addressed store.
+There are also two additional tables being written directly from the environment:
+the coverage a run has reached, as well as the best execution of each episode.
+
+\subsection{Campaigns}\label{sec:impl-campaigns}
+
+An \code{Evaluation} is the full description of a single run.
+It describes which target is fuzzed, which seed to use, and which settings to apply.
+A campaign is an ordered queue of evaluations and is drained by a loop while allowing
+multiple evaluations to run in parallel, if enough resources are available.
+
+In general, we limit the runs not on wall-clock time, but on the number of data
+collection and training iterations.
+This makes more sense for our use case since running multiple evaluations in parallel
+distorts how long each evaluation was able to run.
+Using an iteration bound instead of a wall-clock time bound also allows comparison
+across different hardware.
+
+Parallel execution of evaluations is constrained by the hardware, usually the memory.
+This can either be an insufficient amount of RAM to hold multiple replay buffers with
+the desired capacity, or an insufficient amount of VRAM to store all Tensors at once.
+Actual GPU compute is also a bottleneck, but only slows down parallel runs and does
+not cause them to be killed.

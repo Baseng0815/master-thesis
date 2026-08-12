@@ -10,6 +10,10 @@
 %     -factor constraint C5 (\cref{sec:mdp-constraints}) and letting the policy
 %     generalize across action factors instead of treating joint actions as unrelated
 %     categories (\cref{sec:corpus-action-space}).
+%   - A corpus of more than one seed: every run keeps a single seed
+%     (\cref{sec:impl-corpus}), which makes selection and eviction degenerate. Raising
+%     the corpus size needs per-slot observation rows for both heads to rank slots with,
+%     and those rows must be slot-identity-preserving.
 %   - Variable-length inputs: a fixed observation window over a variable-length seed
 %     decouples "the network needs fixed dimensions" from "seeds must be fixed
 %     length", and re-enables insertion and deletion operators.

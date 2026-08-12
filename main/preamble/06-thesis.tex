@@ -23,6 +23,57 @@
 \usetikzlibrary{arrows.meta,automata}
 \tikzset{terminal/.style={double,double distance=1.2pt}}
 
+% ----- Result plots ---------------------------------------------------------
+% The figures under figures/generated/ are written by scripts/evaluate.py out of
+% the campaign databases and read their numbers from figures/data/*.csv. They
+% need two pgfplots libraries the template does not load: fillbetween, for the
+% quantile bands every distribution is drawn as, and colormaps for the named
+% maps the collapse heatmaps use.
+\usepgfplotslibrary{fillbetween}
+\usepgfplotslibrary{colormaps}
+
+% The generated figures set only what distinguishes them from one another;
+% what they share lives here, so restyling the results does not mean
+% regenerating them. Note the axis lines: the template's default is `center',
+% which runs the axes through the origin. That is right for a function plot and
+% wrong for a measurement read against a non-zero baseline, which is what every
+% result plot in this thesis is.
+% The label anchors need setting explicitly. `axis lines=center' installs label
+% styles that park the labels at the far ends of the axes, which is where they
+% belong when the axes cross at the origin; because the template sets that
+% globally, the styles survive a per-axis switch to `axis lines=left' and the
+% labels end up hanging off the corners of the plot. Re-centring them on the
+% tick label band is what `axis lines=left' would have done on its own.
+%
+% The `rotate=90' on the ordinate label is load-bearing, not decoration: an
+% unrotated label is as wide as its text, pgfplots does not count that width
+% against the axis `width', and three panels of it overflow the text block.
+% `scale only axis' (set by the template) makes `width' the width of the plot
+% area alone, so labels, tick labels and colour bars stick out beyond it and a
+% picture sized to its container overflows. Turning it off for these figures
+% makes `width' the width of the whole picture, which is what a generated
+% figure sized in \linewidth needs in order to fit its column.
+\pgfplotsset{
+  thesis result plot/.style={%
+    axis lines=left,%
+    axis on top=false,%
+    scale only axis=false,%
+    tick align=outside,%
+    grid=major,%
+    grid style={KITblack15,very thin},%
+    legend cell align=left,%
+    xlabel style={at={(ticklabel cs:0.5)},anchor=near ticklabel},%
+    ylabel style={at={(ticklabel cs:0.5)},rotate=90,anchor=near ticklabel}},%
+  thesis matrix plot/.style={%
+    axis lines=left,%
+    scale only axis=false,%
+    tick align=outside,%
+    enlargelimits=false,%
+    axis on top,%
+    xlabel style={at={(ticklabel cs:0.5)},anchor=near ticklabel},%
+    ylabel style={at={(ticklabel cs:0.5)},rotate=90,anchor=near ticklabel}},%
+}
+
 % ----- Tables ---------------------------------------------------------------
 % tabularx also arrives via the template's ltxtable; loading it by name states
 % the dependency rather than relying on that.
