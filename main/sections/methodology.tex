@@ -7,8 +7,8 @@ We first show that the input-action targets can be successfully learned.
 This serves as a correctness test for our EfficientZero implementation.
 Since we will mainly focus on corpus-level actions, we will not do a parameter study,
 but instead stop once the target was successfully learned.
-For the corpus-level action targets, we will do a detailed ablation study on the cjson target.
-We then use its parameters to test two additional targets, libxml2 as well as picohttpparser.
+For the corpus-level action targets, we will do a detailed ablation study on the cJSON target (\cref{sec:target-cjson}).
+We then use its parameters to test two additional targets, libxml2, as well as picohttpparser.
 
 Experiment results are extracted using hooks (see~\cref{hooks}), either
 during training for metrics like losses, or after training and during
@@ -39,14 +39,9 @@ the root Dirichlet noise of \cref{eq:ez-dirichlet}, both its concentration $\xi$
 $\rho$ it is mixed into the priors with, since we found fuzzing with large action spaces to require
 more exploration.
 The default EfficientZero parameters we adopt can be found in \cref{tab:app-ez-params}.
-The remaining differences to the reference configuration are consequences of the scale of our
-targets rather than of tuning: our observations are flat coverage vectors instead of stacked Atari
-frames, and our rewards live on a much smaller scale (\cref{sec:mdp-rewards}).
-\Cref{sec:methodology-hyperparameters} justifies each of them.
 
-% TODO: The run configuration that \cref{chap:implementation} deliberately left out:
-% hardware, backend, software versions, what a single run costs in wall-clock, and
-% how campaigns are launched and terminated. Enough for someone else to repeat it.
+Parameter configuration is only done for the corpus-level action target cJSON.
+Its result is then used for the two other corpus-level action targets.
 
 \section{Metrics}\label{sec:methodology-metrics}
 

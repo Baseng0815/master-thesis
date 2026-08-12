@@ -60,18 +60,5 @@ and three belonging to the corpus action model.
   \end{tabularx}
 \end{table}
 
-\section{Input Actions}\label{sec:targets-input-actions}
-
-Since the main goal is evaluating applications of \gls{rl} to \gls{cgf}, the input
-action model targets serve mainly as baseline checks for the correctness of our
-EfficientZero learner.
-We include two targets \emph{high-and-low} poses a pure bandit-like problem to the learner,
-while \emph{sequence} requires the learner to solve a full POMDP problem.
-
-\input{sections/targets/high-and-low}
-\input{sections/targets/sequence}
-
-\section{Corpus Actions}\label{sec:targets-corpus-actions}
-\input{sections/targets/cjson}
-\input{sections/targets/libxml2}
-\input{sections/targets/picohttpparser}
+\input{sections/targets/input-actions}
+\input{sections/targets/corpus-actions}

@@ -1,0 +1,193 @@
+%!TEX root = ../../thesis.tex
+
+\section{Corpus Actions}\label{sec:targets-corpus-actions}
+
+The corpus action model targets are three C parsers, each driven by a persistent
+harness parsing a fixed-size seed input in a loop (\cref{sec:corpus-level-actions}).
+\emph{cJSON} is run first as an ablation to determine a suitable set of parameters.
+\emph{libxml2} and \emph{picohttpparser} then use this configuration for their own campaigns.
+Every coverage number in this section is a block hit score as introduced
+in~\cref{sec:impl-coverage}, , i.e., summed hit-count levels over the 4096
+buckets rather than raw block hit counts.
+
+\subsection{cJSON}\label{sec:target-cjson}
+
+cJSON 1.7.19 is a single-file recursive-descent JSON parser written in C.
+It is the target of our detailed ablation study.
+We provide a harness around the \code{cJSON\_ParseWithLength} function, which takes
+a buffer and a length and tries to parse the buffer content as JSON.
+The harness is shown in~\cref{lst:target-cjson}.
+It continuously reads a single 16-byte seed input from standard in and then
+tries to parse it.
+A single episode then consists of a fixed number of executions of the loop, terminated
+by the environment outside the harness.
+Afterwards, the state of the emulator is reset and a new episode started.
+
+\begin{ccode}[float=htbp,
+  caption={[The cJSON harness]%
+    The persistent cJSON harness.
+    \code{read\_record} reads a full 16-byte seed and then calls the cJSON parser.},
+  label={lst:target-cjson}]
+#define INPUT_LENGTH 16
+
+int main(void) {
+    char buf[INPUT_LENGTH];
+
+    for (;;) {
+        if (read_record(buf) != 0)
+            break;
+
+        cJSON *root = cJSON_ParseWithLength(buf, INPUT_LENGTH);
+        cJSON_Delete(root);
+    }
+
+    return 0;
+}
+\end{ccode}
+
+In contrast to other targets, we include a detailed ablation study with various parameters.
+The different parameter arms are listed in~\cref{tab:cjson-arms}.
+
+\begin{table}[htbp]
+  \centering
+  \caption[cJSON ablation arms]{%
+    The ablation arms of the cJSON study.
+    Every arm runs under four different seeds for 200 learner iterations.
+  }
+  \label{tab:cjson-arms}
+  \footnotesize
+  \begin{tabularx}{\textwidth}{@{}ll>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+    \toprule
+    Arm & Factor & Baseline & Variation \\
+    \midrule
+    \code{NOCOV}
+      & coverage bitmaps & two 4096-wide maps & zeroed maps \\
+    \code{NOSEED}
+      & seed bytes & the 32 seed-byte floats & zeroed seed \\
+    \code{EDGE}
+      & coverage granularity & block hits & edge hits \\
+    \code{W0}
+      & depth-record weight & 1.0 & 0.0, marginal only \\
+      \code{T15}/\code{T25}
+      & visit-count temperature $T$ & $1 \to 0.5 \to 0.25$
+      & constant 1.5/2.5 \\
+    \code{ALPHA004}/\code{ALPHA010}
+      & root Dirichlet concentration $\xi$ & 1.0 & 0.04/0.10 \\
+      \code{SIMS50}/\code{SIMS100}
+      & simulations per search & 200 & 50/100 \\
+    \code{REUSE4}
+      & training iterations per learner iteration & 16 (reuse of $2\times$)
+      & 32 (reuse of $4\times$) \\
+    \code{SMALL}
+      & hidden width & latent width 128 & latent width 64 \\
+    \code{CTRL-RAND}
+      & action selection & \gls{mcts}
+      & uniform random \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The corpus holds a single 16-byte seed, an episode is 64 mutations and therefore 128 MDP
+steps, and 128 environments run in parallel (\cref{sec:impl-corpus}).
+Every reset rebuilds the corpus from uniformly random bytes, so the agent is never handed
+a valid document and has to reach JSON syntax on its own.
+The reward is the coverage an execution adds to the corpus union plus a bonus per level by
+which it out-parses the deepest execution of its episode (\cref{sec:mdp-rewards}).
+
+Coverage carries signal on this target before any agent is involved.
+A valid document walks into the value, string and number branches of the parser, while a
+malformed record bails out early, and because a coverage level is the log2 bucket of a
+block's hit count, nesting one level deeper is itself new coverage rather than the same
+blocks again.
+That is the axis the campaign's best inputs climb (\cref{tab:best-inputs}).
+
+The ablation is what earns cJSON the space.
+Fifteen arms of four seeds each run on it: a frozen baseline, thirteen arms exactly one
+factor away from it, and a structure-blind random mutator as the control
+(\cref{tab:campaign-inventory}).
+The factors are what the agent sees (\code{NOCOV} zeroes the coverage bitmaps in the
+observation, \code{NOSEED} the seed bytes), what coverage means (\code{EDGE} counts
+transitions instead of blocks), what the agent is paid (\code{W0} disables the depth
+term), how it explores (\code{T15} and \code{T25} replace the annealed self-play
+temperature by a constant, \code{ALPHA004} and \code{ALPHA010} change the root Dirichlet
+concentration $\xi$), how wide it searches (\code{SIMS50} and \code{SIMS100} against the
+baseline's 200 simulations), how much it trains per sample (\code{REUSE4} doubles the gradient
+steps per iteration and so quadruples the sample reuse) and how much capacity it has
+(\code{SMALL}, \code{MEDIUM}).
+\Cref{tab:cjson-arms} gives each arm's setting against the baseline's.
+Since the baseline is a cell of every factor, a difference is attributable to a single
+setting.
+A sixteenth arm, eightfold sample reuse, was queued but never run.
+
+Runs are bounded by learner iterations rather than by wall-clock time
+(\cref{sec:impl-campaigns}).
+At 128 episode completions per iteration and 64 executions per episode, each of the 200
+iterations costs the same 8192 guest executions whatever an arm's temperature, search
+width or gradient-step count, so every arm fuzzes with the same budget of about
+\num{1.6e6} executions and the campaign compares fuzzing rather than compute.
+It is also why the wall-clock column of \cref{tab:campaign-inventory} spans
+\SIrange{7.6}{30.6}{\hour} per run.
+One caveat travels with the campaign: the six arms decided after it launched ran on a
+later revision than the first nine, so a difference between the two waves is not
+attributable to the factor alone (\cref{sec:discussion-threats}).
+
+\subsection{libxml2}\label{sec:target-libxml2}
+
+libxml2 is the XML stack most of the Linux userspace parses with, and the largest target
+in this thesis.
+We configure it down to what an in-memory parse reaches: \code{ICONV}, \code{MODULES} and
+\code{CATALOG} are disabled because each needs a runtime dependency the guest rootfs does
+not stage, threads are disabled so that a run stays deterministic, and \code{HTML},
+\code{XPATH} and the validation stack above it are unreachable from \code{xmlReadMemory}
+anyway.
+
+The harness has the shape of \cref{lst:target-cjson} with three differences.
+It hands a 32-byte record to \code{xmlReadMemory}, it calls \code{xmlInitParser} before the
+snapshot point so that the one-time parser setup is not paid inside the first measured
+parse, and it parses with \code{XML\_PARSE\_RECOVER}.
+Recovery mode is a harness decision that shapes the reward landscape: the parser walks past
+a well-formedness error and returns the partial tree, so a mutation that breaks
+well-formedness still yields coverage that differs from its neighbours instead of
+collapsing every malformed record onto one early-abort path.
+This makes the target more gradient-rich than a strict parser would be, and any conclusion
+drawn from it inherits that.
+
+Scale is the reason it is included.
+An environment accumulates a median block score of 5281 against cJSON's 645 to 958, and
+the best single execution of the campaign scores 4382 on 32 bytes
+(\cref{tab:campaign-inventory,tab:best-inputs}).
+The coverage map holds 4096 buckets, so a target of this size collides and coverage here
+is a lossier measurement than on cJSON (\cref{sec:discussion-threats}).
+
+Its role is transfer.
+Nothing about this target informs the configuration: it runs for 400 iterations at the
+constant temperature $T=2$ and the action-space-scaled concentration $\xi=0.039$ that the
+cJSON ablation selects.
+Two caveats travel with it.
+There is no random control arm, so its curves are read against the untrained structural
+byte rate of \cref{fig:structural-rate} instead, and its four seeds ran on two revisions,
+which makes them four samples of two configurations rather than of one.
+
+\subsection{picohttpparser}\label{sec:target-picohttpparser}
+
+picohttpparser is a header-only HTTP/1.x request parser, and the smallest target in this
+thesis.
+Its harness feeds a 32-byte record to \code{phr\_parse\_request} per execution.
+A request parse is a single bounded pass over the request line and the header block with
+no recursion and no nesting, where cJSON and libxml2 are recursive-descent parsers whose
+coverage grows with the structural depth of the input.
+
+The consequence is a property of the target rather than a result.
+An environment's union saturates at a block score of 81, with 80 to 81 across the four
+seeds, and the best single execution scores 68
+(\cref{tab:campaign-inventory,tab:best-inputs}).
+The depth term of the reward presumes that parsing further means executing further, so
+half the reward signal is structurally unavailable here.
+A target whose entire reachable surface is that small is one on which a planner and a
+random mutator have to converge, because there is nothing left to plan towards.
+We include it to bound the claim the other two targets support: coverage-driven mutation
+planning pays where coverage is a function of input structure and buys nothing where it is
+not (\cref{sec:discussion-disadvantages}).
+
+Its role is transfer, under the configuration and the two caveats
+of~\cref{sec:target-libxml2}.

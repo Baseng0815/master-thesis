@@ -554,7 +554,8 @@ In addition, protocol state is not observable and must be inferred, for instance
 which introduces additional uncertainty.
 Further, most execution engines only support execution from the beginning, while
 a stateful fuzzer would ideally have access to an arbitrary snapshot-and-reset
-mechanism\todo{cref to mogi}.
+mechanism.
+We provide such an execution environment in~\cref{sec:impl-platform}.
 
 AFLNet~\cite{pham_aflnet_2020} is the canonical greybox fuzzer for network protocols
 and works by combining traditional CGF with automatic state inference to guide exploration

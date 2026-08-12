@@ -1,0 +1,92 @@
+%!TEX root = ../../thesis.tex
+
+\section{Input Actions}\label{sec:targets-input-actions}
+
+Since the main goal is evaluating applications of \gls{rl} to \gls{cgf}, the input
+action model targets serve mainly as baseline checks for the correctness of our
+EfficientZero learner.
+We include two targets \emph{high-and-low} poses a pure bandit-like problem to the learner,
+while \emph{sequence} requires the learner to solve a full POMDP problem.
+
+\subsection{High-and-low}\label{sec:target-high-and-low}
+
+This target represents a bandit-like example.
+It reads a single byte and depending on the value, executes either a high-coverage
+or low-coverage region.
+Importantly, it does not change program state.
+This makes it easy to learn since EfficientZero must only internalize what inputs
+produce what coverage.
+\Cref{lst:target-high-and-low} shows an excerpt of the program.
+
+\begin{ccode}[float=htbp,
+  caption={[The \emph{high-and-low} target]%
+    An excerpt of the \emph{high-and-low} target.
+    Each byte selects either a high- or low-coverage function without changing
+    program state. The loop is bounded at 128 iterations.},
+  label={lst:target-high-and-low}]
+int main(void) {
+    char c;
+    int i = 0;
+
+    while ((c = getchar()) != EOF && i++ < 128) {
+        if (c >= 'A' && c <= 'D') {
+            high_coverage();
+        } else {
+            low_coverage();
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+\end{ccode}
+
+As described in~\cref{sec:input-level-actions}, we model actions as actual program input
+and a single environment step then consists of supplying a single byte to the PUT.
+The action space therefore has a size of $\lvert\mathcal{A}\rvert=256$.
+Observations are the new block hit counts compared to the previous input.
+
+\subsection{Sequence}\label{sec:target-sequence}
+
+The \emph{sequence} target is an artificial 16-byte passcode check implemented in C.
+It contains a fixed password and reads input byte-by-byte from standard in.
+Whenever a wrong byte was provided, the program terminates.
+Otherwise, at the end, we execute a high-coverage function.
+The main goal is for the learner to successively learn the passcode by following
+the non-terminating, coverage-increasing path of choosing correct bytes.
+\Cref{lst:target-sequence} shows a program excerpt.
+
+\begin{ccode}[float=htbp,
+  caption={[The \emph{sequence} target]%
+    An excerpt of the \emph{sequence} target.
+    The read loop exits on the first byte that deviates from the passcode,
+    while a correct passcode pays a high reward.},
+  label={lst:target-sequence}]
+const int PASSCODE_LENGTH = 16;
+const char passcode[16] = "ABCDEFGHIJKLMNOP";
+
+int main(void) {
+    int c;
+    int i = 0;
+
+    while (i < PASSCODE_LENGTH && (c = getchar()) != EOF) {
+        if (c != passcode[i]) {
+            return EXIT_FAILURE;
+        }
+        i++;
+    }
+
+    high_coverage();
+
+    return EXIT_SUCCESS;
+}
+\end{ccode}
+
+The action, reward and observation setting is similar to~\cref{sec:target-high-and-low}, with
+two exceptions.
+First, since we are now in a full POMDP setting instead of just a bandit, we include
+the cumulative block hit counts in the observation to allow the learner to better identify
+the state he is in.
+Second, we restrict the action space to the 26 alphabetic characters \code{[A-Z]}
+to reduce the branching factor without invalidating any results.
+Past actions are not included in the observations, so the learner has to base its
+decision only on the actual blocks that were executed.
