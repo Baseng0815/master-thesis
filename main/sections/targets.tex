@@ -2,14 +2,76 @@
 
 \chapter{Evaluation Targets}\label{chap:targets}
 
-\input{sections/targets/overview}
+We evaluate our fuzzer against six targets, three belonging to the input action model
+and three belonging to the corpus action model.
+\Cref{tab:targets} summarizes them.
 
-\section{Diagnostic Microbenchmarks}\label{sec:targets-microbenchmarks}
-\input{sections/targets/bandit}
-\input{sections/targets/contextual-bandit}
+\begin{table}[htbp]
+  \centering
+  \caption[Evaluation targets]{%
+    The six evaluation targets.
+    Three belong to the input-action model and serve as checks whether a single
+    coverage choice, a long action sequence and a protocol state machine can each be
+    successfully learned.
+    The remaining three belong to the corpus-action model and are used to evaluate
+    the effectiveness of iteratively mutating a single seed.
+  }
+  \label{tab:targets}
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}Xrr>{\raggedright\arraybackslash}Xl@{}}
+    \toprule
+    Target & Program under test & $|\mathcal{A}|$ & Steps & Reward & Role \\
+    \midrule
+    \multicolumn{6}{@{}l}{\emph{Input actions (\cref{sec:targets-input-actions})}} \\
+    high-and-low
+      & branch on a single byte
+      & 256 & 128
+      & per-step coverage
+      & sanity \\
+    sequence
+      & 16-character passcode
+      & 26 & 16
+      & living, terminal coverage
+      & sanity \\
+    open62541
+      & \code{tutorial\_server\_firststeps}
+      & 15 & 12
+      & living, terminal bonus
+      & statefulness \\
+    \addlinespace
+    \multicolumn{6}{@{}l}{\emph{Corpus actions (\cref{sec:targets-corpus-actions})}} \\
+    cJSON
+      & \code{cJSON\_ParseWithLength}
+      & 256 & 128
+      & marginal coverage, total coverage
+      & ablation \\
+    libxml2
+      & \code{xmlReadMemory}
+      & 256 & 128
+      & marginal coverage, total coverage
+      & transfer \\
+    picohttpparser
+      & \code{phr\_parse\_request}
+      & 256 & 128
+      & marginal coverage, total coverage
+      & transfer \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{Input Actions}\label{sec:targets-input-actions}
+
+Since the main goal is evaluating applications of \gls{rl} to \gls{cgf}, the input
+action model targets serve mainly as baseline checks for the correctness of our
+EfficientZero learner.
+We include two targets \emph{high-and-low} poses a pure bandit-like problem to the learner,
+while \emph{sequence} requires the learner to solve a full POMDP problem.
+
+\input{sections/targets/high-and-low}
 \input{sections/targets/sequence}
-\input{sections/targets/branches}
 
-\section{Realistic Targets}\label{sec:targets-realistic}
+\section{Corpus Actions}\label{sec:targets-corpus-actions}
 \input{sections/targets/cjson}
-\input{sections/targets/open62541}
+\input{sections/targets/libxml2}
+\input{sections/targets/picohttpparser}

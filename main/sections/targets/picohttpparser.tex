@@ -1,0 +1,58 @@
+%!TEX root = ../../thesis.tex
+
+\subsection{picohttpparser}\label{sec:target-picohttpparser}
+
+% GROUND TRUTH (figures/generated/tab-campaign-inventory.tex, tab-best-inputs.tex,
+% scripts/eval_campaigns.py):
+%   - campaign PICOHTTPPARSER-400: one arm, 4 seeds, 400 iterations, T = 2,
+%     xi = 0.03906, median 81 blocks (80--81), ~41 h per run.
+%   - best input: `AAk  .,T.%...?...4.b.  .lr......`, 68 blocks (32 bytes).
+%   - structural byte rate series: `http_bytes`.
+%
+% OPEN ITEM: unlike the other three, this target's harness is NOT in the local
+% companion checkout --- there is no picohttpparser case under
+% ~/fuzzyemu/sysroots/resources/cases/ and no picohttpparser example in ~/mugiwara.
+% The campaign ran on \texttt{48ea3b4}/\texttt{c779bcc}, which the local mugiwara
+% repository does not contain. Read the harness off those revisions before writing
+% this section; every sentence below marked (?) is an inference from the campaign
+% data, not something verified against code.
+
+% TODO: The smallest target in the thesis, and the one whose result is negative or
+% near-negative --- open with that honestly rather than burying it. 81 reachable
+% blocks, a seed range of 80--81 across four seeds, and a best input of 68 blocks: the
+% target saturates almost immediately and leaves nearly nothing for an agent to
+% discover. Report it anyway, and report it as the informative failure it is.
+%
+% Describe the target: a header-only HTTP/1.x request parser (?), a single bounded
+% pass over the request line and headers with no recursion and no nesting. Contrast
+% with \cref{sec:target-cjson} and \cref{sec:target-libxml2} in ONE clause, not a
+% paragraph: both of those are recursive-descent parsers whose coverage grows with
+% structural depth, and this one has no depth to grow into.
+%
+% Why that matters for the thesis rather than being a bad choice of target --- this is
+% the section's real content, so give it the space:
+%   - the reward's depth term (\cref{sec:target-cjson}) presumes a target where
+%     parsing further means executing further. A flat parser has no such axis, so half
+%     the reward signal is structurally unavailable here,
+%   - a target whose entire reachable surface fits in ~81 blocks is one where a random
+%     mutator and a planner must converge, because there is nothing to plan towards.
+%     If the agent does NOT beat the control here, that is the expected outcome and
+%     should be stated as a prediction the target was chosen to check, not excused
+%     after the fact,
+%   - it bounds the claim made from cJSON and libxml2: coverage-driven mutation
+%     planning pays off where coverage is a function of input structure, and buys
+%     nothing where it is not. That is the transferable design lesson
+%     (\cref{sec:discussion-disadvantages}), and this target is the evidence for it.
+%
+% Its role: transfer, like \cref{sec:target-libxml2}. The configuration is inherited
+% from the cJSON ablation unchanged and nothing about this target informed it.
+%
+% OPEN ITEMS beyond the harness:
+%   - the four seeds ran on TWO revisions (\texttt{48ea3b4} and \texttt{c779bcc}), so
+%     they are not repeated samples of one configuration (\cref{tab:campaign-inventory}).
+%   - no random control arm exists for this target either; say what
+%     \cref{fig:coverage-executions} is read against and why that is weaker here than
+%     on the other two, given how narrow the 80--81 range is.
+%   - decide whether ~41 h per run for a target with 81 reachable blocks is worth
+%     reporting as a cost observation in \cref{sec:methodology-currencies}. It is the
+%     starkest executions-versus-wall-clock datapoint in the campaign.

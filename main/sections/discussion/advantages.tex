@@ -12,14 +12,19 @@
 %   - sample efficiency where an execution is expensive: under emulation, spending
 %     compute per decision to spend fewer executions is the right trade, and that is
 %     the regime this domain sits in (\cref{sec:rl-sample-efficiency}),
-%   - amortized planning: the operator sweep buys many executions per decision, so
-%     the planner's cost is paid down rather than paid per input
-%     (\cref{sec:results-corpus-actions}),
-%   - protocol-state navigation without a hand-written state machine
-%     (\cref{sec:target-open62541}).
+%   - grammar discovery from raw coverage: the agent converges on deeply nested
+%     structure on both recursive-descent parsers without being told the grammar
+%     (\cref{sec:results-corpus-actions}, \cref{tab:best-inputs}),
+%   - a planned mutation is worth more than a random one at the same execution budget,
+%     which is what the iteration-bounded control arm isolates
+%     (\cref{sec:target-cjson}).
 %
 % State the scope of each claim: which target, which baseline, which currency. An
-% advantage demonstrated only where the reward was designed
-% (\cref{sec:targets-microbenchmarks}) is a claim about credit assignment, not about
-% fuzzing --- keep that distinction visible here rather than only in
-% \cref{sec:discussion-threats}.
+% advantage demonstrated only on \cref{sec:target-sequence}, where the reward was
+% designed, is a claim about credit assignment, not about fuzzing --- keep that
+% distinction visible here rather than only in \cref{sec:discussion-threats}.
+%
+% The bound belongs here as much as the advantage: picohttpparser
+% (\cref{sec:target-picohttpparser}) is the target where the approach buys nothing,
+% and naming the property it lacks --- coverage that grows with input structure --- is
+% what turns three coverage curves into a design lesson.

@@ -12,6 +12,12 @@
 %      before any learning claim is made. Report that separation as a precondition.
 %   2. Learning result on cjson (\cref{sec:target-cjson}): coverage against
 %      executions, against the coverage-guided climber and the random floor.
+%   2b. Transfer to libxml2 (\cref{sec:target-libxml2}) and picohttpparser
+%      (\cref{sec:target-picohttpparser}) under the configuration the cjson ablation
+%      selected, run without further tuning. Report the two together and read them as
+%      one result: the approach gains where coverage grows with input structure and
+%      gains nothing where it does not. Neither has a random control arm, so say what
+%      each curve is read against (\cref{fig:structural-rate}).
 %   3. Are the *learned* decisions doing work? This is the novel claim of the
 %      formulation, so isolate each factor:
 %      - selection: does the agent's slot choice beat uniform slot choice?

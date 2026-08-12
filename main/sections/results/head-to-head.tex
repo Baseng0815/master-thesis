@@ -1,33 +1,49 @@
 %!TEX root = ../../thesis.tex
 
-\section{Head-to-Head: cJSON under Both Formulations}\label{sec:results-head-to-head}
+\section{Comparing the Two Formulations}\label{sec:results-head-to-head}
 
-% Answers RQ2 (\cref{sec:introduction-rqs}). This is the section the two-formulation
-% structure of the thesis exists to make possible --- give it the prominence that
-% implies.
+% Answers RQ2 (\cref{sec:introduction-rqs}).
 
-% TODO: The comparison: the same target (\cref{sec:target-cjson}), the same emulator,
-% the same coverage instrumentation, the same learner and the same frozen
-% configuration, differing only in the action space --- one input symbol per step
-% (\cref{sec:input-actions}) versus one corpus operation per step
-% (\cref{sec:corpus-actions}).
+% TODO: THE PREMISE OF THIS SECTION CHANGED --- rewrite it, do not patch it. It was
+% written for a controlled comparison in which cJSON ran under both formulations. No
+% target was run under both: the input formulation carries sequence alone
+% (\cref{sec:targets-input-actions}) and the corpus formulation carries the three
+% parsers (\cref{sec:targets-corpus-actions}). There is therefore NO paired
+% experiment, and the section must not read as though there were.
 %
-% Name the confounds honestly and up front, because they bound what the comparison can
-% conclude:
-%   - the harness differs (per-byte re-parse versus persistent-mode whole-record
-%     read), so an execution does not mean the same thing on both sides,
-%   - the action alphabets differ (a restricted JSON-relevant set versus byte-level
-%     operators), so one formulation carries more grammar knowledge than the other,
-%   - one agent decision costs one execution on one side and up to a sweep width on
-%     the other.
-% Report on both currencies of \cref{sec:methodology-currencies} for exactly this
-% reason, and state which comparisons survive each confound.
+% Decide which of these the section is, and commit:
+%   (a) a design comparison rather than a measurement, arguing from the structure of
+%       the two MDPs (\cref{chap:fuzzing-mdp}) and from what each one achieved on its
+%       own targets, with the absence of a paired experiment stated as the first
+%       sentence, or
+%   (b) drop the section and answer RQ2 from \cref{chap:fuzzing-mdp} plus
+%       \cref{sec:discussion-advantages}, which is the honest option if there is
+%       nothing to report beyond the design argument.
+% Do not leave a section whose title promises a comparison the data cannot support.
 %
-% What to compare: coverage against executions and against wall-clock, sample
-% efficiency to a fixed coverage level, stability across runs, and the shape
-% of what each one finds --- deep-but-narrow versus broad-but-shallow is a more
-% informative difference than a single coverage number.
+% If (a), the argument that IS available without a paired run:
+%   - what each formulation can express. The input formulation builds one input left
+%     to right and can represent sequential dependence between symbols directly; the
+%     corpus formulation edits a persistent seed and can represent the classic fuzzer
+%     loop but not a symbol's position in a protocol,
+%   - what each costs per agent decision, and what an execution means in each. Under
+%     the corpus formulation the place phase costs no execution at all, so half the
+%     MDP steps are free; under the input formulation every step executes,
+%   - why the input formulation was not carried to a real target
+%     (\cref{sec:methodology-setup}). This is the decision RQ2 actually turned on, and
+%     it should be argued rather than merely reported: an input-level environment must
+%     re-drive the program per symbol, which for a batch parser means re-parsing a
+%     growing prefix and paying for a harness that has no counterpart in how the
+%     program is really used. The corpus formulation's persistent-mode loop, by
+%     contrast, presumes exactly what a parser already is --- one self-contained
+%     record per execution.
 %
-% Close with the design lesson, which is the transferable contribution: what the
-% action-space choice costs and buys, and which formulation to reach for under which
-% conditions. That conclusion feeds \cref{sec:discussion-advantages,sec:discussion-disadvantages}.
+% Whatever the section becomes, name the confound that would have bounded the paired
+% comparison anyway, because it is why the paired experiment is not merely missing but
+% hard: the harness differs by necessity between the formulations, so an execution does
+% not mean the same thing on both sides, and any coverage number compared across them
+% compares two experimental apparatuses as much as two action spaces.
+%
+% Close with the transferable design lesson --- what the action-space choice costs and
+% buys, and which formulation to reach for under which conditions. That conclusion
+% feeds \cref{sec:discussion-advantages,sec:discussion-disadvantages}.

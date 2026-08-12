@@ -12,17 +12,17 @@
 % from problem structure rather than tuned, and \cref{sec:methodology-hyperparameters}
 % refers back to it.
 %
-% Episode: fixed input length for cjson, early death on a wrong byte for
-% sequence/branches, session activation for open62541. Reset is the snapshot restore
-% of \cref{sec:platform-snapshots}. Give the horizon actually used and say why it is
+% Episode: an episode ends on early death at a wrong character or on the fixed input
+% length, whichever comes first. Reset is the snapshot restore of
+% \cref{sec:platform-snapshots}. Give the horizon actually used and say why it is
 % bounded tightly (long or absorbing horizons feed the dead-branch failure mode of
 % \cref{sec:failure-dead-branch}).
 %
-% Interaction: rewards on these targets are hand-shaped, and that is exactly what
-% \cref{sec:discussion-threats} identifies as the strongest objection to the result.
-% Say so here rather than letting the reader discover it --- and separate the targets
-% whose reward was designed (sequence, branches) from those where it is raw coverage
-% (cjson, open62541).
+% Interaction: the reward under this formulation is hand-shaped, and that is exactly
+% what \cref{sec:discussion-threats} identifies as the strongest objection to the
+% result. Say so here rather than letting the reader discover it, and draw the
+% contrast with the corpus formulation (\cref{sec:corpus-reward}), where the reward is
+% raw coverage and was not designed around the agent.
 %
 % Reward hacking belongs here as a designed-against failure, not an anecdote: the
 % teardown burst made dying profitable, which is why the novelty bonus is gated on

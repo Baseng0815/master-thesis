@@ -2,28 +2,19 @@
 
 \subsection{Sequence}\label{sec:target-sequence}
 
-% The main diagnostic target: a combination lock of dependent bytes, learned from
-% block coverage. Implemented by the sequence example, with the full probe suite of
-% \cref{sec:impl-probes} attached.
+The \emph{sequence} target is an artificial 16-byte passcode check implemented in C.
+It contains a fixed password and reads input byte-by-byte from standard in.
+Whenever a wrong byte was provided, the program terminates.
+Otherwise, at the end, we execute a high-coverage function.
+The main goal is for the learner to successively learn the passcode by following
+the non-terminating, coverage-increasing path of choosing correct bytes.
 
-% TODO: Describe the target and, above all, why it is the instrument the rest of the
-% evaluation is calibrated on:
-%   - each byte must be correct before the next becomes reachable, so the search
-%     space is exponential and random search is hopeless,
-%   - episode-step position equals prefix depth equals task progress, so "how far did
-%     it get" is *directly observable* --- this legibility is the entire point of the
-%     target and is what makes the mechanism figures of \cref{sec:results-input-actions}
-%     possible (per-depth value ranking of the correct byte, policy prior versus
-%     depth, first-passage time per depth),
-%   - reward: a living reward per surviving step, so the return counts prefix depth,
-%     plus a terminal coverage payout.
-%
-% State the claim it tests: model-based RL can solve a deep, sequentially dependent
-% credit-assignment problem that a coverage-guided random or greedy fuzzer cannot.
-%
-% Then state the limitation immediately, in this section rather than only in
-% \cref{sec:discussion-threats}: the reward is hand-engineered, including a coverage
-% sled that makes the final byte learnable at all. A result here is evidence about
-% credit assignment, not about fuzzing. Note also the role it plays in
-% \cref{sec:methodology-hyperparameters}: the configuration is developed on this
-% target and then frozen before being transferred unchanged to the others.
+The action, reward and observation setting is similar to~\cref{sec:target-high-and-low}, with
+one exception.
+Since we are now in a full POMDP setting instead of just a bandit, we include
+the cumulative block hit counts in the observation to allow the learner to better identify
+the state he is in.
+Past actions are not included in the observations, so the learner has to base its
+decision only on the actual blocks that were executed.
+
+\todo{add C program snippet that illustrates target}

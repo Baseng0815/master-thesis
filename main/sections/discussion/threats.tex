@@ -6,14 +6,18 @@
 % its strongest form first, then the mitigation, then the residual risk. A threat that
 % is not mitigated is stated anyway.
 %
-% 1. External validity --- the diagnostic targets are not fuzzing. Their rewards are
-%    hand-engineered, including shaping that makes the final step learnable at all.
-%    A result there does not transfer to targets whose reward cannot be shaped.
-%    Mitigation: real-world weight rests only on the raw-coverage targets
-%    (\cref{sec:targets-realistic}), and the configuration is frozen and transferred
-%    unchanged (\cref{sec:methodology-hyperparameters}). Residual risk: if the method
-%    works only where the reward was designed, that is the headline, and it should be
-%    said in the abstract.
+% 1. External validity --- sequence is not fuzzing. Its reward is hand-engineered,
+%    including the coverage sled that makes the final byte learnable at all, and a
+%    result under a designed reward does not transfer to a target whose reward cannot
+%    be shaped.
+%    Mitigation: real-world weight rests only on the raw-coverage corpus targets
+%    (\cref{sec:targets-corpus-actions}), and the configuration is frozen on cJSON and
+%    transferred unchanged to libxml2 and picohttpparser
+%    (\cref{sec:methodology-hyperparameters}). Residual risk: if the method works only
+%    where the reward was designed, that is the headline, and it should be said in the
+%    abstract. Note also what the transfer actually was --- $T = 2$ was not one of the
+%    ablated temperatures and the transfer runs were twice as long --- so "unchanged"
+%    is an overstatement unless it is qualified here.
 %
 % 2. Baseline fairness and compute currency. Uniform random against a deep lock is a
 %    strawman; the honest comparison is the coverage-guided climber, and the honest

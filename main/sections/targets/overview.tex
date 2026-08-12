@@ -2,35 +2,76 @@
 
 \section{Overview}\label{sec:targets-overview}
 
-% TODO: Open with the ladder and the table; the per-target sections then only add
-% detail. The table is the most useful single page of this chapter --- one row per
-% target, with columns:
+
+
+% GROUND TRUTH (verified against ~/mugiwara and ~/fuzzyemu/sysroots/resources/cases;
+% numbers from figures/generated/tab-campaign-inventory.tex):
 %
-%   target | capability isolated | formulation | reward source | role in evaluation
+%   target          | formulation | guest                       | blocks reached | role
+%   sequence        | input       | 16-byte passcode case       | ~256 sled      | correctness test
+%   cJSON           | corpus      | cJSON_ParseWithLength       | 542--958       | ablation subject
+%   libxml2         | corpus      | xmlReadMemory (RECOVER)     | 5085--5419     | transfer
+%   picohttpparser  | corpus      | phr_parse_request           | 80--81         | transfer
 %
-% Suggested contents (adjust to what is actually run):
-%   high_and_low | single-step coverage choice        | input  | coverage    | sanity
-%   <contextual> | state-dependent optimal action     | input  | coverage    | sanity
-%   sequence     | deep credit assignment (16 deps)   | input  | designed    | diagnostic
-%   branches     | planning past rewarding decoys     | input  | designed    | diagnostic
-%   cjson        | grammar structure, raw coverage    | both   | raw         | headline
-%   open62541    | protocol state, real stack         | input  | raw         | headline
+% The three corpus campaigns run four seeds each: cJSON carries 15 arms at 200 learner
+% iterations, libxml2 and picohttpparser one arm each at 400
+% (\cref{tab:campaign-inventory}). sequence does not appear in that table.
+
+% TODO: Open with the split the chapter is organized around and with the table; the
+% per-target sections then only add detail. The table is the most useful single page
+% of this chapter --- one row per target, with columns:
 %
-% Then state the distinction the chapter is organized around, because it is the
-% thesis's main defence against the "you designed the reward you then climbed"
-% objection (\cref{sec:discussion-threats}):
+%   target | formulation | guest / harness | action alphabet | reward | role in evaluation
 %
-%   - \cref{sec:targets-microbenchmarks}: rewards are hand-shaped and progress is
-%     directly legible. These are instruments for diagnosis, not evidence about
-%     fuzzing.
-%   - \cref{sec:targets-realistic}: the reward is raw coverage and was not designed
-%     around the agent. Real-world claims rest on these, and only on these.
+% State the asymmetry immediately rather than letting the reader discover it from the
+% section count: one target under the input formulation, three under the corpus
+% formulation, and the ablation on one of the latter. That is not an oversight but the
+% thesis's scope decision (\cref{sec:methodology-setup}) --- the input formulation is
+% carried far enough to establish that the learner works, and the corpus formulation
+% is where the fuzzing claims are made. Say it here, once, and do not re-litigate it
+% in each section.
 %
-% Say which formulation each target is evaluated under, and note that cjson is
-% deliberately run under both --- that is what makes
-% \cref{sec:results-head-to-head} a controlled comparison.
+%   - \cref{sec:targets-input-actions}: sequence is a designed target with a
+%     hand-shaped reward. It answers "does our EfficientZero implementation learn a
+%     deep, sequentially dependent task at all", and nothing about fuzzing
+%     (\cref{sec:target-sequence}). Naming that limit here is the thesis's first
+%     defence against the "you designed the reward you then climbed" objection
+%     (\cref{sec:discussion-threats}).
+%   - \cref{sec:targets-corpus-actions}: three real parsers whose reward is raw
+%     coverage and was not designed around the agent. Every fuzzing claim rests on
+%     these, and only on these.
 %
-% Also list what every target shares, so it is not repeated six times: the coverage
-% instrumentation of \cref{sec:platform-coverage}, the snapshot reset of
-% \cref{sec:platform-snapshots}, and the frozen configuration of
-% \cref{sec:methodology-hyperparameters}.
+% Then order the three corpus targets by the thing that actually distinguishes them,
+% which is scale rather than designed difficulty: picohttpparser reaches ~81 blocks,
+% cJSON ~900, libxml2 ~5300 under the same 16-bucket-per-block instrumentation. That
+% two-order-of-magnitude spread is the chapter's real ladder, and it is what makes the
+% coverage-granularity limit of \cref{sec:platform-coverage} visible in
+% \cref{sec:discussion-threats}.
+%
+% Say what the three corpus targets SHARE, so it is not repeated three times:
+%   - the same corpus MDP (\cref{sec:corpus-actions}) --- place/value phase pair,
+%     |A| = 256, 64 mutations = 128 steps per episode, 128 parallel environments,
+%   - the same persistent-mode harness shape: boot once, snapshot the guest parked on
+%     a fixed-size record read, feed one record per execution, never exit. Written for
+%     this thesis, one C file per target under mogi_sysroots.
+%   - the same reward (MarginalWithDepth): coverage levels this execution reached that
+%     the corpus union had not, plus a weighted bonus per level it out-parses the
+%     episode's deepest execution by,
+%   - the same coverage instrumentation (\cref{sec:platform-coverage}) and snapshot
+%     reset (\cref{sec:platform-snapshots}).
+% What differs between them is the guest, the record length and the reward scale ---
+% list exactly that, and nothing else.
+%
+% Close with the role each plays, because it is what makes \cref{chap:results}
+% readable: cJSON is the target the configuration is developed on
+% (\cref{sec:results-ablations}, 15 arms x 4 seeds), and libxml2 and picohttpparser
+% test whether the configuration the ablation selected transfers to a target it was
+% never tuned on. State the frozen configuration once here --- constant temperature
+% $T = 2$ and root Dirichlet $\xi = 10/|A| = 0.039$ --- and point at
+% \cref{tab:campaign-inventory} for the full inventory.
+%
+% OPEN ITEM: the transferred temperature $T = 2$ is not one of the two constant
+% temperatures the cJSON ablation actually ran (1.5 and 2.5), and the two transfer
+% campaigns ran 400 iterations against cJSON's 200. Both are honest deviations from
+% "the same configuration, unchanged" and must be stated here rather than left for a
+% reader to find in \cref{tab:campaign-inventory}.

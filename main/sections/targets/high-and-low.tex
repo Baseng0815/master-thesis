@@ -1,0 +1,17 @@
+\subsection{High-and-low}\label{sec:target-high-and-low}
+
+This target represents a bandit-like example.
+It reads a single byte and depending on the value, executes either a high-coverage
+or low-coverage region.
+Importantly, it does not change program state.
+This makes it easy to learn since EfficientZero must only internalize what inputs
+produce what coverage.
+
+As described in~\cref{sec:input-level-actions}, we model actions as actual program input
+and a single environment step then consists of supplying a single byte to the PUT.
+For simplicity, actions are restricted to characters in the range \code{[A-Z]}.
+The reward payout is the number of unique blocks hit, so the actual block hit
+count plays no role in this setting.
+The observation contains the new block hit counts since the last input.
+
+\todo{add C program snippet that illustrates target}

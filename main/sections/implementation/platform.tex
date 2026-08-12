@@ -35,6 +35,9 @@ emulation framework provided by \code{mogi\_emulator} is done via the \code{Emul
 trait.
 It allows access to system components as well as execution of the guest binary with
 a given run limit.
+The program will \emph{yield} control back to the user whenever it encounters a stopping
+error condition like a missing syscall implementation or an unsupported instruction and
+whenever it requires an external input to continue.
 To allow a user to quickly get an emulator up and running without having to manually
 create every component, we provide \code{mogi\_quickstart}, a wrapper that creates
 a full emulator instance with sensible defaults.
