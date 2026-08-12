@@ -47,10 +47,12 @@ is $2^8=256$.
 The block hit score is the sum of the levels over all buckets.
 For a maximum number of 4096 blocks, the highest possible reward is therefore
 $4096\times 8=32768$.
-Two \code{Coverage}s can be merged by taking the per-bucket maximum.
-This operation is useful when accumulating coverage information generated
-successively by a sequence of mutated seeds, like in the corpus-level action
-targets.
+The stateful reward $r_\beta$ introduced in~\cref{sec:mdp-rewards} can be
+implemented by deriving the reward from the cumulative block hit tracker in the
+way described above, while the stateless reward $r_\alpha$ can be implemented
+by the \emph{marginal coverage} i.e., the difference between the coverage of
+the previous execution and the current execution.
+Accumulation of coverage happens by taking the per-bucket maximum.
 
 \subsection{The Seed Corpus}\label{sec:impl-corpus}
 
