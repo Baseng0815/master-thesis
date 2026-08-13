@@ -279,7 +279,7 @@ The value head is trained toward an $n$-step return of actual rewards,
 bootstrapped with the root value that \gls{mcts} produced:\index{training target!value}
 
 \begin{equation}\label{eq:ez-value-target}
-  z_t=\sum_{i=0}^{n-1}\gamma^{i}\,u_{t+i+1}+\gamma^{n}\,v^{\text{MCTS}}_{t+n},
+  z_t=\sum_{i=0}^{n-1}\gamma^{i}\,r_{t+i+1}+\gamma^{n}\,v^{\text{MCTS}}_{t+n},
 \end{equation}
 
 where $u$ are the actual rewards observed by the data workers and
@@ -361,7 +361,7 @@ EfficientZero sidesteps this issue by directly predicting the \emph{value prefix
 a sum of discounted rewards over a given sequence of actions:
 
 \begin{equation}\label{eq:ez-value-prefix}
-  x_{t,k}=\sum_{i=0}^{k-1}\gamma^{i}\,u_{t+i+1}.
+  x_{t,k}=\sum_{i=0}^{k-1}\gamma^{i}\,r_{t+i+1}.
 \end{equation}
 
 When the search requires an individual edge reward, it is recovered as the
@@ -377,5 +377,5 @@ a trajectory that is $\tau$ updates old uses a shortened horizon $l\leq n$,
 causing less stale data to enter the bootstrapped value target.
 
 \begin{equation}\label{eq:ez-corrected-target}
-  z_t=\sum_{i=0}^{l-1}\gamma^{i}\,u_{t+i+1}+\gamma^{l}\,v^{\text{MCTS}}_{t+l}.
+  z_t=\sum_{i=0}^{l-1}\gamma^{i}\,r_{t+i+1}+\gamma^{l}\,v^{\text{MCTS}}_{t+l}.
 \end{equation}
