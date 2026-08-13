@@ -42,44 +42,44 @@ OSS-Fuzz has helped to fix over \num{13000} security vulnerabilities and \num{50
 We will introduce some general definitions that mainly follow \textcite{manes_art_2019}.
 
 \begin{enumerate}
-  \item \emph{Program Under Test (PUT):}
+  \item \emph{Program Under Test (PUT):}\index{program under test}
     The program under test is an executable software artifact like a command-line utility
     or library together with an interface that consumes input. In our case it denotes
     a binary executed through the MOGI emulator (\cref{chap:implementation}).
 
-  \item \emph{Security Policy:}
+  \item \emph{Security Policy:}\index{security policy}
     A security policy defines which observable behaviors of the PUT are acceptable.
     Each execution either satisfies or violates a given security policy. A common
     security policy deems all executions that result in crashes like segmentation
     faults to be violations.
 
-  \item \emph{Bug Oracle:}
+  \item \emph{Bug Oracle:}\index{bug oracle}
     A bug oracle is a program that decides whether a given input to the PUT violates
     a given security policy. A widely used bug oracle might deem an execution
     a violation if the PUT crashes or hangs.
 
-  \item \emph{Fuzzing:}
+  \item \emph{Fuzzing:}\index{fuzzing}
     Fuzzing denotes the process of feeding the PUT with inputs sampled from an input space.
     This input space may include expected and valid inputs as well as invalid, unexpected
     ones, which are sampled in the hope of violating a given security policy.
 
-  \item \emph{Fuzz Testing:}
+  \item \emph{Fuzz Testing:}\index{fuzz testing}
     Fuzz testing denotes the software testing technique that makes use of fuzzing.
 
-  \item \emph{Fuzzer:}
+  \item \emph{Fuzzer:}\index{fuzzer}
     A fuzzer is a program that performs fuzz testing on a PUT.
 
-  \item \emph{Fuzz Campaign:}
+  \item \emph{Fuzz Campaign:}\index{fuzz campaign}
     A fuzz campaign is a specific execution of a fuzzer on a PUT with a specific
     security policy. Its goal is to find bugs in the PUT that violate this policy.
 
-  \item \emph{Test Case:}
+  \item \emph{Test Case:}\index{test case}
     A test case denotes a concrete input that the fuzzer feeds to the PUT during
     a fuzzing campaign. The resulting execution is then judged by the bug oracle
     and the test case is recorded if the bug oracle deems it a violation of the
     security policy.
 
-  \item \emph{Seed:}
+  \item \emph{Seed:}\index{seed}
     A seed is a commonly well-structured input to the PUT that the fuzzer uses
     as the basis for deriving new test cases by modifying it.
 
@@ -89,7 +89,7 @@ We will introduce some general definitions that mainly follow \textcite{manes_ar
     exhibit new behavior. We write \emph{initial corpus} for the collection the
     campaign starts from, which is usually supplied by the user.\index{corpus!initial}
 
-  \item \emph{Fuzz Configuration:}
+  \item \emph{Fuzz Configuration:}\index{fuzz configuration}
     A fuzz configuration comprises the parameter values that control the fuzzing
     algorithm.
 \end{enumerate}
@@ -103,7 +103,7 @@ information from the execution of the PUT available to them~\cite{liang_fuzzing_
 
 \subsubsection{Black-box fuzzing}
 
-Black-box fuzzers have no access to the internal behavior of a PUT during execution.
+Black-box fuzzers\index{fuzzing!black-box} have no access to the internal behavior of a PUT during execution.
 They can only make use of the bug oracle to decide whether a given input violates
 the security policy or not.
 The core advantage of this approach is the wide applicability since no instrumentation
@@ -114,7 +114,7 @@ This makes it difficult for fuzzers to generate high-coverage inputs.
 
 \subsubsection{White-box fuzzing}
 
-In contrast to pure black-box fuzzers, white-box fuzzers have full access to
+In contrast to pure black-box fuzzers, white-box fuzzers\index{fuzzing!white-box} have full access to
 the internal logic of the PUT as well as usually any original source code or
 documentation which can greatly aid the fuzzing process.
 In practice, this allows an approach known as \emph{symbolic execution}\index{symbolic execution}: instead
@@ -122,22 +122,22 @@ of relying on actual execution traces, a white-box fuzzer can gather symbolic
 constraints at branching points and use constraint solving to find inputs that exercise
 a specific path.
 While this makes it easy to find test cases of interest in theory, this approach scales poorly
-to large PUTs due to the path explosion problem.
+to large PUTs due to the path explosion problem.\index{path explosion}
 A popular white-box fuzzer is SAGE~\cite{godefroid_sage_2012}.
 
 \subsubsection{Greybox fuzzing}
 
 Since full information is often not available but observing certain parts
 of the internal behavior of the PUT might still be possible, \textit{greybox}
-fuzzing represents an important middle ground between the previous two extremes.
+fuzzing\index{fuzzing!greybox} represents an important middle ground between the previous two extremes.
 By making use of runtime instrumentation information like code coverage, the fuzzer can
 better judge the behavior of the PUT for a given input and direct its exploration efforts towards promising regions.
 
 \subsubsection{Hybrid approaches}
 
 There also exists a variety of hybrid approaches combining different fuzzing methodologies.
-A prominent example is \emph{Driller}, which alternates pure greybox fuzzing with
-\emph{concolic} execution (a combination of concrete and symbolic execution) to overcome hard branch
+A prominent example is \emph{Driller}\index{Driller}, which alternates pure greybox fuzzing with
+\emph{concolic} execution\index{concolic execution} (a combination of concrete and symbolic execution) to overcome hard branch
 conditions like CRC checks that have historically presented a major obstacle for fuzzers~\cite{stephens_driller_2016}.
 
 \subsection{Input generation}\label{sec:fuzzing-input-generation}
@@ -150,7 +150,7 @@ Input generation can be categorized into either generation- or mutation-based.
 
 \subsubsection{Generation-based input generation}
 
-Generation-based input generation makes use of a model of the input expected by
+Generation-based input generation\index{input generation!generation-based} makes use of a model of the input expected by
 the PUT, often represented through a grammar specification.
 These models can be \emph{predefined}, \emph{inferred}, or \emph{encoder-based}.
 
@@ -172,31 +172,31 @@ In general, a PUT contains checks that reject invalid inputs, making it
 difficult to reach code paths that violate a given security policy~\cite{manes_art_2019}.
 This motivates the use of an \emph{initial corpus}, a set of well-structured inputs
 to the PUT like valid network packets or files.
-The seeds inside the corpus are then successively mutated with the goal
+The seeds inside the corpus are then successively mutated\index{input generation!mutation-based} with the goal
 of triggering abnormal behavior.
 Mutation operators can be divided into four sets:
 
 \begin{enumerate}
   \item \emph{Bit-flipping:}
-    Bit flipping is governed by a \emph{mutation ratio}, the fraction of bits to
+    Bit flipping\index{mutation!bit-flipping} is governed by a \emph{mutation ratio}\index{mutation ratio}, the fraction of bits to
     flip per execution.
 
   \item \emph{Arithmetic mutation:}
-    Arithmetic mutation reinterprets byte sequences as integers and perturbs them.
+    Arithmetic mutation\index{mutation!arithmetic} reinterprets byte sequences as integers and perturbs them.
 
   \item \emph{Block-based mutation:}
-    Block-based mutation inserts, deletes, replaces, permutes or resizes byte blocks,
+    Block-based mutation\index{mutation!block-based} inserts, deletes, replaces, permutes or resizes byte blocks,
     and splices blocks across seeds.
 
   \item \emph{Dictionary-based mutation:}
-    Dictionary-based mutation substitutes values with other values of high semantic
+    Dictionary-based mutation\index{mutation!dictionary-based} substitutes values with other values of high semantic
     weight. These usually include numbers like $0$ or $-1$, or format strings for
     string substitution.
 \end{enumerate}
 
 \subsection{Coverage-Guided Greybox Fuzzing}\label{sec:fuzzing-cgf}
 
-This work will focus primarily on coverage-guided greybox fuzzing, \emph{CGF} for short.
+This work will focus primarily on coverage-guided greybox fuzzing,\index{fuzzing!coverage-guided greybox} \emph{CGF} for short.
 It is the dominant design among modern general-purpose fuzzers, popularized by
 AFL~\cite{zalewski2014afl} and its successor AFL++~\cite{fioraldi_afl_nodate}.
 We will outline the general approach following \textcite{bohme_coverage-based_2016}.
@@ -280,7 +280,7 @@ after they are mutated.
 This coverage is not known to the fuzzer unless it executes the PUT with a mutated seed,
 that is, only once the budget has already been spent on that seed.
 Scheduling is therefore subject to what \textcite{manes_art_2019} call the
-\emph{exploration versus exploitation conflict}: time can be spent either on gathering more
+\emph{exploration versus exploitation conflict}\index{exploration--exploitation tradeoff}: time can be spent either on gathering more
 accurate information about the available choices in order to inform later decisions
 (\emph{explore}), or on fuzzing the ones currently believed to lead to the most favorable
 outcome (\emph{exploit}).
@@ -300,7 +300,7 @@ analysis~\cite{gan_greyone_nodate} and through neural surrogates that
 approximate the
 byte-to-coverage map and follow its gradient~\cite{she_neuzz_2019,she_mtfuzz_2020}.
 
-Another problem lies in the existence of magic bytes or checksums, which are hard to satisfy by random mutations.
+Another problem lies in the existence of magic bytes\index{magic bytes} or checksums\index{checksum}, which are hard to satisfy by random mutations.
 For example, a four-byte comparison is satisfied with probability $2^{-32}$ per attempt, making it very unlikely for a single mutation to overcome it.
 This motivates a hybrid approach that makes use of concolic execution~\cite{stephens_driller_2016}, combining mutations with highly targeted constraint solving.
 
@@ -318,13 +318,13 @@ Coverage information is recorded by a lightweight program instrumentation framew
 The instrumentation can collect coverage at different granularities:
 
 \begin{enumerate}
-  \item \emph{Basic-block coverage}
+  \item \emph{Basic-block coverage}\index{coverage!basic-block}
     records which blocks were executed.
 
   \item \emph{Edge} or \emph{branch coverage}\index{coverage!edge} records which transitions $(A,B)$
     between blocks were taken and is strictly more informative.
 
-  \item \emph{Path coverage} tracks a sequence of block hits $(A,B,\dots)$.
+  \item \emph{Path coverage}\index{coverage!path} tracks a sequence of block hits $(A,B,\dots)$.
     While this contains the most useful information, execution paths
     can grow large and therefore slow down the fuzzer.
 \end{enumerate}
@@ -332,9 +332,9 @@ The instrumentation can collect coverage at different granularities:
 Orthogonal to the granularity is the question of how precisely a hit is counted.
 One bit per coverage element is the cheapest option, but it cannot distinguish how often a block was hit.
 Most coverage-guided fuzzers therefore keep a hit count per element and quantize it into
-buckets of logarithmically scaling size, so that a change in hit counts registers as new behavior once a new bucket is entered.
+buckets of logarithmically scaling size,\index{coverage!hit count bucket} so that a change in hit counts registers as new behavior once a new bucket is entered.
 
-To decide whether a new coverage map is interesting, the fuzzer compares it against
+To decide whether a new coverage map\index{coverage map} is interesting, the fuzzer compares it against
 a global coverage map accumulated over the whole campaign.
 $t^\prime$ is then deemed interesting if it contains coverage not yet contained in the global coverage map.
 In practice, coverage maps are implemented as fixed-size arrays indexed by a hash of the coverage element.
@@ -346,20 +346,20 @@ Collecting coverage information requires instrumenting the PUT.
 There are several categories of instrumentation in use~\cite{fioraldi_afl_nodate}:
 
 \begin{enumerate}
-  \item \emph{Compile-time instrumentation}
+  \item \emph{Compile-time instrumentation}\index{instrumentation!compile-time}
     inserts instrumentation during compile time of the PUT.
     This is very cheap and flexible, but requires access to the source code.
 
-  \item \emph{Static binary rewriting}
+  \item \emph{Static binary rewriting}\index{instrumentation!static binary rewriting}
     injects the same code into an existing binary and removes the requirement
     of having source code available, but requires correct disassembly.
 
-  \item \emph{Dynamic binary translation}
+  \item \emph{Dynamic binary translation}\index{instrumentation!dynamic binary translation}
     instead instruments blocks as they are translated at runtime, which works
     on arbitrary binaries and across architectures but costs a considerable
     slowdown relative to native execution~\cite{bellard_qemu_2005}.
 
-  \item \emph{Hardware tracing}
+  \item \emph{Hardware tracing}\index{instrumentation!hardware tracing}
     makes use of built-in hardware instrumentation and tracing mechanisms like
     Intel Processor Trace~\cite{zhang_ptfuzz_2018}. This entails low overhead,
     but restricts instrumentation to host-native binaries.
@@ -368,7 +368,7 @@ There are several categories of instrumentation in use~\cite{fioraldi_afl_nodate
 \subsection{AFL++}\label{sec:fuzzing-aflpp}
 
 The most prominent instantiation of \cref{alg:cgf} is
-AFL++~\cite{fioraldi_afl_nodate}, a reengineered fork of Zalewski's
+AFL++\index{AFL++}~\cite{fioraldi_afl_nodate}, a reengineered fork of Zalewski's
 now-unmaintained American Fuzzy Lop.
 AFL++ consolidates various forks and research prototypes and exposes them as switchable modules~\cite{fioraldi_afl_nodate}.
 It is therefore a customary baseline in the fuzzing literature.
@@ -376,9 +376,9 @@ It is therefore a customary baseline in the fuzzing literature.
 \subsubsection{Test case selection}\label{sec:afl-test-case-selection}
 
 AFL++ keeps the retained test cases in a queue and assigns to each a performance score.
-It maintains a small set of \emph{favored} entries that together account for every edge observed so far.
+It maintains a small set of \emph{favored} entries\index{favored entry} that together account for every edge observed so far.
 \textsc{ChooseNext} is biased towards the favored entries~\cite{fioraldi_afl_nodate}.
-A complementary \emph{trimming} stage shrinks each queue entry to improve execution speed while preserving coverage.
+A complementary \emph{trimming} stage\index{trimming} shrinks each queue entry to improve execution speed while preserving coverage.
 
 For implementing \textsc{AssignEnergy}, AFL++ makes use of various power schedules
 based on AFLFast~\cite{bohme_coverage-based_2016}. These include \texttt{fast},
@@ -399,21 +399,21 @@ It is noteworthy that a fixed schedule is picked before the start of the campaig
 \subsubsection{Test case mutation}
 
 AFL's mutation pipeline has two stages~\cite{fioraldi_afl_nodate}.
-The \emph{deterministic} stage applies single, reproducible mutations systematically along
+The \emph{deterministic} stage\index{mutation!deterministic stage} applies single, reproducible mutations systematically along
 the input.
 These include bit flips, arithmetic increments and decrements over byte, word and
 double-word windows, and substitution of a fixed set of \enquote{interesting} constants
 such as $0$, $-1$ or \texttt{INT\_MAX}.
-The \emph{havoc} stage stacks a random number of randomly chosen mutations, and unlike the
+The \emph{havoc} stage\index{mutation!havoc} stacks a random number of randomly chosen mutations, and unlike the
 deterministic stage may also change the length of the input by inserting or deleting
 byte blocks.
-A later \emph{splicing} stage merges two queue entries and applies havoc to the result.
+A later \emph{splicing} stage\index{mutation!splicing} merges two queue entries and applies havoc to the result.
 
 AFL++ adds three further mutations that can be combined with the above.
-\emph{MOpt}~\cite{lyu_mopt_nodate} replaces the fixed operator distribution with one
+\emph{MOpt}\index{MOpt}~\cite{lyu_mopt_nodate} replaces the fixed operator distribution with one
 searched online by particle swarm optimization.
-Another module consists of RedQueen's \emph{input-to-state} (I2S)
-correspondence~\cite{aschermann_redqueen_2019}.
+Another module consists of RedQueen's\index{RedQueen} \emph{input-to-state} (I2S)
+correspondence\index{input-to-state correspondence}~\cite{aschermann_redqueen_2019}.
 By tracking values used in comparison operations and comparing them with input values,
 it can locate the responsible bytes in the input and substitute the value the comparison is testing for.
 This allows overcoming magic byte and checksum checks without the overhead of concolic execution.
@@ -438,7 +438,7 @@ The bitmap has a fixed size, so distinct edges may alias onto the same byte due 
 
 The counter wraps around at 256 edge hits.
 AFL++ offers a \emph{saturated counters} mode in which entries are frozen at 255,
-as well as a \emph{NeverZero} mode in which the carry flag is folded in so that
+as well as a \emph{NeverZero} mode\index{NeverZero} in which the carry flag is folded in so that
 an overflowing counter never reaches zero.
 NeverZero was shown to improve the visibility of hidden edges with a multiple of
 256 hits, and is the default on most instrumentation backends~\cite{fioraldi_afl_nodate}.
@@ -455,10 +455,10 @@ Some AFL++ components are backend-specific: CmpLog, for instance, is available o
 The choice of instrumentation therefore constrains which other components can be used.
 
 Granularity is configurable between block, edge and path level.
-\emph{Context-sensitive} edge coverage XORs a block's identifier with an identifier of the
+\emph{Context-sensitive} edge coverage\index{coverage!context-sensitive} XORs a block's identifier with an identifier of the
 current call context, so that the same edge reached from different callers is counted
 separately, improving edge discrimination and reducing aliasing.
-\emph{Ngram} coverage hashes the destination block together with the $N-1$ preceding blocks
+\emph{Ngram} coverage\index{coverage!ngram} hashes the destination block together with the $N-1$ preceding blocks
 for $N$ between 2 and 16, approximating path coverage.
 \emph{InsTrim} adds instrumentation only to blocks that have been deemed interesting
 by a prior static analysis pass, reducing instrumentation overhead~\cite{hsu2018instrim}.
@@ -525,7 +525,7 @@ CGF models the PUT as a pure function mapping an input to a coverage.
 A new input requires the PUT to be reset to its initial state.
 For stateful PUTs, the coverage depends on the current input as well as the
 history of previous inputs.
-Stateful targets are especially prevalent in IoT applications and present a
+Stateful targets\index{fuzzing!stateful} are especially prevalent in IoT applications and present a
 significant attack surface~\cite{zhang_iot_2014,sadeghi_security_2015}.
 Examples include industrial control systems~\cite{borcherding_bandits_2023},
 network protocols like QUIC~\cite{ang_quic-fuzz_2025} and OPC~UA,
@@ -534,14 +534,14 @@ operating system kernels~\cite{wang_syzvegas_2021}, and web applications~\cite{d
 We distinguish three kinds of state:
 
 \paragraph{Fuzzer state}
-The current fuzzing configuration and corpus.
+The current fuzzing configuration and corpus.\index{state!fuzzer}
 
 \paragraph{Program state}
-The state of the PUT as seen from the execution engine. It is made up
+The state of the PUT as seen from the execution engine.\index{state!program} It is made up
 of memory and register file state.
 
 \paragraph{Protocol state}
-The state inside the protocol as given by a protocol specification. For a PUT initiating
+The state inside the protocol as given by a protocol specification.\index{state!protocol} For a PUT initiating
 a TCP connection, this might include the protocol state after a \texttt{SYN} has been sent.
 
 \subsubsection{Challenges}
@@ -557,7 +557,7 @@ a stateful fuzzer would ideally have access to an arbitrary snapshot-and-reset
 mechanism.
 We provide such an execution environment in~\cref{sec:impl-platform}.
 
-AFLNet~\cite{pham_aflnet_2020} is the canonical greybox fuzzer for network protocols
+AFLNet\index{AFLNet}~\cite{pham_aflnet_2020} is the canonical greybox fuzzer for network protocols\index{fuzzing!protocol}
 and works by combining traditional CGF with automatic state inference to guide exploration
 towards more important code paths.
 Various prior works describe how a protocol state machine can be learned~\cite{dongol_grey-box_2020,marksteiner_learning_2025,giraud_l-scale_2026}.

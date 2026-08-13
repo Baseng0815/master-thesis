@@ -19,7 +19,7 @@ actions and routing observations and environments from MOGI to the learner.
 \subsection{Coverage Instrumentation}\label{sec:impl-coverage}
 
 Coverage is collected by a single block hook that is registered with MOGI.
-The hook receives the block address and passes it to a \code{BlockHitTracker},
+The hook receives the block address and passes it to a \code{BlockHitTracker},\index{block hit tracker}
 which hashes it, folds the hash into one of 4096 buckets and increments that bucket's counter,
 similar to AFL++.
 
@@ -45,7 +45,7 @@ this score and any additional necessary state.
 
 \subsection{The Seed Corpus}\label{sec:impl-corpus}
 
-The \code{corpus} module implements a target-agnostic seed corpus as described in \cref{sec:mdp-actions}.
+The \code{corpus} module implements a target-agnostic seed corpus\index{seed corpus} as described in \cref{sec:mdp-actions}.
 As outlined in~\cref{sec:corpus-level-actions}, the goal is a seed corpus with multiple seeds
 at a time that can be selected, mutated and retained or discarded.
 This is implemented via \code{SeedCorpus}.
@@ -82,7 +82,7 @@ to convert EfficientZero actions to inputs for MOGI and to convert information c
 MOGI to observations for EfficientZero.
 
 The \code{Environment} also describes how MOGI is set up and what hooks are registered.
-Each program is run once until it yields and then a snapshot is created.
+Each program is run once until it yields and then a snapshot is created.\index{snapshot}
 An environment reset can then be implemented as a simple snapshot restore.
 
 \subsubsection{Input-level action execution}
@@ -128,7 +128,7 @@ fn execute(&mut self, seed: &Seed) -> Coverage {
 
 \subsection{Probes}\label{sec:impl-probes}
 
-A probe in this context is a set of hooks (\cref{hooks}) that collect different
+A probe\index{probe} in this context is a set of hooks (\cref{hooks}) that collect different
 kinds of information during execution.
 Adding a diagnostic is therefore a matter of attaching a new probe at startup.
 
@@ -204,9 +204,9 @@ the coverage a run has reached, as well as the best execution of each episode.
 
 \subsection{Campaigns}\label{sec:impl-campaigns}
 
-An \code{Evaluation} is the full description of a single run.
+An \code{Evaluation} is the full description of a single run.\index{fuzz campaign!evaluation}
 It describes which target is fuzzed, which seed to use, and which settings to apply.
-A campaign is an ordered queue of evaluations and is drained by a loop while allowing
+A campaign\index{fuzz campaign} is an ordered queue of evaluations and is drained by a loop while allowing
 multiple evaluations to run in parallel, if enough resources are available.
 
 In general, we limit the runs not on wall-clock time, but on the number of data

@@ -20,7 +20,7 @@ Reconciliation strategies and additional mutation operators are outlined in~\cre
 
 \subsection{Input-level Actions}\label{sec:input-level-actions}
 
-One way to model actions is as actual PUT inputs.
+One way to model actions is as actual PUT inputs.\index{action space!input-level}
 This is a viable approach for PUTs that consume their inputs byte-by-byte.
 The learned policy $\pi$ in this case represents a generative model for inputs
 that conform to the PUT's grammar.
@@ -28,7 +28,7 @@ that conform to the PUT's grammar.
 \subsection{Corpus-level Actions}\label{sec:corpus-level-actions}
 
 An action model that is comparable to traditional \gls{cgf} approaches is that of
-corpus-level actions.
+corpus-level actions.\index{action space!corpus-level}
 In general, we keep track of a seed corpus $\mathcal{S}$ that is evolved during an episode.
 A single action then decides three things: whether to retain the previous seed,
 which seed to select next, and how to mutate the current seed.

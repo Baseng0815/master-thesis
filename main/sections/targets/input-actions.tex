@@ -10,7 +10,7 @@ while \emph{sequence} and \emph{open62541} require the learner to solve a full P
 
 \subsection{High-and-low}\label{sec:target-high-and-low}
 
-This target represents a bandit-like example.
+This target represents a bandit-like example.\index{target!high-and-low}
 It reads a single byte and depending on its value, executes either a high-coverage
 or low-coverage region.
 Importantly, it does not change program state.
@@ -48,7 +48,7 @@ Observations are the marginal block hit counts.
 
 \subsection{Sequence}\label{sec:target-sequence}
 
-The \emph{sequence} target is an artificial 16-byte passcode check implemented in C.
+The \emph{sequence} target is an artificial 16-byte passcode check implemented in C.\index{target!sequence}
 It contains a fixed passcode and reads input byte-by-byte from standard input.
 Whenever a wrong byte is provided, the program terminates.
 Otherwise, at the end, the program executes a high-coverage function.
@@ -93,3 +93,35 @@ Second, we restrict the action space to the 26 alphabetic characters \code{[A-Z]
 to reduce the branching factor.
 Past actions are not included in the observations, so the learner has to base its
 decision only on the actual blocks that were executed.
+
+\subsection{open62541}\label{sec:target-open62541}
+
+open62541 is an open-source OPC~UA implementation, a protocol stack of the stateful kind
+described in~\cref{sec:fuzzing-stateful}.\index{target!open62541}
+The PUT is its \code{tutorial\_server\_firststeps} example server, and the goal is to reach the
+connected state: an activated session on an open secure channel.
+We boot the server until it blocks accepting connections, inject a client connection and let the
+server accept it, and snapshot there, so every episode starts with the server blocked on the first
+read of an established stream.
+
+The target is a protocol-level \emph{sequence} (\cref{sec:target-sequence}): an ordered prefix of
+correct choices keeps the PUT alive, a wrong choice ends the episode, and the observation carries
+the cumulative block hit counts next to those of the current step.
+What differs is that an action is a whole protocol message instead of a byte.
+The 15 actions are the message templates of the target's OPC~UA corpus, of which \code{hel},
+\code{opn}, \code{create\_sess} and \code{activate\_sess} form the connect path, ten further channel
+and session requests are self-loops the server answers without advancing towards a session, and
+\code{clo} closes the channel.
+Each template carries session-coupling fields, the secure channel identifier and the authentication
+token, which the environment rewrites from the server's responses so that the agent learns which
+message to send when rather than how to forge an identifier.
+
+The reward is a flat survival bonus of one for every step the server survives plus ten for the step
+that activates a session.
+Coverage is observed but never paid for.
+The episode ends when the server closes the channel after a rejected message, when a session is
+activated, or at the twelve-step cap.
+Because activating also terminates the episode, loitering on self-loops for the full budget returns
+\num{12} while connecting immediately returns \num{14}, an undiscounted margin of two for the exact
+four-message ordering, and the maximum of \num{22} requires holding the channel open for eleven
+steps and activating on the twelfth.

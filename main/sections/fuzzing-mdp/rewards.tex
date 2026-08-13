@@ -3,7 +3,7 @@
 \section{Rewards}\label{sec:mdp-rewards}
 
 Executing the \gls{put} produces a list of block hit counts from which the reward is built.
-We do not use the hit counts directly, but rather map them to an \gls{afl}-style hit count \emph{level}
+We do not use the hit counts directly, but rather map them to an \gls{afl}-style hit count \emph{level}\index{hit count level}
 
 \begin{equation*}
   \ell(n)=
@@ -13,7 +13,7 @@ We do not use the hit counts directly, but rather map them to an \gls{afl}-style
   \end{cases}
 \end{equation*}
 
-and a \emph{coverage score} is derived from the hit count levels by summing over all buckets
+and a \emph{coverage score}\index{coverage score} is derived from the hit count levels by summing over all buckets
 $\sigma(c)=\sum_i\ell(c_i)$ of an execution $c\in\mathcal{C}$.
 At 4096 buckets and $\ell_{\max}=8$, a single execution scores between 0 and 32768.
 Compressing the raw counts into exponentially spaced buckets makes the coverage score less sensitive
@@ -33,9 +33,9 @@ The high-and-low (\cref{sec:target-high-and-low}) example is awarded the raw sum
 
 In general, rewards for corpus-level actions can either be \emph{memoryless}
 or \emph{marginal}.
-Memoryless rewards depend only on the coverage score of each execution and ignore
+Memoryless rewards\index{reward!memoryless} depend only on the coverage score of each execution and ignore
 any coverage reached by previous seeds.
-In contrast, marginal coverage pays only for the levels that have not been reached before.
+In contrast, marginal coverage\index{reward!marginal} pays only for the levels that have not been reached before.
 \Textcite{bottinger_deep_2018} evaluate both and report that only the memoryless variant
 beats a random baseline, while the variant built on coverage history does not.
 
@@ -57,7 +57,7 @@ We therefore include a depth term that rewards executions with a coverage score
 larger than that of any previous execution.
 
 An episode maintains two running coverage maxima over its executions: the
-\emph{union coverage} and the \emph{depth record}.
+\emph{union coverage}\index{union coverage} and the \emph{depth record}\index{depth record}.
 Each bucket $i$ of the union coverage $u_t$ contains the maximum of the $i$th bucket of all previous
 executions, $u_{t,i}=\max_{k<t}c_{k,i}$, while the depth record $d_t=\max_{k<t}\sigma(c_k)$
 represents the highest coverage score a single execution has produced.

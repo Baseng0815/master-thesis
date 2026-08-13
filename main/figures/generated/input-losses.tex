@@ -15,6 +15,9 @@
       \addplot [KIT line plot B, ]
         table [col sep=comma, x=batches, y=total] {figures/data/loss-sequence.csv};
       \addlegendentry{sequence}
+      \addplot [KIT line plot C, ]
+        table [col sep=comma, x=batches, y=total] {figures/data/loss-open62541.csv};
+      \addlegendentry{open62541}
       \end{axis}
     \end{tikzpicture}
     \caption{total}
@@ -32,6 +35,8 @@
         table [col sep=comma, x=batches, y=value] {figures/data/loss-high-and-low.csv};
       \addplot [KIT line plot B, forget plot]
         table [col sep=comma, x=batches, y=value] {figures/data/loss-sequence.csv};
+      \addplot [KIT line plot C, forget plot]
+        table [col sep=comma, x=batches, y=value] {figures/data/loss-open62541.csv};
       \end{axis}
     \end{tikzpicture}
     \caption{value}
@@ -49,6 +54,8 @@
         table [col sep=comma, x=batches, y=policy] {figures/data/loss-high-and-low.csv};
       \addplot [KIT line plot B, forget plot]
         table [col sep=comma, x=batches, y=policy] {figures/data/loss-sequence.csv};
+      \addplot [KIT line plot C, forget plot]
+        table [col sep=comma, x=batches, y=policy] {figures/data/loss-open62541.csv};
       \end{axis}
     \end{tikzpicture}
     \caption{policy}
@@ -68,6 +75,8 @@
         table [col sep=comma, x=batches, y=value_prefix] {figures/data/loss-high-and-low.csv};
       \addplot [KIT line plot B, forget plot]
         table [col sep=comma, x=batches, y=value_prefix] {figures/data/loss-sequence.csv};
+      \addplot [KIT line plot C, forget plot]
+        table [col sep=comma, x=batches, y=value_prefix] {figures/data/loss-open62541.csv};
       \end{axis}
     \end{tikzpicture}
     \caption{value prefix}
@@ -84,10 +93,12 @@
         table [col sep=comma, x=batches, y=simsiam] {figures/data/loss-high-and-low.csv};
       \addplot [KIT line plot B, forget plot]
         table [col sep=comma, x=batches, y=simsiam] {figures/data/loss-sequence.csv};
+      \addplot [KIT line plot C, forget plot]
+        table [col sep=comma, x=batches, y=simsiam] {figures/data/loss-open62541.csv};
       \end{axis}
     \end{tikzpicture}
     \caption{simsiam}
   \end{subfigure}
-  \caption[Training losses on the input-level targets]{The five EfficientZero training losses on the two input-level targets, against training batches. Logarithmic ordinate on the three supervised losses, which stay positive; linear on the consistency loss, which is a negative cosine similarity, and on the total, which carries the consistency loss with a coefficient of two and therefore turns negative once the supervised terms fall below it. The two targets ran for different numbers of iterations, so their curves end at different batch counts.}
+  \caption[Training losses on the input-level targets]{The five EfficientZero training losses on the three input-level targets, against training batches. Logarithmic ordinate on the three supervised losses, which stay positive; linear on the consistency loss, which is a negative cosine similarity, and on the total, which carries the consistency loss with a coefficient of two and therefore turns negative once the supervised terms fall below it. The targets ran for different numbers of iterations, so their curves end at different batch counts.}
   \label{fig:input-losses}
 \end{figure}

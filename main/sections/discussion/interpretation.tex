@@ -91,7 +91,7 @@ with entropy collapsing to zero.
 One failure mode we often encountered was the agent producing a slight majority
 of action $a_i$, which then found its way into the replay buffer, and under uniform
 sampling, $a_i$ then is overtrained and all other actions $a_{j\neq i}$ are undertrained,
-further nudging the policy towards $a_i$, causing a policy collapse onto $a_i$ in the end.
+further nudging the policy towards $a_i$, causing a policy collapse\index{policy collapse} onto $a_i$ in the end.
 This is mostly solved by prioritized experience replay.
 In our case, it is not just an improvement to learning speed, but prevents the
 agent policy from collapsing by promoting training on actions that are underrepresented

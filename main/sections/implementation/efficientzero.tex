@@ -3,7 +3,7 @@
 \section{An EfficientZero Implementation in Rust}\label{sec:impl-efficientzero}
 
 In addition to the fuzzer, we provide an EfficientZero implementation in Rust
-using the Burn deep learning framework.
+using the Burn deep learning framework.\index{Burn}
 The implementation provides a flexible interface which enables training agents for
 various environments as well as a unified way to specify parameters and a dashboard
 to monitor training progress.
@@ -12,7 +12,7 @@ to monitor training progress.
 
 EfficientZero is an RL algorithm and therefore formally interacts with an MDP.
 Making use of the rich type system of Rust, we model the MDP via an \code{Environment} trait
-with associated \code{Action} and \code{Observation} types.
+with associated \code{Action} and \code{Observation} types.\index{environment interface}
 Actions and Observations must be representable as a list of floats for model inference and training.
 The environment supports stepping its current state using an action and then returns
 a reward and observation to the caller, as well as a flag \code{done} that indicates
@@ -155,7 +155,7 @@ They consume raw batches that have been prepared by the rollout workers and re-r
 using the updated model parameters.
 
 \paragraph{GPU workers}
-All GPU work is done by GPU workers.
+All GPU work is done by GPU workers.\index{worker!GPU}
 There are two reasons for this.
 First, we found the Burn implementation to be extremely slow when relying on its internal
 task queue due to contention.
@@ -171,7 +171,7 @@ It also makes it possible to add a second device in the future by spawning a sec
 \subsubsection{Hooks}\label{hooks}
 
 To allow better diagnostics and instrumentation, the implementation
-includes a way to add various kinds of hooks to different parts of the learning process.
+includes a way to add various kinds of hooks\index{hook} to different parts of the learning process.
 This makes it possible to build a visualization dashboard or persistence layer
 on top of the learner without needing to modify the learner itself.
 \Cref{tab:impl-ez-hooks} contains a list of the hooks and where they are fired.

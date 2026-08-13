@@ -67,16 +67,50 @@
       \addplot [KITred15, forget plot] fill between [of=loL and hiL];
       \addplot [KIT line plot B, forget plot]
         table [col sep=comma, x=x, y=mid] {figures/data/input-length-sequence.csv};
+      \addplot [KITblack50, dashed, forget plot] coordinates {(0,16) (399,16)};
       \end{axis}
     \end{tikzpicture}
     \caption{sequence: episode length}
   \end{subfigure}
-  \caption[Learning on the input-level targets]{
-  Learning on the two input-level
-  targets.
-  The left column contains the episode return that the agent optimizes
-  as the median over the 128 environments stepped in parallel during one learner iteration.
-  The right column restates the same run in a target-specific success metric.
-  For high-and-low the dashed line is the rate at which an untrained policy hits the high-coverage branch.}
+
+  \vspace{1.4em}
+
+  \begin{subfigure}[b]{0.48\linewidth}
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[thesis result plot, width=0.95\linewidth, height=4.0cm,
+        xlabel={learner iteration}, ylabel={episode return},
+        xmin=0, ymin=0]
+      \addplot [draw=none, forget plot, name path=loR]
+        table [col sep=comma, x=x, y=lo] {figures/data/input-return-open62541.csv};
+      \addplot [draw=none, forget plot, name path=hiR]
+        table [col sep=comma, x=x, y=hi] {figures/data/input-return-open62541.csv};
+      \addplot [KITblue15, forget plot] fill between [of=loR and hiR];
+      \addplot [KIT line plot A, forget plot]
+        table [col sep=comma, x=x, y=mid] {figures/data/input-return-open62541.csv};
+      \end{axis}
+    \end{tikzpicture}
+    \caption{open62541: return}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.48\linewidth}
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[thesis result plot, width=0.95\linewidth, height=4.0cm,
+        xlabel={learner iteration}, ylabel={episode length},
+        xmin=0, ymin=0]
+      \addplot [draw=none, forget plot, name path=loL]
+        table [col sep=comma, x=x, y=lo] {figures/data/input-length-open62541.csv};
+      \addplot [draw=none, forget plot, name path=hiL]
+        table [col sep=comma, x=x, y=hi] {figures/data/input-length-open62541.csv};
+      \addplot [KITred15, forget plot] fill between [of=loL and hiL];
+      \addplot [KIT line plot B, forget plot]
+        table [col sep=comma, x=x, y=mid] {figures/data/input-length-open62541.csv};
+      \addplot [KITblack50, dashed, forget plot] coordinates {(0,12) (99,12)};
+      \end{axis}
+    \end{tikzpicture}
+    \caption{open62541: episode length}
+  \end{subfigure}
+  \caption[Learning on the input-level targets]{Learning on the three input-level targets. The left column is the episode return, the quantity the agent optimises, as the median over the 128 environments of one learner iteration inside their interquartile range; each target ran once, so the band is the spread across environments and not across seeds. The right column restates the same run in the target's own units. For high-and-low the dashed line is the rate at which an untrained policy hits the high-coverage branch, measured at iteration 0; for sequence the dashed line is the full 16-byte passcode, and since the program exits on the first wrong byte the episode length is the length of the correct prefix; for open62541 the dashed line is the twelve-step episode cap, an episode ending when the channel closes, when the session is activated or at that cap.}
   \label{fig:input-learning}
 \end{figure}

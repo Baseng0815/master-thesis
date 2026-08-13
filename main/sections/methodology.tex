@@ -69,7 +69,7 @@ solution might be useful.
 Action entropy is pooled over the positions of an episode, so it measures per-state determinism
 only on a target whose optimal action does not depend on the position; where it does, the
 per-position visit entropy is the quantity that separates a converged policy from a collapsed one.
-We also measure the structural byte rate to verify that the fuzzer learns to
+We also measure the structural byte rate\index{structural byte rate} to verify that the fuzzer learns to
 supply the PUT with relevant bytes only, as well as the number of steps inside
 the replay buffer that carry a non-zero reward.
 By measuring the KL divergence between the MCTS visit count distribution and the

@@ -171,7 +171,7 @@ as arms in the cJSON ablation campaign~(\cref{tab:cjson-arms}).
 \section{Categorical Value and Value-Prefix Targets}\label{sec:app-ez-categorical}
 
 To stabilize training, implicit gradient clipping is provided by modeling the value and value-prefix heads
-as classification instead of regression problems.
+as classification instead of regression problems.\index{categorical value target}
 Each head emits a distribution over a fixed support~\cite{schrittwieser_mastering_2020,ye_mastering_2021}.
 To convert a scalar target $y$ into this representation, it is first compressed by the invertible transform
 
@@ -181,7 +181,7 @@ To convert a scalar target $y$ into this representation, it is first compressed 
 \end{equation}
 
 which is near-linear for small $|y|$ and square-root-like for large $|y|$,
-and then two-hot encoded onto the support $z_1<\dots<z_B$ of $B$ evenly spaced points.
+and then two-hot encoded\index{two-hot encoding} onto the support $z_1<\dots<z_B$ of $B$ evenly spaced points.
 Targets outside $[z_1,z_B]$ are clamped to the boundary.
 A head is read back in the opposite order: its logits are softmaxed, the expectation under that
 distribution is taken against the support, and the result is mapped back with

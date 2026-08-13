@@ -2,14 +2,14 @@
 
 \section{Reinforcement Learning}\label{sec:reinforcement-learning}
 
-Reinforcement learning (RL) is an extremely general framework for approaching problems
+Reinforcement learning (RL)\index{reinforcement learning} is an extremely general framework for approaching problems
 in which an agent strives to maximize a reward signal through a selection of actions
 in certain states~\cite{sutton_reinforcement_2020}.
 
 \subsection{Agent, Environment, and Markov Decision Processes}\label{sec:rl-mdp}
 
 The problems reinforcement learning is typically applied to can be modeled as
-finite Markov decision processes (MDPs). Formally, a Markov decision process is
+finite Markov decision processes (MDPs).\index{Markov decision process} Formally, a Markov decision process is
 a 3-tuple $\mathit{MDP}=(\mathcal{S},\mathcal{A},p)$ where
 
 \begin{itemize}
@@ -18,11 +18,11 @@ a 3-tuple $\mathit{MDP}=(\mathcal{S},\mathcal{A},p)$ where
   \item $p(s^\prime,r|s,a)=\Pr\{S_t=s^\prime, R_t=r|S_{t-1}=s, A_{t-1}=a\}$
     describes the system dynamics, i.e., the probability of encountering a next
     state $s^\prime$ and reward $r\in\mathbb{R}$ at time step $t$ when taking action $a$ in
-    state $s$ at time step $t-1$. This satisfies the \emph{Markov property}:
+    state $s$ at time step $t-1$. This satisfies the \emph{Markov property}:\index{Markov property}
     $p$ depends only on the current state and not the full history.
 \end{itemize}
 
-An RL agent's goal is to learn a policy $\pi:\mathcal{S}\times\mathcal{A}\rightarrow [0,1]$
+An RL agent's goal is to learn a policy\index{policy} $\pi:\mathcal{S}\times\mathcal{A}\rightarrow [0,1]$
 mapping each state $s$ to probabilities of taking each possible action $a$ to maximize
 the cumulative reward.
 
@@ -79,7 +79,7 @@ and the best achievable memoryless policy can be arbitrarily worse than a policy
 allowed to consult the history~\cite{SINGH1994284}.
 
 A POMDP can be made Markovian by treating not the actual observations, but the
-entire observation-action history $H_t=O_0,A_0,O_1,A_1,\dots,O_t$ as the state space.
+entire observation-action history $H_t=O_0,A_0,O_1,A_1,\dots,O_t$ as the state space.\index{observation-action history}
 Another classical solution is to summarize the observation-action history in a probability distribution
 and treat this distribution as the actual state.
 This state is called a \emph{belief state}\index{belief state} $b_t(s)=\Pr\{S_t=s|H_t\}$ and suffices
@@ -90,14 +90,14 @@ for all but the simplest problems~\cite{papadimitriou_complexity_1987}.
 
 \subsection{The Exploration-Exploitation Tradeoff}\label{sec:rl-exploration}
 
-The most important problem any RL agent encounters is that of the \emph{exploration-exploitation tradeoff}.
+The most important problem any RL agent encounters is that of the \emph{exploration-exploitation tradeoff}.\index{exploration--exploitation tradeoff}
 At any point in time, the agent can either \emph{exploit} previously gained information
 to achieve a higher reward, or \emph{explore} yet unknown actions to gain more information
 that might come in useful in the future.
 Balancing the selection of actions that explore versus actions that exploit is a key tradeoff in any RL algorithm.
 
 Any MDP where $\lvert\mathcal{S}\rvert=1$ and $\lvert\mathcal{A}\rvert=k$ is also known as
-a \emph{$k$-armed bandit}, where the $k$-th arm is equal to the $k$-th action $a_k\in\mathcal{A}$.
+a \emph{$k$-armed bandit}\index{k-armed bandit@$k$-armed bandit}, where the $k$-th arm is equal to the $k$-th action $a_k\in\mathcal{A}$.
 This view is inspired by a slot machine with $k$ arms, where pulling a lever produces a reward $r_k\sim R_k$
 drawn from a stationary distribution $R_k$.
 In this setting, the difficulty lies in judging which arm is best.
@@ -116,7 +116,7 @@ We will outline three possible strategies.
 
 \paragraph{Greedy}
 
-A greedy agent always pulls the arm with the highest current estimate
+A greedy agent\index{greedy policy} always pulls the arm with the highest current estimate
 
 \[
   a_t^*=\argmax_{a} Q_t(a)
@@ -126,7 +126,7 @@ This strategy can easily fail.
 If the agent is unlucky and sees a few bad initial rewards, the sample average $Q_t$ will be off and $a_t^*$ will be suboptimal.
 
 \paragraph{$\varepsilon$-greedy}
-The simplest remedy is to explore at random.
+The simplest remedy is to explore at random.\index{epsilon-greedy@$\varepsilon$-greedy}
 With probability $\varepsilon$, the agent pulls an arm chosen uniformly at random, and exploits greedily otherwise.
 This guarantees that every arm keeps being sampled, but the exploration is undirected.
 Moreover, even after the estimate has converged, the agent keeps exploring.
@@ -145,7 +145,7 @@ and prioritizes high-value actions with low visit count.
 This rule has been proven to be optimal in terms of regret minimization up to a constant factor~\cite{auer_finite-time_nodate}.
 UCB is generalizable from bandits to full MDPs by treating every decision point
 of a search tree over the action space as its own bandit.
-This gives rise to the UCT rule~\cite{hutchison_bandit_2006} that is used in an
+This gives rise to the UCT rule\index{upper confidence bound!applied to trees}~\cite{hutchison_bandit_2006} that is used in an
 algorithm called Monte-Carlo Tree Search (MCTS)~\cite{hutchison_efficient_2007}.
 
 \subsection{Solving MDPs}\label{sec:rl-solving}
@@ -155,15 +155,15 @@ Methods for solving MDPs can be classified along two axes.
 \paragraph{Representation of estimates}
 Classical algorithms represent estimates via tables.
 The size of the tables usually scales with the size of the state and action spaces.
-This makes \emph{tabular methods} applicable only to small problems with tractable size.
-\emph{Function approximation methods} exploit regularities in the table data by fitting a parameterized model.
+This makes \emph{tabular methods}\index{tabular method} applicable only to small problems with tractable size.
+\emph{Function approximation methods}\index{function approximation} exploit regularities in the table data by fitting a parameterized model.
 Earlier work that made use of manually engineered features has been succeeded by modern, deep-learning-based approaches.
 
 \paragraph{Model availability}
-Some algorithms require that a model of the transition function $p$ be available.
+Some algorithms require that a model of the transition function $p$ be available.\index{model-based method}
 Classically, the model is assumed to be specified. In more modern algorithms,
 the model is learned by the agent itself through interactions with the underlying MDP.
-\emph{Model-free methods} do not base their estimates on an underlying model, but
+\emph{Model-free methods}\index{model-free method} do not base their estimates on an underlying model, but
 derive them directly from the interactions.
 
 \input{figures/rl-taxonomy}
@@ -172,13 +172,13 @@ derive them directly from the interactions.
 
 We will introduce some definitions and formalize what it means for a policy to be optimal.
 
-The \emph{return} at time step $t$ is the discounted sum of all future rewards,
+The \emph{return}\index{return} at time step $t$ is the discounted sum of all future rewards,
 
 \begin{equation}\label{eq:return}
   G_t=R_{t+1}+\gamma R_{t+2}+\gamma^2 R_{t+3}+\dots=\sum_{k=0}^{\infty}\gamma^k R_{t+k+1},
 \end{equation}
 
-where the \emph{discount factor} $\gamma\in[0,1)$ controls how far-sighted the agent is
+where the \emph{discount factor}\index{discount factor} $\gamma\in[0,1)$ controls how far-sighted the agent is
 by exponentially discounting future rewards.
 
 A \emph{value function}\index{value function} measures how good a state is under a given policy.
@@ -188,7 +188,7 @@ It is defined as the expected return when starting in $s$ and following $\pi$:
   v_\pi(s)=\mathbb{E}_\pi[G_t|S_t=s]
 \end{equation}
 
-The \emph{Bellman equation} is a recursive consistency equation that formalizes the
+The \emph{Bellman equation}\index{Bellman equation} is a recursive consistency equation that formalizes the
 intuition of the value of a state being equal to its expected immediate reward plus
 the discounted value of its successor states:
 
@@ -196,17 +196,17 @@ the discounted value of its successor states:
   v_\pi(s)=\sum_a\pi(a|s)\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma v_\pi(s^\prime)\right].
 \end{equation}
 
-An \emph{optimal policy} $\pi^*$ has the property that no other policy assigns a
+An \emph{optimal policy}\index{policy!optimal} $\pi^*$ has the property that no other policy assigns a
 higher value to any state: $\forall\pi\;\forall s\in\mathcal{S}:v_{\pi^*}(s)\geq v_\pi(s)$.
 All optimal policies have the same value function, denoted as $v^*=v_{\pi^*}$.
 
-The recursive \emph{Bellman optimality equation} follows:
+The recursive \emph{Bellman optimality equation}\index{Bellman equation!optimality} follows:
 
 \begin{equation}\label{eq:bellman-opt}
   v^*(s)=\max_a\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma v^*(s^\prime)\right],
 \end{equation}
 
-We can define the same equations over state-action pairs $(s,a)\in\mathcal{S}\times\mathcal{A}$ instead:
+We can define the same equations over state-action pairs $(s,a)\in\mathcal{S}\times\mathcal{A}$ instead:\index{action-value function}
 
 \begin{align}
   q_\pi(s,a)&=\mathbb{E}_\pi[G_t|S_t=s,A_t=a]\label{eq:q-function}\\
@@ -223,13 +223,13 @@ When the model $p$ is known, the Bellman optimality equation can be used to deri
 that provably converges to $\pi^*$.
 
 \paragraph{Policy iteration}
-Let $\pi_i$ be given. By repeatedly applying the Bellman equation,
+Let $\pi_i$ be given.\index{policy iteration} By repeatedly applying the Bellman equation,
 we can compute $v_{\pi_i}$. Once $v_{\pi_i}$ is known, we improve $\pi_i$ by acting greedily
 with respect to $v_{\pi_i}$. This then yields a strictly better policy $\pi_{i+1}$.
 A fixed point after $n$ steps is then guaranteed to be optimal: $\pi_n=\pi^*$.
 
 \paragraph{Value iteration}
-Instead of alternating between deriving $v_{\pi_i}$ and improving $\pi_i$, we can directly
+Instead of alternating between deriving $v_{\pi_i}$ and improving $\pi_i$,\index{value iteration} we can directly
 apply the Bellman optimality equation to get a one-step update rule~\cite{puterman_markov_2009}:
 
 \begin{equation}\label{eq:value-iteration}
@@ -238,16 +238,16 @@ apply the Bellman optimality equation to get a one-step update rule~\cite{puterm
 
 Most RL algorithms make use of this general framework of estimating values and then
 using these estimates to improve the current policy.
-This framework is called \emph{generalized policy iteration} (GPI)~\cite{sutton_reinforcement_2020}.
+This framework is called \emph{generalized policy iteration} (GPI)\index{generalized policy iteration}~\cite{sutton_reinforcement_2020}.
 
 While dynamic programming guarantees convergence to an optimal policy, it requires a complete model $p$ and
 must sweep the entire state space each iteration, making it impractical for larger real-world problems.
 
 \subsubsection{Temporal-difference learning}\label{sec:rl-td}
 
-Temporal-difference (TD) learning removes the need for a model.
+Temporal-difference (TD) learning\index{temporal-difference learning} removes the need for a model.
 Values are estimated from sampled transitions $(S_t,A_t,R_{t+1},S_{t+1})$ obtained by interacting with the environment~\cite{sutton_learning_1988,sutton_reinforcement_2020}.
-TD methods, like DP, make use of \emph{bootstrapping} --- updating estimates based on other estimates.
+TD methods, like DP, make use of \emph{bootstrapping}\index{bootstrapping} --- updating estimates based on other estimates.
 They do not require full state-space sweeps, but update the value function using the sampled transition data.
 A simple TD algorithm, TD(0), updates the estimate $V(S_t)$ as follows:
 
@@ -257,19 +257,19 @@ A simple TD algorithm, TD(0), updates the estimate $V(S_t)$ as follows:
   \delta_t=R_{t+1}+\gamma V(S_{t+1})-V(S_t),
 \end{equation}
 
-where $\alpha\in(0,1]$ is a step size and the \emph{TD error} $\delta_t$ measures how much the
+where $\alpha\in(0,1]$ is a step size and the \emph{TD error}\index{temporal-difference error} $\delta_t$ measures how much the
 sampled outcome deviates from the current estimate.
 
-Monte Carlo methods form the bootstrap-free alternative by simulating a whole
+Monte Carlo methods\index{Monte Carlo method} form the bootstrap-free alternative by simulating a whole
 episode, updating toward the full observed return $G_t$ at the end.
-The TD($\lambda$) family interpolates between the two extremes via \emph{eligibility traces},
+The TD($\lambda$) family interpolates between the two extremes via \emph{eligibility traces}\index{eligibility trace},
 with TD(0) and Monte Carlo as the limit cases $\lambda=0$ and
 $\lambda=1$~\cite{sutton_learning_1988}.
 
 \paragraph{SARSA}
-SARSA~\cite{sutton_reinforcement_2020} is similar to TD learning, but learns an action-value function $Q(s,a)$ instead of
+SARSA\index{SARSA}~\cite{sutton_reinforcement_2020} is similar to TD learning, but learns an action-value function $Q(s,a)$ instead of
 a value function $V(s)$. The update rule makes use of the action that the agent
-actually performed, making SARSA an \emph{on-policy} algorithm since it follows
+actually performed, making SARSA an \emph{on-policy}\index{on-policy learning} algorithm since it follows
 the currently active policy $\pi$:
 
 \begin{equation}\label{eq:sarsa}
@@ -277,7 +277,7 @@ the currently active policy $\pi$:
 \end{equation}
 
 \paragraph{Q-learning}
-Q-learning~\cite{watkins_q-learning_1992} can be interpreted as an \emph{off-policy} SARSA:
+Q-learning\index{Q-learning}~\cite{watkins_q-learning_1992} can be interpreted as an \emph{off-policy}\index{off-policy learning} SARSA:
 its target maximizes over the successor actions, making the update rule
 independent of the actually taken action:
 
@@ -296,15 +296,15 @@ function $\hat{v}(s;\theta)$ or $\hat{q}(s,a;\theta)$ whose parameter vector $\t
 can be learned, for example by (semi-)gradient descent on the TD error.
 
 Historically, the approximators were linear in hand-crafted features.
-Today, they are deep neural networks, giving rise to the field of \emph{deep reinforcement learning}.
+Today, they are deep neural networks, giving rise to the field of \emph{deep reinforcement learning}.\index{reinforcement learning!deep}
 The combination is powerful, but introduces new issues concerning stability:
 bootstrapping, off-policy learning, and function approximation together can
 make training diverge~\cite{sutton_reinforcement_2020}.
 
 The two large families of model-free deep reinforcement learning algorithms are
-the deep Q-network (DQN)~\cite{mnih_human-level_2015} and policy gradient
-methods such as proximal policy optimization
-(PPO)~\cite{schulman_proximal_2017}. DQN uses the standard Q-learning update
+the deep Q-network (DQN)\index{deep Q-network}~\cite{mnih_human-level_2015} and policy gradient
+methods\index{policy gradient method} such as proximal policy optimization
+(PPO)\index{proximal policy optimization}~\cite{schulman_proximal_2017}. DQN uses the standard Q-learning update
 rule, but represents $Q$ as a function approximator instead, allowing it to
 deal with large state and action spaces. PPO directly learns a parameterized
 policy $\pi_\theta$ by performing gradient updates on a clipped objective
@@ -317,10 +317,10 @@ Model-free deep RL algorithms require a large amount of data.
 For instance, DQN and its successors require on the order of tens to hundreds
 of millions of environment interactions to learn a useful $Q$ function.
 This is a major drawback if environment interactions are expensive.
-Many real-world applications therefore require high \emph{sample efficiency}.
+Many real-world applications therefore require high \emph{sample efficiency}.\index{sample efficiency}
 
 Model-based deep RL algorithms allow higher sample efficiency by learning a model of the underlying dynamics
-while they interact with the environment.
+while they interact with the environment.\index{world model}
 This allows them to generate additional, cheap experience~\cite{moerland_model-based_2022},
 and to train the policy inside the learned environment.
 The Dreamer line refines this recipe of learning latent

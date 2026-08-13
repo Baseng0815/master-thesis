@@ -9,7 +9,7 @@ harness parsing a fixed-size seed input in a loop (\cref{sec:corpus-level-action
 
 \subsection{cJSON}\label{sec:target-cjson}
 
-cJSON 1.7.19 is a single-file recursive-descent JSON parser written in C.
+cJSON 1.7.19 is a single-file recursive-descent JSON parser written in C.\index{target!cJSON}
 It is the target of our detailed ablation study.
 We provide a harness around the \code{cJSON\_ParseWithLength} function, which takes
 a buffer and a length and tries to parse the buffer content as JSON.
@@ -96,7 +96,7 @@ correct prefix, it can successively learn the password character-by-character.
 
 \subsection{libxml2}\label{sec:target-libxml2}
 
-libxml2 v2.15.3 is an XML parser commonly used in Linux.
+libxml2 v2.15.3 is an XML parser commonly used in Linux.\index{target!libxml2}
 We disable threads for deterministic execution as well as unreachable and out-of-scope
 features like \code{ICONV}, \code{MODULES}, \code{CATALOG}, \code{HTML} and \code{XPATH}.
 The library entry point the harness makes use of is \code{xmlReadMemory}.
@@ -112,6 +112,6 @@ We do not include a random control baseline.
 
 \subsection{picohttpparser}\label{sec:target-picohttpparser}
 
-picohttpparser is a header-only HTTP/1.x request parser.
+picohttpparser is a header-only HTTP/1.x request parser.\index{target!picohttpparser}
 We use the version from the master branch with commit hash \code{f4d94b4}.
 The setup is identical to libxml2 except for the block count of \num{4096}, since this is a smaller target.
