@@ -3,7 +3,7 @@
 \section{Mugiwara}\label{sec:impl-mugiwara}
 
 \code{mugiwara} connects the EfficientZero agent with the MOGI execution environment.
-It does this by implementing the \code{Environment} trait for each PUT.
+It does this by implementing the \code{Environment} trait for each SUT.
 This necessitates the mapping of generic learner actions to executable input and
 generated MOGI instrumentation to observations as well as providing an adequate
 reward signal.
@@ -88,7 +88,7 @@ An environment reset can then be implemented as a simple snapshot restore.
 \subsubsection{Input-level action execution}
 
 The execution loop for the input-level action model as introduced in~\cref{sec:input-level-actions}
-consists of pushing a single input, usually a byte, into the input stream of the PUT
+consists of pushing a single input, usually a byte, into the input stream of the SUT
 and then waking it up via MOGI.
 The environment is only reset on episode end, i.e., whenever an error condition is
 encountered or the step limit of the episode is exceeded.
@@ -108,9 +108,9 @@ fn execute(&mut self, action: Action) -> (Vec<f32>, bool) {
 
 \subsubsection{Corpus-level action execution}
 
-During each step, the PUT is re-executed with a given seed.
+During each step, the SUT is re-executed with a given seed.
 This is done by resetting the environment and block hit trackers, pushing the
-seed data, waking and running the PUT, and collecting any observations and is
+seed data, waking and running the SUT, and collecting any observations and is
 illustrated in~\cref{lst:mugiwara-execution}.
 
 \begin{rust}[caption={One guest execution in the corpus-action setting},label={lst:mugiwara-execution}]

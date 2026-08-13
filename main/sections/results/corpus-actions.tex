@@ -48,14 +48,14 @@ Wall-clock time scales close to linearly with the number of \gls{mcts} simulatio
 This shows that planning at 100 or even 50 steps does not decrease performance
 compared to the baseline of 200 steps.
 It is an open question whether this is a general limit of planning-based fuzzing,
-or an artefact of the PUTs being too small.
+or an artefact of the SUTs being too small.
 
 Disabling the depth-record reward term leaves \code{W0} at \num{641} blocks, and it is the arm
 whose structural byte rate decays furthest, ending at \num{0.214}.
 
 The models of size \code{FULL} as well as \code{SMALL} perform better than the baseline, albeit
 not significantly.
-We expect a larger PUT with richer structure to benefit more from a large model.
+We expect a larger SUT with richer structure to benefit more from a large model.
 \code{EDGE} coverage also performs slightly better than the baseline block coverage.
 
 The highest-coverage input any cJSON run produced covers \num{831}

@@ -16,8 +16,8 @@ This has the advantage of not needing to rely on interfacing with the existing P
 implementation, which in general is very slow.
 It also makes it easier to include EfficientZero in the overall architecture.
 Finally, we provide the actual fuzzer, \emph{mugiwara}\index{mugiwara}, which implements the interface
-required by the EfficientZero learner and drives the execution of PUTs using MOGI.
-In addition, it contains utility functions that are shared between different PUTs
+required by the EfficientZero learner and drives the execution of SUTs using MOGI.
+In addition, it contains utility functions that are shared between different SUTs
 like instrumentation and a model of a seed corpus.
 
 We chose to develop these three components separately to enable a clean architectural

@@ -24,7 +24,7 @@
 %    \code{mugiwara} is the only layer touching both sides is a claim of the chapter,
 %    not an omission.
 %  * Fill encodes provenance: blue = written for this thesis, grey = existing
-%    framework, white = the program under test. The caption says so; do not add a
+%    framework, white = the system under test. The caption says so; do not add a
 %    legend row.
 %  * The seams use `text width' rather than `minimum width'. This is not cosmetic:
 %    minimum width does not clip, so an earlier draft's one-line trait list grew the
@@ -127,7 +127,7 @@
   \end{tikzpicture}
   \caption[System architecture]{%
     The main system architecture and the fuzzing loop of~\cref{sec:rl-mdp}.
-    \code{mugiwara} wraps each PUT into an environment as expected by \code{efficientzero}.
+    \code{mugiwara} wraps each SUT into an environment as expected by \code{efficientzero}.
     \code{efficientzero} generates an action, \code{mugiwara} converts it to a concrete
     input, forwards the input to MOGI and receives raw execution feedback like
     block hits and the exit reason.

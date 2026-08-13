@@ -53,6 +53,8 @@ In reality, this is often not the case.
 An agent perceives its environment as a lossy function of the underlying state.
 The recycling robot of \cref{fig:mdp-recycling-robot}, for instance, might perceive
 its charge level as a noisy voltage measurement.
+In the case of fuzzing, the agent perceives coverage as a partial observation of
+the true program state.
 Observing the environment may therefore introduce uncertainty.
 The Markov property then still holds for the underlying state, but not for what the agent sees.
 
@@ -101,7 +103,7 @@ a \emph{$k$-armed bandit}\index{k-armed bandit@$k$-armed bandit}, where the $k$-
 This view is inspired by a slot machine with $k$ arms, where pulling a lever produces a reward $r_k\sim R_k$
 drawn from a stationary distribution $R_k$.
 In this setting, the difficulty lies in judging which arm is best.
-Each arm has an expected value $q^*(a_k)=\mathbb{E}[R_t|A_t=a_k]$ that is unknown
+Each arm has an expected value $Q^*(a_k)=\mathbb{E}[R_t|A_t=a_k]$ that is unknown
 and must be estimated, for example by the sample average
 
 \begin{equation}\label{eq:bandit-sample-average}
@@ -123,7 +125,7 @@ A greedy agent\index{greedy policy} always pulls the arm with the highest curren
 \]
 
 This strategy can easily fail.
-If the agent is unlucky and sees a few bad initial rewards, the sample average $Q_t$ will be off and $a_t^*$ will be suboptimal.
+If the agent is unlucky and sees a few bad initial rewards, the sample average $Q_t$ will be skewed and $a_t^*$ will be suboptimal.
 
 \paragraph{$\varepsilon$-greedy}
 The simplest remedy is to explore at random.\index{epsilon-greedy@$\varepsilon$-greedy}
