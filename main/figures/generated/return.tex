@@ -12,16 +12,16 @@
         table [col sep=comma, x=x, y=lo] {figures/data/return-cjson-ctrl-rand.csv};
       \addplot [draw=none, forget plot, name path=hiA]
         table [col sep=comma, x=x, y=hi] {figures/data/return-cjson-ctrl-rand.csv};
-      \addplot [KITblue15, forget plot] fill between [of=loA and hiA];
-      \addplot [KIT line plot A]
+      \addplot [KITlilac15, forget plot] fill between [of=loA and hiA];
+      \addplot [KIT line plot D]
         table [col sep=comma, x=x, y=mid] {figures/data/return-cjson-ctrl-rand.csv};
       \addlegendentry{CTRL-RAND}
       \addplot [draw=none, forget plot, name path=loB]
         table [col sep=comma, x=x, y=lo] {figures/data/return-cjson-t25.csv};
       \addplot [draw=none, forget plot, name path=hiB]
         table [col sep=comma, x=x, y=hi] {figures/data/return-cjson-t25.csv};
-      \addplot [KITred15, forget plot] fill between [of=loB and hiB];
-      \addplot [KIT line plot B]
+      \addplot [KITblue15, forget plot] fill between [of=loB and hiB];
+      \addplot [KIT line plot A]
         table [col sep=comma, x=x, y=mid] {figures/data/return-cjson-t25.csv};
       \addlegendentry{T25}
       \end{axis}

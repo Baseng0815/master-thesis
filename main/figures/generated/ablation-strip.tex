@@ -6,7 +6,7 @@
     \begin{axis}[thesis result plot, width=0.80\textwidth, height=9.3cm,
       xlabel={blocks covered at the end of training}, ylabel={},
       axis y line=left, axis x line=bottom,
-      ytick={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14}, yticklabels={CTRL-RAND,BASE,W0,SIMS100,SIMS50,SMALL,NOSEED,MEDIUM,EDGE,NOCOV,REUSE4,ALPHA010,ALPHA004,T25,T15},
+      ytick={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14}, yticklabels={CTRL-RAND,BASE,W0,SIMS100,SIMS50,SMALL,NOSEED,FULL,EDGE,NOCOV,REUSE4,ALPHA010,ALPHA004,T25,T15},
       yticklabel style={font=\scriptsize}, ymin=-0.7, ymax=14.7, xmin=0]
     \addplot [KIT scatter plot A, mark size=1.6pt, opacity=0.75]
       table [col sep=comma, x=coverage, y=y] {figures/data/ablation-strip.csv};

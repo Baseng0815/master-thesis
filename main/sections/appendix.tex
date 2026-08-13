@@ -282,13 +282,13 @@ head evaluation and every loss reduction run once over all $(K+1)N$ rows.
       & $a_{t_b+k+1}$, the action index driving the dynamics chain \\
     \code{rewards}
       & $[K{+}1,N]$
-      & $u_{t_b+k+1}$, kept as a scalar so prefixes can be summed \\
+      & $r_{t_b+k+1}$, kept as a scalar so prefixes can be summed \\
     \code{action\_counts}
       & $[K{+}1,N,|\mathcal{A}|]$
       & the root visit counts $N_{t_b+k}(a)$ recorded at self-play time \\
     \code{reward\_prefix}
       & $[K{+}1,N]$
-      & $\sum_{i=0}^{n_b-1}\gamma^{i}u_{t_b+k+i+1}$, truncated at the end of $\tau_b$ \\
+      & $\sum_{i=0}^{n_b-1}\gamma^{i}r_{t_b+k+i+1}$, truncated at the end of $\tau_b$ \\
     \code{bootstrap\_observations}
       & $[K{+}1,N,|o|]$
       & $o_{t_b+k+n_b}$, the position the $n$-step target bootstraps from \\
@@ -338,7 +338,7 @@ zero.
 The value targets are recomputed for every position of the batch as the $n$-step return
 
 \begin{equation}\label{eq:app-loss-value-target}
-  z^k_b=\underbrace{\sum_{i=0}^{n_b-1}\gamma^{i}\,u_{t_b+k+i+1}}_{\text{read at rollout time}}
+  z^k_b=\underbrace{\sum_{i=0}^{n_b-1}\gamma^{i}\,r_{t_b+k+i+1}}_{\text{read at rollout time}}
         \;+\;\ind{t_b+k+n_b<|\tau_b|}\,\gamma^{n_b}\,
         \hat v\!\left(o_{t_b+k+n_b}\right),
 \end{equation}
@@ -493,7 +493,7 @@ reanalyze time.
   \mathcal{L}_x=\sum_{k=0}^{K}\sum_{b=0}^{N-1}w^v_{b,k}\;
   \ell\!\left(\phi_x\!\left(x^k_b\right),\ \vpnet_k(s^{0:k}_b;\theta)\right),
   \qquad
-  x^k_b=\sum_{j=k_0(k)}^{k-1}m^j_b\,u_{t_b+j+1},
+  x^k_b=\sum_{j=k_0(k)}^{k-1}m^j_b\,r_{t_b+j+1},
 \end{equation}
 
 where $\vpnet_k$ is the logits the \gls{lstm} emits at step $k$ and $k_0(k)$ is the last carry
