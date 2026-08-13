@@ -2,73 +2,18 @@
 
 \section{Threats to Validity}\label{sec:discussion-threats}
 
-Each threat below is stated in the form an examiner would put it, then what the design does about
-it, then what remains.
-The first is not mitigated at all, and it is the reason this thesis claims feasibility rather than
-competitiveness.
+There are multiple possible failure modes to this thesis leading to invalid or lackluster conclusions.
 
-\paragraph{No conventional fuzzer was run.}
-The experiment that would settle whether any of this is worth doing --- the same targets, the same
-wall-clock, AFL++ on one side and the agent on the other --- was never run, and no such measurement
-exists anywhere in the recorded campaigns.
-Every comparison in this thesis is therefore internal: the agent against a structure-blind random
-control that shares its emulator, its harness and its execution budget~(\cref{sec:target-cjson}),
-and configurations of the agent against each other.
-Nothing mitigates this.
-It bounds the strongest available claim to the one made in
-\cref{sec:discussion-interpretation} --- that the learned policy beats undirected mutation per
-execution --- and it makes every statement about competitiveness in this thesis an argument from
-throughput arithmetic rather than a measurement.
-A reader who wants the bake-off should treat the numbers here as the agent-side input to it and
-nothing more.
+\paragraph{No comparison to conventional fuzzers is included.}
+We do not compare our approach to any conventional fuzzers like AFL++.
+Results can therefore only be interpreted as showing the general feasibility of our approach,
+without quantifying potential advantages or drawbacks as compared to traditional \gls{cgf}.
+We leave this open as future work.
 
-\paragraph{The clearest results come from rewards that were designed for them.}
-high-and-low and sequence are solved under rewards built to be solvable, including the coverage
-sled that makes the final byte of the passcode learnable at all~(\cref{sec:target-sequence}), and a
-result obtained under a designed reward says nothing about a target whose reward cannot be shaped.
-The mitigation is that no real-world weight rests on those two targets: they are described as
-feasibility tests in \cref{sec:methodology-setup}, the corpus-action targets run on raw coverage
-with no shaping, and the configuration tuned on cJSON was transferred to libxml2 and picohttpparser
-rather than re-tuned per target.
-Two residuals qualify that transfer.
-The transferred configuration is not literally the cJSON baseline --- it runs at $T=2$, which was
-not one of the ablated temperatures, for twice as many iterations --- so "unchanged" describes the
-intent and not the runs.
-And the seeds of both transfer campaigns were not all produced by the same revision
-(\cref{tab:campaign-inventory}), which makes them four runs of a configuration rather than four
-repeated samples of one.
-
-\paragraph{The win may be the learned value function rather than the planning.}
-On a deterministic target a model-based planner and a well-fit value function over coverage are
-hard to tell apart, and the contribution claimed here is the planner.
-The ablation that separates them is a one-simulation arm, which was not run.
-What was run is 50, 100 and 200 simulations, and coverage does not respond to any of it while
-wall-clock scales with all of it~(\cref{sec:discussion-interpretation}); the divergence between the
-policy prior and the search posterior also falls threefold over
-training~(\cref{fig:policy-improvement}).
-Both observations are consistent with the search mattering early and the network absorbing its
-benefit later, and neither rules out the stronger reading that search width beyond 50 simulations
-is simply wasted.
-This thesis therefore makes no claim that planning as such is what produces its results.
-
-\paragraph{Coverage is a proxy for bugs, and the coverage measured here is itself approximate.}
-Every objective, reward and headline number in this thesis is basic-block coverage; no claim about
-bugs found is made beyond what the oracle of \cref{sec:fuzzing-definitions} detected.
-The proxy is standard in greybox fuzzing and it is what makes the comparison to a coverage-guided
-baseline meaningful at all, so the choice is deliberate rather than incidental.
-Two residuals remain.
-Coverage is collected at block rather than edge granularity and is hashed into a fixed bucket array,
-so distinct blocks collide and "new coverage" is an approximation whose error grows with the size
-of the target~(\cref{sec:impl-coverage}).
-And a policy optimised against a proxy will exploit the proxy: nothing in the reward distinguishes a
-deeply nested input that reaches new blocks from one that reaches new blocks and would also expose a
-defect.
-
-The two threats an examiner will put together are the first and the third: a planner was used to
-climb a reward on targets chosen for it, and neither the value of the planning nor the value of the
-whole approach was measured against the technique it means to improve on.
-The answer this thesis can give is that the learned policy beats undirected mutation by a factor of
-\num{71} per execution on cJSON under a raw-coverage reward, that it discovers nesting on two
-recursive-descent parsers without being told the grammar, and that both facts are worth having
-precisely because they are the preconditions for the comparison that was not run.
-What it cannot give is that comparison.
+\paragraph{The return might climb due to a learned value function, and not due to planning.}
+The core part of EfficientZero is \gls{mcts}-based planning.
+We do not include a parameter study with only a single \gls{mcts} iteration.
+This is necessary to determine whether planning is useful at all, or whether the
+agent only learns a value function.
+It is important to quantify how many planning iterations should be used exactly since wall-clock
+execution time scales with the number of iteration.

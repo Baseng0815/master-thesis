@@ -98,7 +98,6 @@ The peak arrives at \SI{24}{\percent}, \SI{31}{\percent} and \SI{11}{\percent} o
 budgets, so on every target the agent spends most of its run below the structural rate it had
 already reached.
 
-\input{figures/generated/structural-rate}
 \input{figures/generated/structural-decay}
 
 Over the same period, the policy tends to narrow onto fewer actions.
@@ -110,20 +109,15 @@ The share of self-play plays taken by the single most-played action at a positio
 correspondingly~(\cref{fig:depth-actions}).
 
 \input{figures/generated/collapse-entropy}
-\input{figures/generated/depth-actions}
 
 Search contributes less as training proceeds.
 The mean KL divergence between the network's policy prior and the \gls{mcts} visit distribution at
 the root falls from \num{0.99} to \num{0.28} nats on cJSON, from \num{4.16} to \num{0.59} on
 libxml2 and from \num{4.16} to \num{0.44} on picohttpparser~(\cref{fig:policy-improvement}).
 
-\input{figures/generated/policy-improvement}
-
-\cref{fig:buffer-reward-density} shows that the fraction of replay-buffer
-transitions with a non-zero reward climbs throughout the campaign.
+The fraction of replay-buffer transitions with a non-zero reward climbs throughout the
+campaign~(\cref{fig:buffer-reward-density}).
 It rises over training on all three targets, from \num{0.012} to \num{0.147} on
 cJSON and from \num{0.004} to \num{0.104} on picohttpparser.
 This indicates an increasing competency in choosing actions that improve coverage of the agent.
 libxml2 peaks at \num{0.201} at iteration 327 and then turns around, ending at \num{0.188}.
-
-\input{figures/generated/buffer-reward-density}

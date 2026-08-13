@@ -634,23 +634,36 @@ kernels.
   \end{tabularx}
 \end{table}
 
-% TODO: \cref{tab:app-ez-params} covers the EfficientZero parameters only. What is
-% still missing is the complete hyperparameter table referenced from
-% \cref{sec:methodology-hyperparameters}, annotated by justification tier (inherited,
-% derived, sensitivity-analyzed) so the main text can cite it instead of reproducing
-% it. Include the commit hash and the date the configuration was frozen.
-
-\chapter{Action and Observation Encodings}\label{app:encodings}
-
-% TODO: The full encodings that \cref{sec:input-action-space,sec:corpus-action-space}
-% and the observation sections summarize: the packing arithmetic for the composite
-% corpus action, the per-slot feature layout, and the exact vector widths per target.
-% Enough detail to reimplement, kept out of the main text so the design argument
-% stays readable.
-
 \chapter{Additional Results}\label{app:results}
 
-% TODO: Per-run curves, the peripheral ablations labelled indicative in
-% \cref{sec:results-ablations}, and the diagnostic series that support the
-% collapse and degradation findings of \cref{sec:results-corpus-actions} without
-% belonging in it.
+The figures collected here are the diagnostic series behind \cref{sec:results-degradation}.
+Each resolves a claim that section makes across all three corpus-action targets into its
+per-target or per-position detail.
+
+\Cref{fig:structural-rate} is the per-seed, per-target view of the structural byte rate that
+\cref{fig:structural-decay} normalizes onto a common budget.
+It carries the untrained rate each target starts from, so the rise above chance and the later decay
+can be read against an absolute scale rather than against each run's own peak.
+
+\input{figures/generated/structural-rate}
+
+\Cref{fig:depth-actions} breaks the narrowing of the policy down by episode step.
+A share approaching one at a step means the agent plays a single byte there almost regardless of
+state, which locates the collapse within the episode rather than only establishing that it happened.
+
+\input{figures/generated/depth-actions}
+
+\Cref{fig:policy-improvement} tracks how much search still moves the policy.
+The divergence between the prior and the \gls{mcts} visit distribution is what planning contributes
+on top of the network, so its decline over training is the measurement behind the finding that
+search contributes less as training proceeds.
+
+\input{figures/generated/policy-improvement}
+
+\Cref{fig:buffer-reward-density} gives the fraction of replay-buffer transitions carrying a
+non-zero reward.
+The coverage reward is scored against the corpus union of the current episode and that union is
+re-bootstrapped at every reset, so a block found once pays again in the next episode and the signal
+does not thin out as run-level coverage saturates.
+
+\input{figures/generated/buffer-reward-density}
