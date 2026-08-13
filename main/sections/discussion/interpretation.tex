@@ -108,9 +108,10 @@ A single action then has to decide whether to retain the previous test case, whi
 new seed to select, and what mutations to apply.
 In this example, the resulting (non-hierarchical) action space has a size of about
 
-\[
+\begin{equation*}
+  \label{eq:action-space-size}
   \lvert\mathcal{A}\rvert=2\cdot 32\cdot 16\cdot 256=262144,
-\]
+\end{equation*}
 
 which is way too large for a vanilla EfficientZero agent.
 Approaches to solve this problem are outlined in~\cref{chap:future-work}.

@@ -7,5 +7,39 @@
 \addchap*{Kurzfassung}
 \markboth{Kurzfassung}{}
 
-% TODO: German translation of sections/abstract_en.tex. Write the English
-% abstract first, then translate --- the two must say the same thing.
+% siunitx has no babel integration; the comma is local to the otherlanguage
+% group thesis.tex inputs this file in.
+\sisetup{output-decimal-marker={,}}
+
+Coverage-gesteuertes Greybox-Fuzzing verdankt seinen Erfolg beim Finden von Fehlern dem
+Durchsatz: Es führt Millionen von Eingaben aus und behält jene, die neuen Code erreichen, ohne je
+ein explizites Modell davon zu bilden, was eine gute Eingabe ausmacht.
+Wie das Ausführungsbudget verteilt wird, entscheiden handgetunte Heuristiken, und Zielprogramme,
+deren Verhalten nicht von einer einzelnen Eingabe, sondern von einer Folge vorheriger Eingaben
+abhängt, passen nicht in das zustandslose Modell, das dabei angenommen wird.
+
+Wir modellieren emulatorbasiertes Greybox-Fuzzing als Markov-Entscheidungsprozess und steuern es
+mit EfficientZero, einer stichprobeneffizienten MuZero-Variante, die mittels
+Monte-Carlo-Baumsuche in einem gelernten latenten Modell ihrer Umgebung plant.
+Die unter Emulation erfasste Basisblock-Coverage dient zugleich als Beobachtung und als Belohnung.
+Wir formulieren zwei Aktionsräume: Aktionen auf Eingabeebene, bei denen eine Aktion einer Eingabe
+entspricht, die das Programm konsumiert, und Aktionen auf Korpusebene, bei denen eine Aktion eine
+Position in einem Seed und den dort geschriebenen Bytewert auswählt.
+Beide sind in einer wiederverwendbaren Rust-Implementierung von EfficientZero auf Basis des
+Deep-Learning-Frameworks Burn und im Fuzzer \emph{mugiwara} umgesetzt, der seine Zielprogramme
+unter dem Emulations-Framework MOGI ausführt.
+
+Wir evaluieren sechs Zielprogramme.
+Der Agent löst alle drei Ziele mit Aktionen auf Eingabeebene: Er rekonstruiert einen 16~Byte langen
+Passcode Position für Position und aktiviert eine OPC~UA-Sitzung gegen open62541.
+Bei den Zielen mit Aktionen auf Korpusebene übertrifft er bei identischem Ausführungsbudget eine
+ungerichtete Kontrolle und erreicht auf cJSON im Median \num{645} abgedeckte Blöcke gegenüber
+\num{542}, im besten von vierzehn Ablationsläufen \num{958}.
+Er leitet zudem Struktur her, die ihm nie vorgegeben wurde: Die Eingaben mit der höchsten Coverage
+für cJSON und libxml2 sind tief verschachtelt, und der Anteil strukturell relevanter Bytes steigt
+auf cJSON von \num{0.09} auf \num{0.90}.
+Die Grenzen des Ansatzes liegen bei Durchsatz und Stabilität.
+Ausführungsraten von \num{21} bis \num{23} Eingaben pro Sekunde im Gast liegen drei
+Größenordnungen unter nativem coverage-gesteuertem Fuzzing, tiefere Suche zahlt sich jenseits von
+50 Simulationen nicht mehr aus, und jedes Korpusziel endet unterhalb seines eigenen Höchstwerts
+beim Anteil struktureller Bytes.

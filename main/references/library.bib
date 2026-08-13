@@ -2848,3 +2848,132 @@
   year = {2017},
   copyright = {arXiv.org perpetual, non-exclusive license}
 }
+
+@misc{hubert_learning_2021,
+  title = {Learning and {{Planning}} in {{Complex Action Spaces}}},
+  author = {Hubert, Thomas and Schrittwieser, Julian and Antonoglou, Ioannis and Barekatain, Mohammadamin and Schmitt, Simon and Silver, David},
+  year = 2021,
+  month = apr,
+  number = {arXiv:2104.06303},
+  eprint = {2104.06303},
+  primaryclass = {cs.LG},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.2104.06303},
+  urldate = {2026-08-13},
+  abstract = {Many important real-world problems have action spaces that are high-dimensional, continuous or both, making full enumeration of all possible actions infeasible. Instead, only small subsets of actions can be sampled for the purpose of policy evaluation and improvement. In this paper, we propose a general framework to reason in a principled way about policy evaluation and improvement over such sampled action subsets. This sample-based policy iteration framework can in principle be applied to any reinforcement learning algorithm based upon policy iteration. Concretely, we propose Sampled MuZero, an extension of the MuZero algorithm that is able to learn in domains with arbitrarily complex action spaces by planning over sampled actions. We demonstrate this approach on the classical board game of Go and on two continuous control benchmark domains: DeepMind Control Suite and Real-World RL Suite.},
+  archiveprefix = {arXiv},
+  langid = {english},
+  keywords = {Computer Science - Machine Learning},
+  file = {/home/bastian/Zotero/storage/9EW7ZYXA/Hubert et al. - 2021 - Learning and Planning in Complex Action Spaces.pdf}
+}
+
+@article{danihelka_policy_2022,
+  title = {{{POLICY IMPROVEMENT BY PLANNING WITH GUMBEL}}},
+  author = {Danihelka, Ivo and Guez, Arthur and Schrittwieser, Julian and Silver, David},
+  year = 2022,
+  abstract = {AlphaZero is a powerful reinforcement learning algorithm based on approximate policy iteration and tree search. However, AlphaZero can fail to improve its policy network, if not visiting all actions at the root of a search tree. To address this issue, we propose a policy improvement algorithm based on sampling actions without replacement. Furthermore, we use the idea of policy improvement to replace the more heuristic mechanisms by which AlphaZero selects and uses actions, both at root nodes and at non-root nodes. Our new algorithms, Gumbel AlphaZero and Gumbel MuZero, respectively without and with model-learning, match the state of the art on Go, chess, and Atari, and significantly improve prior performance when planning with few simulations.},
+  langid = {english},
+  file = {/home/bastian/Zotero/storage/ELVQWK87/Danihelka et al. - 2022 - POLICY IMPROVEMENT BY PLANNING WITH GUMBEL.pdf}
+}
+
+@misc{kool_stochastic_2019,
+  title = {Stochastic {{Beams}} and {{Where}} to {{Find Them}}: {{The Gumbel-Top-k Trick}} for {{Sampling Sequences Without Replacement}}},
+  shorttitle = {Stochastic {{Beams}} and {{Where}} to {{Find Them}}},
+  author = {Kool, Wouter and van Hoof, Herke and Welling, Max},
+  year = 2019,
+  month = may,
+  number = {arXiv:1903.06059},
+  eprint = {1903.06059},
+  primaryclass = {cs.LG},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.1903.06059},
+  urldate = {2026-08-13},
+  abstract = {The well-known Gumbel-Max trick for sampling from a categorical distribution can be extended to sample k elements without replacement. We show how to implicitly apply this `Gumbel-Top-k' trick on a factorized distribution over sequences, allowing to draw exact samples without replacement using a Stochastic Beam Search. Even for exponentially large domains, the number of model evaluations grows only linear in k and the maximum sampled sequence length. The algorithm creates a theoretical connection between sampling and (deterministic) beam search and can be used as a principled intermediate alternative. In a translation task, the proposed method compares favourably against alternatives to obtain diverse yet good quality translations. We show that sequences sampled without replacement can be used to construct low-variance estimators for expected sentence-level BLEU score and model entropy.},
+  archiveprefix = {arXiv},
+  keywords = {Computer Science - Machine Learning,Statistics - Machine Learning},
+  file = {/home/bastian/Zotero/storage/SVH8NL4F/Kool et al. - 2019 - Stochastic Beams and Where to Find Them The Gumbel-Top-k Trick for Sampling Sequences Without Repla.pdf}
+}
+
+@article{hao_multiagent_2024,
+  title = {Multiagent {{Gumbel MuZero}}: {{Efficient Planning}} in {{Combinatorial Action Spaces}}},
+  shorttitle = {Multiagent {{Gumbel MuZero}}},
+  author = {Hao, Xiaotian and Hao, Jianye and Xiao, Chenjun and Li, Kai and Li, Dong and Zheng, Yan},
+  year = 2024,
+  month = mar,
+  journal = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume = {38},
+  number = {11},
+  pages = {12304--12312},
+  issn = {2374-3468, 2159-5399},
+  doi = {10.1609/aaai.v38i11.29121},
+  urldate = {2026-08-13},
+  abstract = {AlphaZero and MuZero have achieved state-of-the-art (SOTA) performance in a wide range of domains, including board games and robotics, with discrete and continuous action spaces. However, to obtain an improved policy, they often require an excessively large number of simulations, especially for domains with large action spaces. As the simulation budget decreases, their performance drops significantly. In addition, many important real-world applications have combinatorial (or exponential) action spaces, making it infeasible to search directly over all possible actions. In this paper, we extend AlphaZero and MuZero to learn and plan in more complex multiagent (MA) Markov decision processes, where the action spaces increase exponentially with the number of agents. Our new algorithms, MA Gumbel AlphaZero and MA Gumbel MuZero, respectively without and with model learning, achieve superior performance on cooperative multiagent control problems, while reducing the number of environmental interactions by up to an order of magnitude compared to model-free approaches. In particular, we significantly improve prior performance when planning with much fewer simulation budgets. The code and appendix are available at https://github.com/tjuHaoXiaotian/MA-MuZero.},
+  langid = {english},
+  file = {/home/bastian/Zotero/storage/2BY2SSVI/Hao et al. - 2024 - Multiagent Gumbel MuZero Efficient Planning in Combinatorial Action Spaces.pdf}
+}
+
+@misc{pu_unizero_2025,
+  title = {{{UniZero}}: {{Generalized}} and {{Efficient Planning}} with {{Scalable Latent World Models}}},
+  shorttitle = {{{UniZero}}},
+  author = {Pu, Yuan and Niu, Yazhe and Yang, Zhenjie and Ren, Jiyuan and Li, Hongsheng and Liu, Yu},
+  year = 2025,
+  month = jan,
+  number = {arXiv:2406.10667},
+  eprint = {2406.10667},
+  primaryclass = {cs.LG},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.2406.10667},
+  urldate = {2026-08-13},
+  abstract = {Learning predictive world models is crucial for enhancing the planning capabilities of reinforcement learning (RL) agents. Recently, MuZero-style algorithms, leveraging the value equivalence principle and Monte Carlo Tree Search (MCTS), have achieved superhuman performance in various domains. However, these methods struggle to scale in heterogeneous scenarios with diverse dependencies and task variability. To overcome these limitations, we introduce UniZero, a novel approach that employs a modular transformer-based world model to effectively learn a shared latent space. By concurrently predicting latent dynamics and decision-oriented quantities conditioned on the learned latent history, UniZero enables joint optimization of the long-horizon world model and policy, facilitating broader and more efficient planning in the latent space. We show that UniZero significantly outperforms existing baselines in benchmarks that require long-term memory. Additionally, UniZero demonstrates superior scalability in multitask learning experiments conducted on Atari benchmarks. In standard single-task RL settings, such as Atari and DMControl, UniZero matches or even surpasses the performance of current state-of-the-art methods. Finally, extensive ablation studies and visual analyses validate the effectiveness and scalability of UniZero's design choices. Our code is available at https://github.com/opendilab/LightZero.},
+  archiveprefix = {arXiv},
+  langid = {english},
+  keywords = {Computer Science - Machine Learning},
+  file = {/home/bastian/Zotero/storage/WPGABFMK/Pu et al. - 2025 - UniZero Generalized and Efficient Planning with Scalable Latent World Models.pdf}
+}
+
+@article{mei_speedyzero_2023,
+  title = {{{SPEEDYZERO}}: {{MASTERING ATARI WITH LIMITED DATA AND TIME}}},
+  author = {Mei, Yixuan and Gao, Jiaxuan and Ye, Weirui and Liu, Shaohuai and Gao, Yang and Wu, Yi},
+  year = 2023,
+  abstract = {Many recent breakthroughs of deep reinforcement learning (RL) are mainly built upon large-scale distributed training of model-free methods using millions to billions of samples. On the other hand, state-of-the-art model-based RL methods can achieve human-level sample efficiency but often take a much longer overall training time than model-free methods. However, high sample efficiency and fast training time are both important to many real-world applications. We develop SpeedyZero, a distributed RL system built upon a state-of-the-art model-based RL method, EfficientZero, with a dedicated system design for fast distributed computation. We also develop two novel algorithmic techniques, Priority Refresh and Clipped LARS, to stabilize training with massively parallelization and large batch size. SpeedyZero maintains on-par sample efficiency compared with EfficientZero while achieving a 14.5\texttimes{} speedup in wall-clock time, leading to human-level performances on the Atari benchmark within 35 minutes using only 300k samples. In addition, we also present an in-depth analysis on the fundamental challenges in further scaling our system to bring insights to the community.},
+  langid = {english},
+  file = {/home/bastian/Zotero/storage/YE7H8WNU/Mei et al. - 2023 - SPEEDYZERO MASTERING ATARI WITH LIMITED DATA AND TIME.pdf}
+}
+
+@misc{xuan_rezero_2024,
+  title = {{{ReZero}}: {{Boosting MCTS-based Algorithms}} by {{Backward-view}} and {{Entire-buffer Reanalyze}}},
+  shorttitle = {{{ReZero}}},
+  author = {Xuan, Chunyu and Niu, Yazhe and Pu, Yuan and Hu, Shuai and Liu, Yu and Yang, Jing},
+  year = 2024,
+  month = dec,
+  number = {arXiv:2404.16364},
+  eprint = {2404.16364},
+  primaryclass = {cs.AI},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.2404.16364},
+  urldate = {2026-08-13},
+  abstract = {Monte Carlo Tree Search (MCTS)-based algorithms, such as MuZero and its derivatives, have achieved widespread success in various decision-making domains. These algorithms employ the reanalyze process to enhance sample efficiency from stale data, albeit at the expense of significant wall-clock time consumption. To address this issue, we propose a general approach named ReZero to boost tree search operations for MCTS-based algorithms. Specifically, drawing inspiration from the one-armed bandit model, we reanalyze training samples through a backward-view reuse technique which uses the value estimation of a certain child node to save the corresponding sub-tree search time. To further adapt to this design, we periodically reanalyze the entire buffer instead of frequently reanalyzing the mini-batch. The synergy of these two designs can significantly reduce the search cost and meanwhile guarantee or even improve performance, simplifying both data collecting and reanalyzing. Experiments conducted on Atari environments, DMControl suites and board games demonstrate that ReZero substantially improves training speed while maintaining high sample efficiency. The code is available as part of the LightZero MCTS benchmark at https://github.com/opendilab/LightZero.},
+  archiveprefix = {arXiv},
+  langid = {english},
+  keywords = {Computer Science - Artificial Intelligence},
+  file = {/home/bastian/Zotero/storage/ELDLFU27/Xuan et al. - 2024 - ReZero Boosting MCTS-based Algorithms by Backward-view and Entire-buffer Reanalyze.pdf}
+}
+
+@misc{niu_lightzero_2023,
+  title = {{{LightZero}}: {{A Unified Benchmark}} for {{Monte Carlo Tree Search}} in {{General Sequential Decision Scenarios}}},
+  shorttitle = {{{LightZero}}},
+  author = {Niu, Yazhe and Pu, Yuan and Yang, Zhenjie and Li, Xueyan and Zhou, Tong and Ren, Jiyuan and Hu, Shuai and Li, Hongsheng and Liu, Yu},
+  year = 2023,
+  month = oct,
+  number = {arXiv:2310.08348},
+  eprint = {2310.08348},
+  primaryclass = {cs.LG},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.2310.08348},
+  urldate = {2026-08-13},
+  abstract = {Building agents based on tree-search planning capabilities with learned models has achieved remarkable success in classic decision-making problems, such as Go and Atari. However, it has been deemed challenging or even infeasible to extend Monte Carlo Tree Search (MCTS) based algorithms to diverse real-world applications, especially when these environments involve complex action spaces and significant simulation costs, or inherent stochasticity. In this work, we introduce LightZero, the first unified benchmark for deploying MCTS/MuZero in general sequential decision scenarios. Specificially, we summarize the most critical challenges in designing a general MCTS-style decision-making solver, then decompose the tightly-coupled algorithm and system design of tree-search RL methods into distinct sub-modules. By incorporating more appropriate exploration and optimization strategies, we can significantly enhance these sub-modules and construct powerful LightZero agents to tackle tasks across a wide range of domains, such as board games, Atari, MuJoCo, MiniGrid and GoBigger. Detailed benchmark results reveal the significant potential of such methods in building scalable and efficient decision intelligence. The code is available as part of OpenDILab at https://github.com/opendilab/LightZero.},
+  archiveprefix = {arXiv},
+  langid = {english},
+  keywords = {Computer Science - Machine Learning},
+  file = {/home/bastian/Zotero/storage/KCDDGXHL/Niu et al. - 2023 - LightZero A Unified Benchmark for Monte Carlo Tree Search in General Sequential Decision Scenarios.pdf}
+}

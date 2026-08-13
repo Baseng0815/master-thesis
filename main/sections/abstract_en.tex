@@ -3,5 +3,33 @@
 \addchap*{Abstract}
 \markboth{Abstract}{}
 
-% TODO: Summarize motivation, approach (RL-guided fuzzing with EfficientZero),
-% key results, and contributions in ~250 words.
+Coverage-guided greybox fuzzing is an important tool in ensuring the security of software.
+It executes millions of inputs and keeps the ones that reach new code without
+forming an explicit model of what inputs are good and how a target program behaves,
+relying on raw throughput instead.
+Which inputs to use, which inputs to modify and how to modify them is mostly
+left to hand-tuned heuristics and does not adapt to the program being tested.
+
+We frame emulator-based greybox fuzzing as a Markov decision process and apply EfficientZero
+to it, a sample-efficient MuZero variant that plans with Monte-Carlo Tree Search inside a
+learned latent model of its environment.
+Basic-block coverage collected from an emulator is used as an observation as well as to derive a reward.
+We formulate two action spaces: input-level actions, where an action is an input the program
+consumes, and corpus-level actions, where an action selects a position in a seed and the byte value
+to write to it.
+This approach is implemented in the fuzzer \emph{mugiwara} using the Rust programming language
+and the MOGI emulation framework.
+
+We evaluate six targets, three in the input-action setting and three in the corpus-action setting.
+The agent solves all three input-action targets: it recovers a 16-byte passcode one position at a
+time and activates an OPC~UA session against open62541.
+On the corpus-action targets it beats the random control baseline at identical execution budget
+and improves on it by a factor of \num{1.62} in the best run.
+It also manages to derive structure related to the target program's input grammar:
+for the cJSON and libxml2 parsers, it generates easily recognizable nested structure.
+This serves to prove the feasibility of our fuzzer.
+
+Limitations of the approach include throughput and stability.
+Guest execution rates of \num{21} to \num{23} inputs per second fall three orders of magnitude short
+of native coverage-guided fuzzing, and training is shown to be unstable and
+degrade somewhat after a point in certain settings.

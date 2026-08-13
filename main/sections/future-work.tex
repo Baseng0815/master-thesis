@@ -2,32 +2,65 @@
 
 \chapter{Future Work}\label{chap:future-work}
 
-% TODO: Follow-up directions, each tied to a limitation established in
-% \cref{sec:discussion-interpretation} or \cref{sec:discussion-threats} rather than
-% listed generically. The closing paragraph of \cref{sec:discussion-interpretation}
-% already splits them into implementation limits (remedied by engineering) and
-% approach limits (open problems); only the latter belong here. Candidates:
-%
-%   - Factored action heads with sampled search, lifting the enumerable-branching
-%     -factor constraint C5 (\cref{sec:mdp-constraints}) and letting the policy
-%     generalize across action factors instead of treating joint actions as unrelated
-%     categories (\cref{sec:corpus-action-space}).
-%   - A corpus of more than one seed: every run keeps a single seed
-%     (\cref{sec:impl-corpus}), which makes selection and eviction degenerate. Raising
-%     the corpus size needs per-slot observation rows for both heads to rank slots with,
-%     and those rows must be slot-identity-preserving.
-%   - Variable-length inputs: a fixed observation window over a variable-length seed
-%     decouples "the network needs fixed dimensions" from "seeds must be fixed
-%     length", and re-enables insertion and deletion operators.
-%   - Coverage representation that scales: edge rather than block coverage, and a
-%     collision-aware or learned compression instead of a fixed hashed bucket array
-%     (\cref{sec:platform-coverage}).
-%   - Reward without shaping: the results depend on hand-designed rewards on the
-%     diagnostic targets; intrinsic or novelty-based objectives that need no
-%     per-target engineering are the natural next question.
-%   - Hybrid deployment: run the agent alongside a conventional fuzzer rather than
-%     instead of one, which is how most prior RL fuzzers deal with the throughput gap.
-%   - Reliability: every corpus target ends below its own structural-rate peak
-%     (\cref{fig:structural-decay}), so a stopping rule --- or training that does not
-%     give ground back --- is worth more than making converged runs better.
-%   - Broader targets, and a crash-finding rather than coverage-maximizing objective.
+There are various possible follow-ups to this work that are concerned with expanding
+the single-seed base case, improving the EfficientZero learner, modifying the fuzzing
+loop, and including additional benchmark suites and ablations.
+
+\section{Full seed corpus}
+
+Since the goal is fuzzing stateful applications, we want to extend the basic
+single-seed corpus approach we have used throughout this thesis to a full seed
+corpus example keeping track of multiple fixed seeds at once as described
+in~\cref{sec:corpus-level-actions}.
+
+This includes evaluating retain and select actions and incorporating new
+information into the observation model to enable the agent to learn a good
+policy.
+
+\section{Improving the EfficientZero learner}
+
+We have presented the MuZero lineage in~\cref{sec:ez-lineage} up to EfficientZero
+and chose it as the base of our implementation.
+EfficientZero itself was released in 2021 and is therefore somewhat dated.
+There are various successors that introduce additional improvements and sample efficiency
+gains.
+Incorporating these improvements into the base EfficientZero architecure we
+implemented here is an interesting line of future work.
+
+Multiple prior works exist that attack the problem of action space size explosion (\cref{eq:action-space-size})
+we are likely to encounter when implementing the full corpus-input model.
+Sampled MuZero~\cite{hubert_learning_2021} samples a subset of actions and plans over them
+instead of the whole action space while correcting the policy-improvement operator for the sampling distribution.
+Gumbel MuZero~\cite{danihelka_policy_2022} guarantees policy improvement by sampling
+actions without replacement using the Gumbel-Top-k trick~\cite{kool_stochastic_2019}.
+Multiagent Gumbel MuZero~\cite{hao_multiagent_2024} tackles the action space explosion
+problem by modeling it as a multi-agent problem.
+EfficientZero V2~\cite{wang_efficientzero_2024} combines the results of Sampled
+MuZero and Gumbel MuZero.
+
+Other works improve the world model and the throughput.
+SpeedyZero~\cite{mei_speedyzero_2023} improves the raw execution performance of EfficientZero
+by introducing a distributed and highly parallel architecture.
+UniZero~\cite{pu_unizero_2025} uses a transformer as the world model to improve long-term memory
+and reduce problems caused by partial observability.
+ReZero~\cite{xuan_rezero_2024} modifies the reanalyze stage to improve execution performance.
+LightZero~\cite{niu_lightzero_2023} contains reference implementations of ReZero and UniZero
+and evaluates them via a unified benchmark.
+
+\section{Modifying the fuzzing loop}
+
+In our implementation, the learner is strictly \gls{gpu}-bound.
+This leads to a waste of resources since the \gls{cpu} is underutilized.
+Ideally, we want to do useful \gls{cpu} work while waiting for the \gls{gpu} to complete
+its operation.
+One possible approach is a hybrid fuzzing scheme: by running a classical \gls{cgf} fuzzer
+alongside our RL-based fuzzer, we can make full use of all system resources.
+The different fuzzers can then exchange information, improving overall performance.
+
+\section{Additional benchmark suites and ablations}
+
+We have tested our implementation against a few small examples, proving its feasibility.
+Next, we want to include more and larger targets to measure exactly how parameters
+like the \gls{mcts} simulation count impacts the fuzzing of targets of higher complexity.
+Additionally, we expect further ablation studies and a detailed parameter tuning to improve fuzzing
+performance.
