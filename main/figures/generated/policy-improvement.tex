@@ -52,6 +52,10 @@
     \end{tikzpicture}
     \caption{picohttpparser}
   \end{subfigure}
-  \caption[Policy improvement of search over the prior]{What search contributes at the root during self-play: the KL divergence between the MCTS visit distribution and the policy prior, against the entropies of both, as medians over seeds. A KL that stays clear of zero is the evidence that planning moves the policy rather than reproducing it.}
+  \caption[Policy improvement of search over the prior]{
+    The KL divergence between the MCTS visit count distribution and the policy prior.
+    A high KL indicates the policy prior chasing a moving MCTS visit count distribution,
+    i.e., quantifies the effectiveness of planning.
+    It falls close to monototonously for all targets.}
   \label{fig:policy-improvement}
 \end{figure}

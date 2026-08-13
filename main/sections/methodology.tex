@@ -72,6 +72,9 @@ per-position visit entropy is the quantity that separates a converged policy fro
 We also measure the structural byte rate to verify that the fuzzer learns to
 supply the PUT with relevant bytes only, as well as the number of steps inside
 the replay buffer that carry a non-zero reward.
+By measuring the KL divergence between the MCTS visit count distribution and the
+policy priors, we can quantify the effectiveness of planning, i.e., by how much
+planning through \gls{mcts} \enquote{moves} the policy.
 
 The metrics described above can be found in~\cref{chap:results}.
 Additional data is included in the Appendix.

@@ -52,6 +52,12 @@
     \end{tikzpicture}
     \caption{picohttpparser}
   \end{subfigure}
-  \caption[Policy-collapse matrix]{The share of self-play plays taken by the single most-played action at each episode-step position, over training. This is the policy-collapse matrix: a share approaching one means the agent plays one fixed byte at that position regardless of state. Read together with \cref{fig:structural-rate}, it distinguishes a run that learned the grammar from one that found a single high-reward token. Colour encodes share of the most-played action.}
+  \caption[Policy-collapse matrix]{
+    The share of self-play plays taken by the single most-played action at each
+    episode step.
+    A share approaching one means the agent plays a fixed byte almost exclusively regardless of state,
+    indicating that the action has collapsed at this step.
+    For cJSON, after an initial collapse between iterations 22 and 40, it regained and kept its entropy.
+    The same can be observed for the other two targets.}
   \label{fig:depth-actions}
 \end{figure}

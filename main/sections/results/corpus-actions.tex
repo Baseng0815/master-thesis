@@ -113,22 +113,17 @@ correspondingly~(\cref{fig:depth-actions}).
 \input{figures/generated/depth-actions}
 
 Search contributes less as training proceeds.
-The mean divergence between the network's policy prior and the \gls{mcts} visit distribution at
+The mean KL divergence between the network's policy prior and the \gls{mcts} visit distribution at
 the root falls from \num{0.99} to \num{0.28} nats on cJSON, from \num{4.16} to \num{0.59} on
 libxml2 and from \num{4.16} to \num{0.44} on picohttpparser~(\cref{fig:policy-improvement}).
-On cJSON the prior's own entropy falls from \num{5.55} to \num{0.79} nats over the same run, so
-the prior search is correcting is itself an increasingly narrow one.
 
 \input{figures/generated/policy-improvement}
 
-Reward starvation does not accompany any of this.
-Novelty is scored against the corpus union of the current episode, which is re-bootstrapped at
-every reset, so a block found in one episode pays again in the next and the signal does not thin
-out as run-level coverage saturates.
-The share of replay-buffer transitions carrying a non-zero reward rises over training on all three
-targets, from \num{0.012} to \num{0.147} on cJSON and from \num{0.004} to \num{0.104} on
-picohttpparser~(\cref{fig:buffer-reward-density}).
-libxml2 is the only target that turns over at all, peaking at \num{0.201} at iteration 327 and
-ending at \num{0.188}.
+\cref{fig:buffer-reward-density} shows that the fraction of replay-buffer
+transitions with a non-zero reward climbs throughout the campaign.
+It rises over training on all three targets, from \num{0.012} to \num{0.147} on
+cJSON and from \num{0.004} to \num{0.104} on picohttpparser.
+This indicates an increasing competency in choosing actions that improve coverage of the agent.
+libxml2 peaks at \num{0.201} at iteration 327 and then turns around, ending at \num{0.188}.
 
 \input{figures/generated/buffer-reward-density}
