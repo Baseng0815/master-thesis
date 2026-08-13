@@ -3,10 +3,18 @@
 The evaluation data is a tree of per-run SQLite databases produced by the probe
 suite in ``mugiwara/src/experiments/``.  Every run writes its own database, and
 all three corpus-level targets share one schema (18 tables), so a single
-target-agnostic reader covers the whole campaign.  What differs per target is
+target-agnostic reader covers that whole campaign.  What differs per target is
 only the name of the ``action_rate`` series -- ``json_bytes`` / ``xml_bytes`` /
 ``http_bytes`` -- which this module normalises to the abstract "structural byte
 rate" that the figures use.
+
+The two input-level targets are the exception in both respects.  Each is a
+single run rather than a multi-seed campaign, its database sitting directly in
+the campaign root, and they carry fewer probes than the corpus runs and not the
+same ones as each other: high-and-low has ``action_rate`` but no
+``collapse_entropy``, sequence the reverse, and neither has ``run_union``, so
+neither yields a coverage curve.  Extractors are failure-isolated for exactly
+this reason and skip a probe their run does not carry.
 
 Run metadata is read from the ``experiments`` table rather than from the
 directory layout, because the layouts disagree: the cjson campaign has an
@@ -30,14 +38,23 @@ from pathlib import Path
 # Default location of the consolidated experiment results.
 DEFAULT_DATA_ROOT = Path("/home/bastian/mnt/experiment-results")
 
-# The three corpus-level action-space campaigns, in the order the results
-# chapter reports them.  `root` is relative to the data root; `arms` is None
-# when the campaign has a single configuration and several seeds.
+# Every campaign, in the order the results chapter reports it.  The value is
+# the campaign root relative to the data root.
 CAMPAIGNS: dict[str, str] = {
+    "high-and-low": "high-and-low",
+    "sequence": "sequence",
     "cjson": "runs/cjson",
     "libxml2": "libxml2-400",
     "picohttpparser": "picohttpparser-400",
 }
+
+# The input-level action-space campaigns are one run each rather than a tree of
+# LABEL-sNN run directories: they are feasibility checks that were stopped once
+# the target was solved, not multi-seed campaigns, so their database sits
+# directly in the campaign root.  Their arm label is fixed to MAIN, since there
+# is nothing for it to distinguish.
+SINGLE_RUN_CAMPAIGNS = frozenset({"high-and-low", "sequence"})
+SINGLE_RUN_LABEL = "MAIN"
 
 # Directories under a campaign root that are not runs.
 NON_RUN_DIRS = re.compile(r"^(_|discarded-)")
@@ -160,21 +177,46 @@ def _parse_config(config_json: str) -> dict:
     return parsed
 
 
+def _has_table(con: sqlite3.Connection, name: str) -> bool:
+    row = con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (name,)
+    ).fetchone()
+    return row is not None
+
+
 def _structural_series(con: sqlite3.Connection) -> str:
-    """The name of this target's structural-byte-rate series.
+    """The name of this target's action-rate series, if it has one.
 
     One series per target (`json_bytes`, `xml_bytes`, `http_bytes`), measuring
     how often self-play plays an action from the target's grammar-relevant byte
     set.  Its value at iteration 0 is the measured chance rate and serves as
-    the within-run control.
+    the within-run control.  The high-and-low target carries the same probe
+    under the name `high_coverage`, measuring how often self-play plays a byte
+    that takes the high-coverage branch; the sequence target has no such probe
+    and this is empty for it.
     """
+    if not _has_table(con, "action_rate"):
+        return ""
     row = con.execute("SELECT series FROM action_rate LIMIT 1").fetchone()
     return row[0] if row else ""
 
 
 def _iteration_count(con: sqlite3.Connection) -> int:
-    row = con.execute("SELECT MAX(iteration) + 1 FROM action_rate").fetchone()
-    return int(row[0]) if row and row[0] is not None else 0
+    """How many learner iterations the run reached.
+
+    `action_rate` is the per-iteration probe present in every corpus-action
+    run, and it stays the source of record for them so this number cannot move
+    under the published campaigns.  The sequence target does not carry that
+    probe, so `buffer_state` -- the one per-iteration probe common to every
+    schema in the campaign -- is the fallback.
+    """
+    for table in ("action_rate", "buffer_state"):
+        if not _has_table(con, table):
+            continue
+        row = con.execute(f"SELECT MAX(iteration) + 1 FROM {table}").fetchone()
+        if row and row[0] is not None:
+            return int(row[0])
+    return 0
 
 
 def read_run(target: str, run_dir: Path) -> Run | None:
@@ -185,8 +227,24 @@ def read_run(target: str, run_dir: Path) -> Run | None:
     databases = sorted(run_dir.glob("*-experiments.db"))
     if len(databases) != 1:
         return None
-    db = databases[0]
+    return _read_database(target, run_dir.name, match.group("label"), int(match.group("seed")), databases[0])
 
+
+def read_single_run(target: str, root: Path) -> Run | None:
+    """Reads a campaign that is one run, its database sitting in the root.
+
+    The run is identified by the stem of that database rather than by a
+    directory name, because there is no run directory to carry a label and a
+    seed; the seed comes from the `experiments` row, as it does everywhere.
+    """
+    databases = sorted(root.glob("*.db"))
+    if len(databases) != 1:
+        return None
+    return _read_database(target, databases[0].stem, SINGLE_RUN_LABEL, 0, databases[0])
+
+
+def _read_database(target: str, run_id: str, label: str, seed_hint: int, db: Path) -> Run | None:
+    """Reads the metadata of one run database."""
     with _connect(db) as con:
         row = con.execute(
             "SELECT id, git_sha, seed, status FROM experiments ORDER BY created_at LIMIT 1"
@@ -202,9 +260,9 @@ def read_run(target: str, run_dir: Path) -> Run | None:
 
     return Run(
         target=target,
-        run_id=run_dir.name,
-        label=match.group("label"),
-        seed=int(db_seed) if db_seed is not None else int(match.group("seed")),
+        run_id=run_id,
+        label=label,
+        seed=int(db_seed) if db_seed is not None else seed_hint,
         db=db,
         exp_id=exp_id,
         git_sha=git_sha or "",
@@ -233,6 +291,11 @@ def discover(data_root: Path = DEFAULT_DATA_ROOT, targets: list[str] | None = No
             continue
         root = data_root / relative
         if not root.is_dir():
+            continue
+        if target in SINGLE_RUN_CAMPAIGNS:
+            run = read_single_run(target, root)
+            if run is not None:
+                found.append(run)
             continue
         for entry in sorted(root.iterdir()):
             if not entry.is_dir() or NON_RUN_DIRS.match(entry.name):

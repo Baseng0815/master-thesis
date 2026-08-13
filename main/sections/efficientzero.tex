@@ -318,6 +318,8 @@ where $\ell$ is the cross entropy between a target and the categorical
 prediction of the corresponding head.
 The value loss $\lambda_v\,\ell\!\left(z_{t+k},v(s^k;\theta)\right)$ is used to update
 the replay buffer priorities.
+\Cref{app:loss} gives the layout of a sampled batch, the masks that decide which positions each
+term supervises, and the exact form the four terms take in our implementation.
 
 \section{EfficientZero's Improvements}\label{sec:ez-improvements}
 

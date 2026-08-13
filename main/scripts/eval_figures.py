@@ -31,6 +31,7 @@ Conventions that hold across every figure:
 from __future__ import annotations
 
 import csv
+import math
 from collections import defaultdict
 from pathlib import Path
 
@@ -42,6 +43,30 @@ TARGETS = {
     "libxml2": "libxml2",
     "picohttpparser": "picohttpparser",
 }
+
+# The input-level action-space targets, in the order the results chapter
+# reports them.  These are feasibility checks rather than campaigns -- one run
+# each, one seed -- so their figures share no emitter with the corpus targets:
+# there is no seed spread to draw a band from, and no coverage probe to draw a
+# coverage curve from.  What they do carry is the same return, loss and entropy
+# instrumentation, which is what the section reports.
+INPUT_TARGETS = {
+    "high-and-low": "high-and-low",
+    "sequence": "sequence",
+}
+
+# Size of each input-level target's action space.  Its logarithm is the entropy
+# of the uniform policy, which is where an untrained agent starts and therefore
+# the reference the entropy curves are read against.
+INPUT_ACTION_SPACE = {"high-and-low": 256, "sequence": 26}
+
+# The episode length that counts as solving the target, where the target has
+# one.  On sequence it is the length of the passcode: the program exits on the
+# first wrong byte, so a 16-step episode is a fully recovered passcode.  Taken
+# from the target rather than from the highest length the run happened to
+# reach, so that the reference line means what the caption says it means even
+# if a run never gets there.
+INPUT_EPISODE_CEILING = {"sequence": 16}
 
 # The cjson arms that carry the head-to-head story, in plotting order.  The
 # rest of the campaign appears only in the ablation figures.
@@ -569,44 +594,53 @@ def fig_return(root: Path, cache: Path, arms: dict):
     )
 
 
-def fig_losses(root: Path, cache: Path, arms: dict):
-    """The five EfficientZero training losses, one panel per loss.
+LOSS_SERIES = ["total", "value", "policy", "value_prefix", "simsiam"]
 
-    A training-health diagnostic rather than a result, which is why it belongs
-    in the appendix: it says the optimiser behaved, not that the agent fuzzed.
+
+def _loss_data(root: Path, cache: Path, chosen: dict, prefix: str) -> tuple[dict, dict]:
+    """Writes one loss table per target and pools the plotted values per series.
+
+    The pooled values are what decides each panel's ordinate scale, which
+    cannot be decided from the name of the loss; see `_loss_panels`.
     """
-    series_names = ["total", "value", "policy", "value_prefix", "simsiam"]
-    chosen = {
-        target: next(
-            (group[0] for (t, label), group in sorted(arms.items()) if t == target and label in ("T25", "LIBXML2-400", "PICOHTTPPARSER-400")),
-            None,
-        )
-        for target in TARGETS
-    }
-    sources = {}
+    sources: dict[str, str] = {}
+    pooled: dict[str, list[float]] = defaultdict(list)
     for target, run in chosen.items():
         if run is None:
             continue
         rows_in = load(cache, run, "loss")
         if not rows_in:
             continue
-        rows = [
-            [int(float(row["train_batches"]))] + [round(num(row, f"{s}_mean"), 5) for s in series_names]
-            for row in rows_in
-        ]
-        sources[target] = write_data(root, f"loss-{target}", ["batches", *series_names], rows)
+        rows = []
+        for row in rows_in:
+            cells = [round(num(row, f"{s}_mean"), 5) for s in LOSS_SERIES]
+            rows.append([int(float(row["train_batches"]))] + cells)
+            for series, value in zip(LOSS_SERIES, cells):
+                if value == value:  # not NaN
+                    pooled[series].append(value)
+        sources[target] = write_data(root, f"{prefix}-{target}", ["batches", *LOSS_SERIES], rows)
+    return sources, pooled
 
+
+def _loss_panels(sources: dict, pooled: dict, display_of: dict) -> str:
+    """One small panel per loss, three to a row."""
     panels = []
-    for name in series_names:
+    for name in LOSS_SERIES:
         plots = [
             f"    \\addplot [{LINE_STYLES[i]}, {'forget plot' if name != 'total' else ''}]\n"
             f"      table [col sep=comma, x=batches, y={name}] {{{source}}};"
-            + (f"\n    \\addlegendentry{{{TARGETS[target]}}}" if name == "total" else "")
+            + (f"\n    \\addlegendentry{{{display_of[target]}}}" if name == "total" else "")
             for i, (target, source) in enumerate(sources.items())
         ]
-        # simsiam is a negative cosine similarity and crosses zero, so it is the
-        # one loss that cannot use a log ordinate.
-        mode = "" if name == "simsiam" else "      ymode=log,\n"
+        # pgfplots drops every non-positive coordinate of a logarithmic axis
+        # without saying so, which would quietly delete most of a curve rather
+        # than fail. The scale is therefore taken from the data and not from
+        # the name of the loss. Two of the five can go non-positive: the
+        # consistency loss is a negative cosine similarity throughout, and the
+        # total carries it with a coefficient of two, so the total turns
+        # negative on any target whose supervised terms fall below it.
+        values = pooled.get(name) or []
+        mode = "      ymode=log,\n" if values and min(values) > 0 else ""
         options = (
             "      xlabel={training batches}, ylabel={" + name.replace("_", r"\_") + "},\n"
             + mode
@@ -617,8 +651,26 @@ def fig_losses(root: Path, cache: Path, arms: dict):
                             name.replace("_", " "), width="0.32\\linewidth"))
     # The five losses are a grid of small panels, not one panel per
     # target, so they stay three to a row whatever the default layout is.
-    body = (panels_row(panels[:3], layout="row") + "\n\n  \\vspace{1.4em}\n\n"
+    return (panels_row(panels[:3], layout="row") + "\n\n  \\vspace{1.4em}\n\n"
             + panels_row(panels[3:], layout="row"))
+
+
+def fig_losses(root: Path, cache: Path, arms: dict):
+    """The five EfficientZero training losses, one panel per loss.
+
+    A training-health diagnostic rather than a result, which is why it belongs
+    in the appendix: it says the optimiser behaved, not that the agent fuzzed.
+    """
+    chosen = {
+        target: next(
+            (group[0] for (t, label), group in sorted(arms.items()) if t == target and label in ("T25", "LIBXML2-400", "PICOHTTPPARSER-400")),
+            None,
+        )
+        for target in TARGETS
+    }
+    sources, pooled = _loss_data(root, cache, chosen, "loss")
+    if not sources:
+        return None
     return write_tex(
         root,
         "losses",
@@ -629,7 +681,7 @@ def fig_losses(root: Path, cache: Path, arms: dict):
             "self-supervised consistency loss, which is a negative cosine similarity and "
             "crosses zero.",
             "EfficientZero training losses",
-            body,
+            _loss_panels(sources, pooled, TARGETS),
             placement="tbp",
         ),
     )
@@ -993,7 +1045,14 @@ def fig_tree(root: Path, cache: Path, arms: dict):
 
 
 def fig_buffer(root: Path, cache: Path, arms: dict):
-    """Reward density in the replay buffer -- the sparsity evidence."""
+    """Reward density in the replay buffer.
+
+    Read this against the reward's actual scope, not the run's. `Marginal`
+    scores novelty against the corpus union of the *current episode*, and
+    `reset` re-bootstraps that corpus (`mugiwara/examples/cjson.rs`), so a block
+    found in one episode pays again in the next and the signal cannot thin out
+    as run-level coverage saturates. The share rises with competence instead.
+    """
     plots = []
     for i, (target, display) in enumerate(TARGETS.items()):
         runs = [
@@ -1023,12 +1082,254 @@ def fig_buffer(root: Path, cache: Path, arms: dict):
         figure(
             "buffer-reward-density",
             "The fraction of replay-buffer transitions that carry a non-zero reward. Coverage "
-            "rewards are sparse by construction --- a step is rewarded only when it reaches a "
-            "block no environment had reached before --- and the share falls further as the "
-            "easy coverage is exhausted, which is the mechanism behind the value-target "
-            "collapse discussed in \\cref{chap:failure-modes}.",
+            "rewards are sparse --- a step pays only when it reaches a block the episode had "
+            "not reached before --- but they are scored against the corpus union of the "
+            "current episode, which is re-bootstrapped at every reset, so a block found once "
+            "pays again in the next episode and the signal does not thin out as run-level "
+            "coverage saturates. The share rises with competence instead, as the agent finds "
+            "more new blocks per episode. libxml2 is the one target that turns over, peaking "
+            "at \\num{0.201} and ending at \\num{0.188}.",
             "Reward density in the replay buffer",
             body,
+        ),
+    )
+
+
+# --------------------------------------------------------------------------
+# Input-level action spaces
+#
+# One run per target and one seed per run, so these figures draw a line rather
+# than a band across seeds. Where a band appears it is the spread across the
+# 128 environments within one learner iteration, which is a different quantity
+# from the seed spread of the corpus figures and is named as such in every
+# caption. Two panels per figure rather than three, side by side.
+# --------------------------------------------------------------------------
+
+
+INPUT_PANEL_WIDTH = "0.48\\linewidth"
+INPUT_AXIS_WIDTH = "0.95\\linewidth"
+INPUT_AXIS_HEIGHT = "4.0cm"
+
+
+def input_run(arms: dict, target: str) -> Run | None:
+    """The single run of an input-level campaign."""
+    return next(
+        (group[0] for (t, _), group in sorted(arms.items()) if t == target and group),
+        None,
+    )
+
+
+def input_panel(options: str, plots: list[str], caption: str) -> str:
+    return panel(
+        axis(options, "\n".join(plots), width=INPUT_AXIS_WIDTH, height=INPUT_AXIS_HEIGHT),
+        caption,
+        width=INPUT_PANEL_WIDTH,
+    )
+
+
+def input_grid(panels: list[str]) -> str:
+    """Lays panels out two to a row."""
+    rows = [panels[i : i + 2] for i in range(0, len(panels), 2)]
+    return "\n\n  \\vspace{1.4em}\n\n".join(panels_row(row, layout="row") for row in rows)
+
+
+def fig_input_learning(root: Path, cache: Path, arms: dict):
+    """That each input-level target was solved, in the terms of that target.
+
+    Return is the quantity the agent optimises and is comparable to nothing
+    outside its own target, so each target gets a second panel in a unit that
+    can be read directly: for high-and-low the fraction of self-play bytes that
+    take the high-coverage branch, against the measured chance rate; for
+    sequence the trajectory length, which because the program exits on the
+    first wrong byte is exactly the number of passcode bytes the agent has
+    right. Both make "solved" a value on the ordinate rather than an assertion.
+    """
+    panels = []
+    for target, display in INPUT_TARGETS.items():
+        run = input_run(arms, target)
+        if run is None:
+            continue
+
+        returns = load(cache, run, "return")
+        if returns:
+            rows = [
+                [
+                    int(float(row["iteration"])),
+                    round(num(row, "return_q25"), 4),
+                    round(num(row, "return_median"), 4),
+                    round(num(row, "return_q75"), 4),
+                ]
+                for row in returns
+            ]
+            source = write_data(root, f"input-return-{target}", ["x", "lo", "mid", "hi"], rows)
+            options = (
+                "      xlabel={learner iteration}, ylabel={episode return},\n"
+                "      xmin=0, ymin=0"
+            )
+            panels.append(
+                input_panel(
+                    options,
+                    [band(source, "x", "lo", "mid", "hi", LINE_STYLES[0], BAND_FILLS[0], None, "R")],
+                    f"{display}: return",
+                )
+            )
+
+        # The second panel is the target's own evidence, and there is one per
+        # target because the two targets record different probes.
+        rates = load(cache, run, "structural")
+        lengths = load(cache, run, "length")
+        if rates:
+            rows = [
+                [int(float(row["iteration"])), round(num(row, "rate"), 5)] for row in rates
+            ]
+            source = write_data(root, f"input-rate-{target}", ["iteration", "rate"], rows)
+            chance = num(rates[0], "rate")
+            plots = [
+                f"    \\addplot [{LINE_STYLES[0]}, forget plot]\n"
+                f"      table [col sep=comma, x=iteration, y=rate] {{{source}}};",
+                f"    \\addplot [KITblack50, dashed, forget plot] coordinates "
+                f"{{(0,{chance:.5f}) ({rows[-1][0]},{chance:.5f})}};",
+            ]
+            options = (
+                "      xlabel={learner iteration}, ylabel={high-coverage byte rate},\n"
+                "      xmin=0, ymin=0, ymax=1"
+            )
+            panels.append(input_panel(options, plots, f"{display}: action rate"))
+        elif lengths:
+            rows = [
+                [
+                    int(float(row["iteration"])),
+                    round(num(row, "length_q25"), 4),
+                    round(num(row, "length_median"), 4),
+                    round(num(row, "length_q75"), 4),
+                ]
+                for row in lengths
+            ]
+            source = write_data(root, f"input-length-{target}", ["x", "lo", "mid", "hi"], rows)
+            plots = [band(source, "x", "lo", "mid", "hi", LINE_STYLES[1], BAND_FILLS[1], None, "L")]
+            ceiling = INPUT_EPISODE_CEILING.get(target)
+            if ceiling:
+                plots.append(
+                    f"    \\addplot [KITblack50, dashed, forget plot] coordinates "
+                    f"{{(0,{ceiling:g}) ({rows[-1][0]},{ceiling:g})}};"
+                )
+            options = (
+                "      xlabel={learner iteration}, ylabel={episode length},\n"
+                "      xmin=0, ymin=0"
+            )
+            panels.append(input_panel(options, plots, f"{display}: episode length"))
+
+    if not panels:
+        return None
+    return write_tex(
+        root,
+        "input-learning",
+        figure(
+            "input-learning",
+            "Learning on the two input-level targets. The left column is the episode return, "
+            "the quantity the agent optimises, as the median over the 128 environments of one "
+            "learner iteration inside their interquartile range; each target ran once, so the "
+            "band is the spread across environments and not across seeds. The right column "
+            "restates the same run in the target's own units. For high-and-low the dashed "
+            "line is the rate at which an untrained policy hits the high-coverage branch, "
+            "measured at iteration 0; for sequence the dashed line is the full 16-byte "
+            "passcode, and since the program exits on the first wrong byte the episode length "
+            "is the length of the correct prefix.",
+            "Learning on the input-level targets",
+            input_grid(panels),
+            placement="tbp",
+        ),
+    )
+
+
+def fig_input_losses(root: Path, cache: Path, arms: dict):
+    """The five EfficientZero training losses on the input-level targets.
+
+    The same training-health diagnostic as \\cref{fig:losses} carries for the
+    corpus targets: it says the optimiser behaved, not that the agent fuzzed.
+    It matters more here than there, because these two targets exist to test
+    the learner rather than the fuzzer.
+    """
+    chosen = {target: input_run(arms, target) for target in INPUT_TARGETS}
+    sources, pooled = _loss_data(root, cache, chosen, "loss")
+    if not sources:
+        return None
+    return write_tex(
+        root,
+        "input-losses",
+        figure(
+            "input-losses",
+            "The five EfficientZero training losses on the two input-level targets, against "
+            "training batches. Logarithmic ordinate on the three supervised losses, which "
+            "stay positive; linear on the consistency loss, which is a negative cosine "
+            "similarity, and on the total, which carries the consistency loss with a "
+            "coefficient of two and therefore turns negative once the supervised terms fall "
+            "below it. The two targets ran for different numbers of iterations, so their "
+            "curves end at different batch counts.",
+            "Training losses on the input-level targets",
+            _loss_panels(sources, pooled, INPUT_TARGETS),
+            placement="tbp",
+        ),
+    )
+
+
+def fig_input_entropy(root: Path, cache: Path, arms: dict):
+    """Entropy of the played action distribution, against the uniform policy.
+
+    This quantity is pooled over episode positions, which is why the two
+    targets look so different and why the sequence curve must not be read as a
+    failure to converge.  high-and-low wants the same byte at every position,
+    so the pooled entropy is the per-state entropy and collapses with it.
+    sequence wants a different byte at each of its sixteen positions, so a
+    policy that is deterministic everywhere still pools to about ln 16, and
+    that is where the curve settles.  Per-state determinism on sequence is
+    visible in the visit counts, not here.
+    """
+    panels = []
+    for target, display in INPUT_TARGETS.items():
+        run = input_run(arms, target)
+        rows_in = load(cache, run, "sampled") if run else []
+        rows_in = [row for row in rows_in if num(row, "action_entropy") == num(row, "action_entropy")]
+        if not rows_in:
+            continue
+        rows = [
+            [int(float(row["iteration"])), round(num(row, "action_entropy"), 5)]
+            for row in rows_in
+        ]
+        source = write_data(root, f"input-entropy-{target}", ["iteration", "entropy"], rows)
+        uniform = math.log(INPUT_ACTION_SPACE[target])
+        plots = [
+            f"    \\addplot [{LINE_STYLES[0]}, forget plot]\n"
+            f"      table [col sep=comma, x=iteration, y=entropy] {{{source}}};",
+            f"    \\addplot [KITblack50, dashed, forget plot] coordinates "
+            f"{{(0,{uniform:.4f}) ({rows[-1][0]},{uniform:.4f})}};",
+        ]
+        options = (
+            "      xlabel={learner iteration}, ylabel={action entropy (nats)},\n"
+            f"      xmin=0, ymin=0, ymax={uniform * 1.12:.3f}"
+        )
+        panels.append(input_panel(options, plots, display))
+    if not panels:
+        return None
+    return write_tex(
+        root,
+        "input-entropy",
+        figure(
+            "input-entropy",
+            "Shannon entropy of the actions in the batches trained on, for the two "
+            "input-level targets. The dashed line is the entropy of the uniform policy over "
+            "the target's action space, $\\ln 256 \\approx 5.55$ for high-and-low and "
+            "$\\ln 26 \\approx 3.26$ for sequence, which is where an untrained agent starts. "
+            "The quantity is pooled over episode positions, which is what makes the two "
+            "curves differ in kind. high-and-low rewards the same byte at every position, so "
+            "the pooled entropy is the per-state entropy and collapses with it. sequence "
+            "rewards a different byte at each of its sixteen positions, so a policy that is "
+            "deterministic at every position still pools to about $\\ln 16 \\approx 2.77$, "
+            "which is where the curve settles; that value is evidence of a solved passcode "
+            "and not of a policy that failed to converge.",
+            "Action entropy on the input-level targets",
+            input_grid(panels),
+            placement="tbp",
         ),
     )
 
@@ -1050,6 +1351,10 @@ def tab_campaign(root: Path, cache: Path, arms: dict):
     lines = []
     split_arms = []
     for (target, label), runs in sorted(arms.items()):
+        # The input-level runs record no coverage probe, so every column this
+        # table is built around would be empty for them.
+        if target not in TARGETS:
+            continue
         summaries = [load_summary(cache, run) for run in runs]
         summaries = [s for s in summaries if s]
         if not summaries:
@@ -1095,7 +1400,9 @@ def tab_campaign(root: Path, cache: Path, arms: dict):
     )
     body = f"""\\begin{{table}}[tbp]
   \\centering
-  \\caption[Campaign inventory]{{Every run behind \\cref{{chap:results}}. Coverage is the
+  \\caption[Campaign inventory]{{Every corpus-action run behind \\cref{{chap:results}};
+    the two input-action targets are single runs and are inventoried in
+    \\cref{{sec:results-input-actions}}. Coverage is the
     median over the 128 environments at the end of training; the range spans the seeds.
     Wall-clock is the mean per run. An iteration count given as a range means the arm
     holds runs that stopped short. The three campaigns were built from different
@@ -1115,49 +1422,171 @@ def tab_campaign(root: Path, cache: Path, arms: dict):
     return write_tex(root, "tab-campaign-inventory", body)
 
 
+CONTROL_ARM = "CTRL-RAND"
+DEEP_SEED_PERCENTILE = 0.99
+
+
+def _histogram(rows: list[dict]) -> dict[int, int]:
+    return {int(float(r["score"])): int(float(r["episodes"])) for r in rows}
+
+
+def _rate_above(hist: dict[int, int], threshold: int) -> float:
+    total = sum(hist.values())
+    return 100.0 * sum(n for s, n in hist.items() if s >= threshold) / total if total else 0.0
+
+
+def tab_deep_seed(root: Path, cache: Path, arms: dict):
+    """The campaign's registered primary metric, recomputed from the databases.
+
+    The fraction of episodes whose best seed clears the 99th percentile of the
+    pooled control distribution. The threshold is derived once, from all four
+    control runs pooled, and every arm is then scored against that one number
+    -- scoring each arm against its own distribution would compare each arm to
+    itself.
+
+    Only cjson has a random control, so the metric exists for cjson alone; the
+    other two campaigns have no floor to measure against.
+    """
+    control = [
+        _histogram(load(cache, run, "episode_scores"))
+        for (target, label), group in arms.items()
+        if target == "cjson" and label == CONTROL_ARM
+        for run in group
+    ]
+    control = [h for h in control if h]
+    if not control:
+        return None
+
+    pooled: dict[int, int] = defaultdict(int)
+    for hist in control:
+        for score, count in hist.items():
+            pooled[score] += count
+    total = sum(pooled.values())
+    # The percentile of the pooled sample, by the same nearest-rank convention
+    # the rest of the pipeline uses for quantiles.
+    wanted = int(round(DEEP_SEED_PERCENTILE * (total - 1)))
+    seen = 0
+    threshold = min(pooled)
+    for score in sorted(pooled):
+        seen += pooled[score]
+        if seen > wanted:
+            threshold = score
+            break
+
+    lines = []
+    for (target, label), group in sorted(arms.items()):
+        if target != "cjson":
+            continue
+        rates = [
+            _rate_above(hist, threshold)
+            for hist in (_histogram(load(cache, run, "episode_scores")) for run in group)
+            if hist
+        ]
+        if not rates:
+            continue
+        cells = [f"{r:.2f}" for r in rates] + [""] * (4 - len(rates))
+        lines.append(
+            f"\\texttt{{{label}}} & " + " & ".join(cells)
+            + f" & \\textbf{{{sum(rates) / len(rates):.2f}}} \\\\"
+        )
+
+    body = f"""\\begin{{table}}[tbp]
+  \\centering
+  \\caption[Deep-seed rate on cJSON]{{The campaign's registered primary metric on cJSON:
+    the percentage of episodes whose best seed reaches the 99th percentile of the pooled
+    \\texttt{{{CONTROL_ARM}}} distribution. That percentile is computed once over all
+    \\num{{{total}}} control episodes, giving a threshold of \\num{{{threshold}}} covered blocks,
+    and every arm is scored against it. The control sits at its own definition; every trained arm
+    clears it by roughly two orders of magnitude, and no trained arm is separated from
+    another. Only cJSON has a random control, so the metric exists for cJSON alone.}}
+  \\label{{tab:deep-seed}}
+  \\footnotesize
+  \\begin{{tabular}}{{@{{}}lrrrrr@{{}}}}
+    \\toprule
+    Arm & s00 & s01 & s02 & s03 & Mean \\\\
+    \\midrule
+{chr(10).join('    ' + line for line in lines)}
+    \\bottomrule
+  \\end{{tabular}}
+\\end{{table}}
+"""
+    return write_tex(root, "tab-deep-seed", body)
+
+
+# Seeds are 16 bytes on cJSON and 32 on the other two, so 32 characters shows
+# every input in full rather than a prefix of one.
+BEST_INPUT_CHARS = 32
+
+
+# Escaped one character at a time rather than by successive str.replace: the
+# replacements themselves contain braces and backslashes, so a sequential pass
+# escapes its own output and turns a single backslash into
+# `\textbackslash\{\}`.
+_LATEX_ESCAPES = {
+    "\\": r"\textbackslash{}", "&": r"\&", "%": r"\%", "$": r"\$",
+    "#": r"\#", "_": r"\_", "{": r"\{", "}": r"\}",
+    "^": r"\textasciicircum{}", "~": r"\textasciitilde{}",
+}
+
+
+def latex_escape(text: str) -> str:
+    """Escapes a recovered input for typesetting inside \\texttt."""
+    return "".join(_LATEX_ESCAPES.get(char, char) for char in text)
+
+
 def tab_best_inputs(root: Path, cache: Path, arms: dict):
-    """The highest-coverage input each target produced."""
+    """The highest-coverage input each PRG seed produced, per target.
+
+    One row per seed rather than one per target. A single row shows what the
+    best run converged on; four independent rows show whether the seeds
+    converged on the *same* structure, which is the stronger claim and the one
+    the structural-rate figures make over training. On cJSON the seeds are
+    pooled across all fifteen arms, so the arm that produced each row is named
+    -- the row is the best that PRG seed achieved anywhere in the campaign, not
+    the best of a fixed arm.
+    """
     lines = []
     for target, display in TARGETS.items():
-        best = None
+        by_seed: dict[int, tuple[float, str, str, str]] = {}
         for (t, label), runs in sorted(arms.items()):
             if t != target:
                 continue
             for run in runs:
-                summary = load_summary(cache, run)
-                score = summary.get("best_input_score")
-                if score and (best is None or score > best[0]):
-                    best = (score, summary.get("best_input_ascii", ""), run.run_id)
-        if best is None:
+                rows = load(cache, run, "best_inputs")
+                if not rows:
+                    continue
+                # The extractor already ranks a run's inputs by score and then
+                # by the executions they cost, so the first row is that run's
+                # best under a tie-break that is recorded rather than incidental.
+                top = rows[0]
+                score = num(top, "coverage_score", 0.0)
+                current = by_seed.get(run.seed)
+                if current is None or score > current[0]:
+                    by_seed[run.seed] = (score, label, top.get("seed_ascii", ""), top.get("source", ""))
+        if not by_seed:
             continue
-        score, text, run_id = best
-        escaped = (
-            text[:48]
-            .replace("\\", r"\textbackslash{}")
-            .replace("&", r"\&")
-            .replace("%", r"\%")
-            .replace("$", r"\$")
-            .replace("#", r"\#")
-            .replace("_", r"\_")
-            .replace("{", r"\{")
-            .replace("}", r"\}")
-            .replace("^", r"\textasciicircum{}")
-            .replace("~", r"\textasciitilde{}")
-        )
-        lines.append(
-            f"{display} & \\texttt{{{run_id}}} & {score:.0f} & \\texttt{{{escaped}}} \\\\"
-        )
+        if lines:
+            lines.append(r"\addlinespace")
+        for position, seed in enumerate(sorted(by_seed)):
+            score, label, text, _ = by_seed[seed]
+            lines.append(
+                f"{display if position == 0 else ''} & {seed} & \\texttt{{{latex_escape(label)}}}"
+                f" & {score:.0f} & \\texttt{{{latex_escape(text[:BEST_INPUT_CHARS])}}} \\\\"
+            )
     body = f"""\\begin{{table}}[tbp]
   \\centering
-  \\caption[Highest-coverage inputs]{{The highest-coverage input produced by each target,
-    rendered with non-printable bytes as dots. These are the inputs behind the coverage
-    numbers of \\cref{{fig:coverage-executions}}, and they show what the agent converged on:
-    deeply nested structure in the two structured grammars.}}
+  \\caption[Highest-coverage inputs]{{The highest-coverage input each PRG seed produced,
+    rendered with non-printable bytes as dots. On cJSON the seed is taken across all fifteen
+    arms and the arm that produced it is named; the other two campaigns have one arm each.
+    All four cJSON seeds converge on a nested array and all four libxml2 seeds on nested tags,
+    neither of which was described to the agent in any form, while picohttpparser shows no
+    such agreement. These are the inputs behind the coverage numbers of
+    \\cref{{fig:coverage-executions}}.}}
   \\label{{tab:best-inputs}}
   \\footnotesize
-  \\begin{{tabular}}{{@{{}}llrl@{{}}}}
+  \\begin{{tabular}}{{@{{}}lllrl@{{}}}}
     \\toprule
-    Target & Run & Blocks & Input (first 48 bytes) \\\\
+    Target & Seed & Arm & Blocks & Input \\\\
     \\midrule
 {chr(10).join('    ' + line for line in lines)}
     \\bottomrule
@@ -1177,6 +1606,9 @@ FIGURES = {
         root, cache, arms, "wall_ms", "coverage-wallclock", "wall-clock hours",
         scale=1 / 3.6e6, caption_axis="wall-clock time",
     ),
+    "input-learning": fig_input_learning,
+    "input-losses": fig_input_losses,
+    "input-entropy": fig_input_entropy,
     "structural-rate": fig_structural,
     "structural-decay": fig_structural_decay,
     "return": fig_return,
@@ -1189,6 +1621,7 @@ FIGURES = {
     "tree-depth": fig_tree,
     "buffer-reward-density": fig_buffer,
     "tab-campaign-inventory": tab_campaign,
+    "tab-deep-seed": tab_deep_seed,
     "tab-best-inputs": tab_best_inputs,
 }
 

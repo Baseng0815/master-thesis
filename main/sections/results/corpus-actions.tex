@@ -2,37 +2,138 @@
 
 \section{Corpus-Level Action Spaces}\label{sec:results-corpus-actions}
 
-We will describe the results for the corpus-action targets in detail since they
-closely relate to the goal of applying RL to \gls{cgf}.
+All corpus-action targets improve over time.
+Each target is run under 4 different seeds and steps 128 environments in parallel.
+The achieved union coverage is reported against actual guest executions as well
+as wall-clock time.
+A tabular summary can be found in~\cref{tab:campaign-inventory}.
 
-% The figures below are cited from \cref{chap:discussion} and are included here so
-% those references resolve; the prose that reads them is still to be written.
 \input{figures/generated/tab-campaign-inventory}
 \input{figures/generated/coverage-executions}
 \input{figures/generated/coverage-wallclock}
 \input{figures/generated/saturation}
 \input{figures/generated/tab-best-inputs}
 
-\subsection{cJSON}
+\subsection{cJSON}\label{sec:results-cjson}
 
-cJSON is the first corpus action target we ran.
-To calibrate further runs, we in turn decided to do an ablation study for various parameters.
+cJSON is the only target we run together with a random control.
+The trained agent beats the random control decisively.
+Starting from a bootstrap corpus covering \num{240} blocks, the random control reaches a
+median of \num{542} covered blocks and the frozen baseline \num{645}, while the best-performing
+arm reaches \num{958}~(\cref{fig:ablation-strip}).
 
-\todo{describe figures}
+\input{figures/generated/ablation-strip}
 
-\subsection{libxml2}
+The primary metric for this campaign measures the fraction of episodes whose
+best seed reaches the 99th percentile of the random control and is provided in~\cref{tab:deep-seed}.
+The baseline sits at \SI{76.66}{\percent} while the random control sits at \SI{1.08}{\percent}, about 71 times less.
+Across the fourteen trained arms, the same metric spans \SI{68.68}{\percent} to
+\SI{87.46}{\percent}.
 
-\todo{describe figures}
+\input{figures/generated/tab-deep-seed}
+\input{figures/generated/return}
 
-\subsection{picohttpparser}
-\todo{describe figures}
+The two constant-temperature arms are the two best in the campaign, \code{T25} at \num{958} blocks
+and \code{T15} at \num{936} against the scheduled baseline's \num{645}, and scaling the root
+Dirichlet concentration to the action space adds a smaller amount, \code{ALPHA004} reaching
+\num{876}.
+We conclude that sufficient exploration is crucial for fuzzing performance, and that the
+default temperature schedule provided by EfficientZero~\cite{ye_mastering_2021} is
+not appropriate in this setting.
 
-\subsection{Structure, Collapse and Degradation}
+Halving and quartering the number of \gls{mcts} simulations changes coverage by less than the
+seed spread within an arm: \num{687} blocks at 50 simulations, \num{640} at 100 and \num{645}
+at 200.
+Wall-clock time scales close to linearly with the number of \gls{mcts} simulations.
+This shows that planning at 100 or even 50 steps does not decrease performance
+compared to the baseline of 200 steps.
+It is an open question whether this is a general limit of planning-based fuzzing,
+or an artefact of the PUTs being too small.
 
-\todo{describe figures}
+Disabling the depth-record reward term leaves \code{W0} at \num{641} blocks, and it is the arm
+whose structural byte rate decays furthest, ending at \num{0.214}.
+
+The models of size \code{FULL} as well as \code{SMALL} perform better than the baseline, albeit
+not significantly.
+We expect a larger PUT with richer structure to benefit more from a large model.
+\code{EDGE} coverage also performs slightly better than the baseline block coverage.
+
+The highest-coverage input any cJSON run produced covers \num{831}
+blocks~(\cref{tab:best-inputs}).
+It is \code{[[[[[2,[[[[[1\ldots}, which is nesting the agent was never told about.
+All four PRG seeds arrive at the same shape --- a run of opening brackets, a digit, a comma and
+more brackets --- and they do so from three different arms, so the motif is a property of the
+target and the reward rather than of one lucky run.
+
+\subsection{libxml2}\label{sec:results-libxml2}
+
+We run a single four-seed arm for libxml2 for 400 iterations and \num{3328128} guest executions in \SI{42.1}{\hour}.
+Coverage rises from a bootstrap level of \num{1416} blocks to a median of \num{5281}, spanning
+\num{5085} to \num{5419} across seeds.
+The structural byte rate rises from a chance level of \num{0.054} to a peak of \num{0.725} at
+\SI{31}{\percent} of the budget.
+The highest-coverage input nests tags to a depth comparable with the cJSON result, at \num{4382}
+blocks.
+
+\subsection{picohttpparser}\label{sec:results-picohttpparser}
+
+picohttpparser learns as much structure as the other two and gains almost no coverage for it.
+It runs the same budget as libxml2, 400 iterations and \num{3328128} executions in
+\SI{40.7}{\hour}, and ends at a median of \num{81} covered blocks from a bootstrap level of
+\num{26}.
+The seed-to-seed range is a single block, \num{80} to \num{81}.
+Coverage reaches \SI{90}{\percent} of its final level within the first quarter of the budget and
+adds nothing in the final quarter~(\cref{fig:saturation}).
+
+The structural byte rate tells a different story from the coverage curve.
+It rises from a chance level of \num{0.030} to a peak of \num{0.732}, the same magnitude of rise
+as on the other two targets, and it peaks earlier than either, at \SI{11}{\percent} of the budget.
+The agent produces better-formed requests throughout; the target does not pay for them.
+As with libxml2 there is no random control, and the four seeds again split across two
+revisions.
+
+\subsection{Structure, Collapse and Degradation}\label{sec:results-degradation}
+
+The structural byte rate peaks before the end of training on all three targets and finishes below
+its peak on each~(\cref{fig:structural-decay}).
+It runs from \num{0.088} through a peak of \num{0.904} to \num{0.801} on cJSON, from \num{0.054}
+through \num{0.725} to \num{0.548} on libxml2, and from \num{0.030} through \num{0.732} to
+\num{0.358} on picohttpparser.
+The peak arrives at \SI{24}{\percent}, \SI{31}{\percent} and \SI{11}{\percent} of the respective
+budgets, so on every target the agent spends most of its run below the structural rate it had
+already reached.
 
 \input{figures/generated/structural-rate}
 \input{figures/generated/structural-decay}
+
+The policy narrows over the same period.
+Per-position \gls{mcts} visit entropy falls from about \num{2.4} nats to between \num{0.08} and
+\num{0.68} on cJSON, from \num{2.7} to between \num{0.37} and \num{0.73} on libxml2 and from
+\num{2.1} to between \num{0.41} and \num{0.55} on picohttpparser, and the positions narrow in
+order, earliest first~(\cref{fig:collapse-entropy}).
+The share of self-play plays taken by the single most-played action at a position rises
+correspondingly~(\cref{fig:depth-actions}).
+
 \input{figures/generated/collapse-entropy}
+\input{figures/generated/depth-actions}
+
+Search contributes less as training proceeds.
+The mean divergence between the network's policy prior and the \gls{mcts} visit distribution at
+the root falls from \num{0.99} to \num{0.28} nats on cJSON, from \num{4.16} to \num{0.59} on
+libxml2 and from \num{4.16} to \num{0.44} on picohttpparser~(\cref{fig:policy-improvement}).
+On cJSON the prior's own entropy falls from \num{5.55} to \num{0.79} nats over the same run, so
+the prior search is correcting is itself an increasingly narrow one.
+
 \input{figures/generated/policy-improvement}
+
+Reward starvation does not accompany any of this.
+Novelty is scored against the corpus union of the current episode, which is re-bootstrapped at
+every reset, so a block found in one episode pays again in the next and the signal does not thin
+out as run-level coverage saturates.
+The share of replay-buffer transitions carrying a non-zero reward rises over training on all three
+targets, from \num{0.012} to \num{0.147} on cJSON and from \num{0.004} to \num{0.104} on
+picohttpparser~(\cref{fig:buffer-reward-density}).
+libxml2 is the only target that turns over at all, peaking at \num{0.201} at iteration 327 and
+ending at \num{0.188}.
+
 \input{figures/generated/buffer-reward-density}

@@ -74,3 +74,17 @@ $T$ & Temperature of the visit-count policy \\
 $L$ & Width of the latent state \\
 $\chi$ & Scaling transform between a scalar target and its categorical support \\
 \end{tabular}
+
+\addsec*{Training batches}
+
+\begin{tabular}{p{2.5cm} p{11cm}}
+$N$, $K$ & Batch size and number of unroll steps; a batch covers $(K+1)N$ positions \\
+$b$, $k$ & Index of a sample within a batch and of a step within its unroll \\
+$\tau_b$, $t_b$ & Trajectory sample $b$ was drawn from and the offset its unroll starts at \\
+$n_b$ & Bootstrap horizon of sample $b$ after the off-policy correction \\
+$w_b$ & Importance-sampling weight of sample $b$ \\
+$m^k_b$, $m^{v,k}_b$ & In-range mask and its extension to absorbing positions \\
+$\pi^k_b$, $z^k_b$, $x^k_b$ & Policy, value and value-prefix target at position $(b,k)$ \\
+$\phi_v$, $\phi_x$ & Two-hot encoding onto the value and the value-prefix support \\
+$\lambda_p$, $\lambda_v$, $\lambda_x$, $\lambda_c$ & Coefficients of the four loss terms \\
+\end{tabular}

@@ -115,6 +115,12 @@
 \newcommand{\projnet}{\mathit{proj}}
 \newcommand{\prednet}{\mathit{pred}}
 
+% ----- Math macros ----------------------------------------------------------
+% Indicator of a predicate, \ind{t < |\tau|}. Set as an upright bold one rather
+% than \mathbb{1}: the AMS blackboard font msbm carries no digits, and pulling
+% in bbm or dsfont for a single symbol would add a font to the document.
+\newcommand{\ind}[1]{\mathbf{1}\!\left[#1\right]}
+
 % ----- Draft aids -----------------------------------------------------------
 % Follows the draft switch set in preamble.tex: notes are shown while writing
 % and hidden in the final document. The margin this template leaves is a little

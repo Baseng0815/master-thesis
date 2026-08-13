@@ -28,7 +28,7 @@ import traceback
 from collections import defaultdict
 from pathlib import Path
 
-from eval_campaigns import Run, _connect
+from eval_campaigns import Run, _connect, _has_table
 
 # Time axes shared by every table.  `iteration` is populated only by the probes
 # that run once per learner iteration (action_rate, collapse_entropy,
@@ -101,6 +101,28 @@ def write_csv(path: Path, header: list[str], rows) -> int:
     return count
 
 
+def requires(*tables: str):
+    """Skips an extractor whose run does not carry the probe it reads.
+
+    Failure isolation already keeps a missing table from losing a run, but an
+    absent probe is not a failure and should not be reported as one: the two
+    input-level targets carry roughly half the probes the corpus runs do, and
+    an unguarded extractor would report ten errors for two healthy runs.
+    """
+
+    def decorate(extractor):
+        def guarded(run: Run, con: sqlite3.Connection, out: Path) -> int:
+            if not all(_has_table(con, table) for table in tables):
+                return 0
+            return extractor(run, con, out)
+
+        guarded.__name__ = extractor.__name__
+        guarded.__doc__ = extractor.__doc__
+        return guarded
+
+    return decorate
+
+
 def summarise(values: list[float]) -> list[float]:
     """min / q25 / median / q75 / max / mean of a non-empty sample.
 
@@ -123,6 +145,7 @@ def summarise(values: list[float]) -> list[float]:
 # --------------------------------------------------------------------------
 
 
+@requires("run_union")
 def x_coverage(run: Run, con: sqlite3.Connection, out: Path) -> int:
     """Union coverage and cumulative executions, aggregated over environments.
 
@@ -180,14 +203,17 @@ def x_coverage(run: Run, con: sqlite3.Connection, out: Path) -> int:
     return write_csv(out / "coverage.csv", header, rows)
 
 
+@requires("action_rate")
 def x_structural(run: Run, con: sqlite3.Connection, out: Path) -> int:
     """Rate at which self-play plays a byte from the target's grammar.
 
-    One series per target -- `json_bytes`, `xml_bytes`, `http_bytes` -- written
-    once per learner iteration.  The value at iteration 0 is the untrained
-    rate, which is the measured chance level and the within-run control this
-    metric is read against.
+    One series per target -- `json_bytes`, `xml_bytes`, `http_bytes`, and
+    `high_coverage` on high-and-low -- written once per learner iteration.  The
+    value at iteration 0 is the untrained rate, which is the measured chance
+    level and the within-run control this metric is read against.
     """
+    if not run.structural_series:
+        return 0
     rows = [
         [iteration, round(value, 5)]
         for iteration, value in con.execute(
@@ -198,18 +224,18 @@ def x_structural(run: Run, con: sqlite3.Connection, out: Path) -> int:
     return write_csv(out / "structural.csv", ["iteration", "rate"], rows)
 
 
-def x_return(run: Run, con: sqlite3.Connection, out: Path) -> int:
-    """Per-trajectory return, binned into iterations.
+def _trajectory_series(run: Run, con: sqlite3.Connection, out: Path, series: str, name: str) -> int:
+    """One per-trajectory series, binned into iterations.
 
     The table holds one row per finished trajectory -- 128 per iteration -- and
     carries no iteration column, so trajectories are chunked in `env_steps`
-    order.  The result is the reward curve, as a distribution rather than a
-    mean.
+    order.  The result is a curve given as a distribution rather than a mean.
     """
     values = [
         (env_steps, wall_ms, value)
         for env_steps, wall_ms, value in con.execute(
-            "SELECT env_steps, wall_ms, value FROM trajectory WHERE series = 'return' ORDER BY env_steps"
+            "SELECT env_steps, wall_ms, value FROM trajectory WHERE series = ? ORDER BY env_steps",
+            (series,),
         )
     ]
     if not values or run.iterations == 0:
@@ -229,8 +255,24 @@ def x_return(run: Run, con: sqlite3.Connection, out: Path) -> int:
                 *[round(v, 4) for v in summarise([v for _, _, v in chunk])],
             ]
         )
-    header = ["iteration", "env_steps", "wall_ms", *[f"return_{n}" for n in QUANTILE_HEADER]]
-    return write_csv(out / "return.csv", header, rows)
+    header = ["iteration", "env_steps", "wall_ms", *[f"{series}_{n}" for n in QUANTILE_HEADER]]
+    return write_csv(out / f"{name}.csv", header, rows)
+
+
+def x_return(run: Run, con: sqlite3.Connection, out: Path) -> int:
+    """Per-trajectory return, the quantity the agent optimises."""
+    return _trajectory_series(run, con, out, "return", "return")
+
+
+def x_length(run: Run, con: sqlite3.Connection, out: Path) -> int:
+    """Per-trajectory length, binned into iterations.
+
+    Interesting only where an episode can end early.  On the sequence target it
+    is the result rather than a diagnostic: the program exits on the first byte
+    that deviates from the passcode, so the length of a trajectory is exactly
+    the number of passcode bytes the agent got right.
+    """
+    return _trajectory_series(run, con, out, "length", "length")
 
 
 def x_loss(run: Run, con: sqlite3.Connection, out: Path) -> int:
@@ -290,6 +332,28 @@ def _pivot_by_iteration(
     return write_csv(out / f"{name}.csv", ["iteration", *series], rows)
 
 
+@requires("seed")
+def x_episode_scores(run: Run, con: sqlite3.Connection, out: Path) -> int:
+    """Histogram of the best seed score each episode reached.
+
+    `seed` holds one row per finished episode, carrying that episode's best
+    seed. The campaign's registered primary metric is the fraction of episodes
+    clearing the 99th percentile of the pooled control distribution, and that
+    threshold is not known until every control run has been read -- so this
+    keeps the full distribution rather than a rate against a fixed cut.
+
+    A histogram rather than the raw scores because the scores are integer block
+    counts in the low hundreds: at most a few hundred rows per run instead of
+    25,600, and exact, so any percentile or threshold can be recovered from it
+    later without approximation.
+    """
+    rows = list(
+        con.execute("SELECT coverage_score, COUNT(*) FROM seed GROUP BY coverage_score ORDER BY 1")
+    )
+    return write_csv(out / "episode_scores.csv", ["score", "episodes"], rows)
+
+
+@requires("policy_improvement")
 def x_improvement(run: Run, con: sqlite3.Connection, out: Path) -> int:
     """What search contributes over the raw policy prior.
 
@@ -350,6 +414,7 @@ def x_reanalyzed(run: Run, con: sqlite3.Connection, out: Path) -> int:
     )
 
 
+@requires("collapse_entropy")
 def x_collapse(run: Run, con: sqlite3.Connection, out: Path) -> int:
     """MCTS visit-count entropy per episode-step position, over training.
 
@@ -368,6 +433,7 @@ def x_collapse(run: Run, con: sqlite3.Connection, out: Path) -> int:
     return write_csv(out / "collapse.csv", ["iteration", "position", "entropy"], rows)
 
 
+@requires("depth_action_counts")
 def x_depth_actions(run: Run, con: sqlite3.Connection, out: Path) -> int:
     """The most-played action at each position, and the mass it holds.
 
@@ -394,6 +460,7 @@ def x_depth_actions(run: Run, con: sqlite3.Connection, out: Path) -> int:
     return write_csv(out / "depth_actions.csv", header, rows)
 
 
+@requires("action_tree_nodes")
 def x_tree(run: Run, con: sqlite3.Connection, out: Path) -> int:
     """Growth of the action-execution trie, by depth and over time.
 
@@ -481,6 +548,8 @@ def x_best_inputs(run: Run, con: sqlite3.Connection, out: Path) -> int:
     report nothing meaningful -- which is why the source is recorded per row.
     """
     tables = {name for (name,) in con.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    if not tables & {"episode_best", "seed"}:
+        return 0  # the input-level runs record neither
     if "episode_best" in tables:
         query = """
             SELECT block_score, executions, seed_ascii, seed_hex
@@ -505,7 +574,9 @@ EXTRACTORS = {
     "coverage": x_coverage,
     "structural": x_structural,
     "return": x_return,
+    "length": x_length,
     "loss": x_loss,
+    "episode_scores": x_episode_scores,
     "improvement": x_improvement,
     "buffer": x_buffer,
     "sampled": x_sampled,
@@ -577,8 +648,15 @@ def summarise_run(run: Run, out: Path) -> dict:
 
     returns = _read_csv(out / "return.csv")
     if returns:
+        summary["return_initial_median"] = float(returns[0]["return_median"])
         summary["return_final_median"] = float(returns[-1]["return_median"])
         summary["return_max"] = max(float(row["return_max"]) for row in returns)
+
+    lengths = _read_csv(out / "length.csv")
+    if lengths:
+        summary["length_initial_median"] = float(lengths[0]["length_median"])
+        summary["length_final_median"] = float(lengths[-1]["length_median"])
+        summary["length_max"] = max(float(row["length_max"]) for row in lengths)
 
     best = _read_csv(out / "best_inputs.csv")
     if best:
