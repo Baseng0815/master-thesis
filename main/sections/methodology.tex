@@ -31,7 +31,7 @@ We run our experiments on devices that all have access to NVIDIA GPUs and theref
 the CUDA backend.
 Experiments were run on two VMs with an Intel(R) Xeon(R) Gold 5418Y processor as
 well as an NVIDIA L40S and 500 GiB of RAM.
-This allows to run about two to four experiments of a campaign at once.
+This allows us to run about two to four experiments of a campaign at once.
 The exact version of libraries used is saved in the corresponding repository's
 \code{Cargo.lock} file.
 
@@ -40,7 +40,7 @@ The exact version of libraries used is saved in the corresponding repository's
 There are many possible parameters to tune in this work.
 We decide to mostly adopt the default EfficientZero parameters without any further studies
 since the authors have already done a detailed investigation and found these to be good.
-Two things we change is the temperature schedule $T:\mathbb{N}\rightarrow\mathbb{R}$ as well as
+Two things we change are the temperature schedule $T:\mathbb{N}\rightarrow\mathbb{R}$ as well as
 the root Dirichlet noise of \cref{eq:ez-dirichlet}, both its concentration $\xi$ and the fraction
 $\rho$ it is mixed into the priors with, since we found fuzzing with large action spaces to require
 more exploration.

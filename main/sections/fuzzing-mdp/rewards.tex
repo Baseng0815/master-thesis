@@ -16,9 +16,9 @@ We do not use the hit counts directly, but rather map them to an \gls{afl}-style
 and a \emph{coverage score} is derived from the hit count levels by summing over all buckets
 $\sigma(c)=\sum_i\ell(c_i)$ of an execution $c\in\mathcal{C}$.
 At 4096 buckets and $\ell_{\max}=8$, a single execution scores between 0 and 32768.
-Compressing the raw counts into exponentially spaced buckets make the coverage score less sensitive
-to the exact hit count and allows to represent a wider range of hit counts in
-comparison with linear bucketing.
+Compressing the raw counts into exponentially spaced buckets makes the coverage score less sensitive
+to the exact hit count and represents a wider range of hit counts than linear
+bucketing does.
 
 \subsection{Input-level actions}
 
@@ -26,7 +26,7 @@ In the input-level actions setting, the fuzzer executes single inputs and keeps 
 Rewards are designed in a simple and straightforward manner that serves the purpose of the target.
 For example, the sequence (\cref{sec:target-sequence}) example receives a fixed liveliness reward for
 each step it keeps the environment alive, as well as a final coverage reward at the end that
-includes additional bonus coverage if the password was found.
+includes additional bonus reward if the password is found.
 The high-and-low (\cref{sec:target-high-and-low}) example is awarded the raw sum of block hit counts.
 
 \subsection{Corpus-level actions}
@@ -41,20 +41,20 @@ beats a random baseline, while the variant built on coverage history does not.
 
 The memoryless variant can be interpreted as steering the seed mutation towards high-coverage
 regions.
-A problem is mutations producing the same high-coverage seed over and over again.
-Paying out the same high-coverage reward for seeds that already reach a high coverage
+The problem is that mutations produce the same high-coverage seed repeatedly.
+Paying out the same high-coverage reward for seeds that already reach high coverage
 discourages exploration into new regions.
 
 We solve this problem by introducing a marginal reward.
-By keeping track of a union of all coverage seen during an episode, we can
-subtract this union from a new coverage to get a marginal coverage.
+By keeping track of the union of all coverage seen during an episode, we can
+subtract this union from a new coverage map to get the marginal coverage.
 This contains only newly found coverage and thus encourages exploration into yet underexplored regions.
 A disadvantage of marginal coverage is its time dependency.
 A seed that achieves new coverage early in the episode when the coverage union is still sparse
 achieves a higher marginal reward than the same seed later on in the run, even though
 the later seed might produce a new coverage high score.
 We therefore include a depth term that rewards executions with a coverage score
-larger than any previous execution.
+larger than that of any previous execution.
 
 An episode maintains two running coverage maxima over its executions: the
 \emph{union coverage} and the \emph{depth record}.
@@ -72,11 +72,11 @@ that improve on the previous executions with the highest coverage score.
   \;+\;\omega\bigl(\sigma(c_t)-d_t\bigr)_+\right],
 \end{equation*}
 
-where $\omega$ is a parameter that adjusts the weight between exploration breadth
-versus depth and $\lambda$ rescales the reward to better fit the value support.
+where $\omega$ is a parameter that adjusts the weight of exploration depth against
+breadth, and $\lambda$ rescales the reward to better fit the value support.
 For the default choice of $\omega=1$, we end up with a reward signal that
 values an execution that reaches exactly one level deeper in a single bucket
-than the union of all previous executions equally to an execution that reaches
-exactly one level deeper than the best previous execution.
+than the union of all previous executions and an execution that reaches
+exactly one level deeper than the best previous execution equally.
 For $\omega=0$, the depth term disappears and the reward collapses to a pure measure
 of marginal novelty, i.e., of how much a new seed improves on the union of all previously attained coverage.

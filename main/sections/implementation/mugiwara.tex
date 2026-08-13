@@ -23,10 +23,10 @@ The hook receives the block address and passes it to a \code{BlockHitTracker},
 which hashes it, folds the hash into one of 4096 buckets and increments that bucket's counter,
 similar to AFL++.
 
-The bucket count trades memory against collisions and is target-dependant.
+The bucket count trades memory against collisions and is target-dependent.
 Usually, it is calibrated once manually before starting a larger fuzzing campaign,
 since all buffer sizes need to be known beforehand.
-For example, cjson (\cref{sec:target-cjson} hits 495 unique blocks on startup, so a bucket
+For example, cJSON (\cref{sec:target-cjson}) hits 495 unique blocks on startup, so a bucket
 size of 512 would lead to almost every block hit colliding with another one, distorting
 the observation and derived reward signal.
 Coverage numbers are therefore only comparable between runs at the same bucket count.
@@ -35,7 +35,7 @@ The tracker counts either blocks or edges.
 Block granularity counts basic block hits, while edge granularity counts
 transitions between consecutive blocks like \acrshort{afl}, by hashing the
 blocks $h_\text{cur}\oplus(h_\text{prev}\gg 1)$, so that for any two basic
-blocks $A$ and $B$,, $A\rightarrow B$ and $B\rightarrow A$ land in different
+blocks $A$ and $B$, $A\rightarrow B$ and $B\rightarrow A$ land in different
 buckets and can therefore be differentiated.
 
 Block hits are then converted to a reward according to~\cref{sec:mdp-rewards}.
@@ -59,7 +59,7 @@ as well as the retain-or-discard decision.
 Since actions are represented as categorical variables, a single seed of length $n=16$
 has an associated action space of size $2\times 16\times 256=8192$ which is too large
 for \gls{mcts} with a few hundred rollout iterations.
-We therefore split a single environment step artifically into two steps, where the
+We therefore split a single environment step artificially into two steps, where the
 action of the first step decides on whether to retain or discard the previous seed as well
 as on the mutation position, while the second step decides on the value of the mutation.
 The emulator is only run every second step, while the first step returns an empty
@@ -128,7 +128,7 @@ fn execute(&mut self, seed: &Seed) -> Coverage {
 
 \subsection{Probes}\label{sec:impl-probes}
 
-A probe in this context is a set of hooks (~\cref{hooks} that collect different
+A probe in this context is a set of hooks (\cref{hooks}) that collect different
 kinds of information during execution.
 Adding a diagnostic is therefore a matter of attaching a new probe at startup.
 
@@ -217,7 +217,7 @@ Using an iteration bound instead of a wall-clock time bound also allows comparis
 across different hardware.
 
 Parallel execution of evaluations is constrained by the hardware, usually the memory.
-This can either be an insufficient amount of RAM to hold multiple replay buffers with
-the desired capacity, or an insufficient amount of VRAM to store all Tensors at once.
+This can either be too little RAM to hold multiple replay buffers with
+the desired capacity, or too little VRAM to store all tensors at once.
 Actual GPU compute is also a bottleneck, but only slows down parallel runs and does
 not cause them to be killed.

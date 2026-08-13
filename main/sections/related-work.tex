@@ -2,23 +2,23 @@
 
 \chapter{Related Work}\label{chap:related-work}
 
-Fuzzing is a sequential decision making problem under certainty over a large search space
+Fuzzing is a sequential decision-making problem under uncertainty over a large search space
 with a scalar progress signal.
 This makes it amenable to solving it through reinforcement learning methods.
 We will introduce and classify selected prior works in this area.
 
 \textcite{wang_systematic_2020} classify ML-based fuzzers into five categories according
 to the problems they solve.
-In addition, it divides each fuzzer into what learning algorithm it uses.
+They further group the fuzzers by the learning algorithm each uses.
 These are broadly divided into traditional machine learning, deep learning, and reinforcement learning.
-Reinforcement learning-based fuzzers they survey for each fuzzing step are shown in~\cref{tab:rw-rl-fuzzers}.
+The reinforcement-learning-based fuzzers that they survey for each fuzzing step are shown in \cref{tab:rw-rl-fuzzers}.
 
 \input{figures/rw-rl-fuzzers}
 
-\section{Modelling fuzzing as a Markov decision process}\label{sec:rw-mdp-formulations}
+\section{Modeling Fuzzing as a Markov Decision Process}\label{sec:rw-mdp-formulations}
 
-For the six of the seven papers that use a form of Q-Learning or SARSA, we
-outline how they model their corresponding problem as an \gls{mdp} and
+For six of the seven papers that use a form of Q-learning or SARSA, we
+outline how they model their problem as an \gls{mdp} and
 summarize the state, action and reward design.
 
 \begin{description}[style=nextline, leftmargin=0pt, labelindent=0pt, labelwidth=0pt]
@@ -31,7 +31,7 @@ summarize the state, action and reward design.
         avoiding the state explosion problem.
         Three strategies mutate the content of a message (delete a field, insert a
         field, modify a field value) and three mutate the message order within a
-        session (insert, repeat, or drop a message according to the behavioural
+        session (insert, repeat, or drop a message according to the behavioral
         model).
 
       \item \textbf{Action.}
@@ -43,13 +43,13 @@ summarize the state, action and reward design.
           r(q_t) = r_{\text{trace}}(q_t) + r_{\text{deb}}(q_t) + r_{\text{mon}}(q_t),
         \]
 
-        where $r_{\text{trace}}$  depends on the entropy of a message and
-        amount of function calls, $r_{\text{deb}}$ depends on whether
+        where $r_{\text{trace}}$ depends on the entropy of a message and the
+        number of function calls, $r_{\text{deb}}$ depends on whether
         an error was seen, and $r_{\text{mon}}$ depends on whether a corrupted
-        or delayed messages was monitored.
+        or delayed message was monitored.
     \end{itemize}
-    The paper only provides a design and no working proof of concept and therefore
-    no evaluation and empirical studies.
+    The paper provides only a design; there is no implementation and therefore
+    no empirical evaluation.
 
   \item[Böttinger et al.\ (2018)~\cite{bottinger_deep_2018}]
     They provided the first formulation of fuzzing as an \gls{mdp} and applied \gls{dqn}
@@ -62,8 +62,8 @@ summarize the state, action and reward design.
         They define the state space to be equal to the program input space $\mathcal{S}=\mathcal{I}=\Sigma^*$.
 
       \item \textbf{Action.}
-        Actions are random variables mapping inputs to probabilistic rewriting rules.
-        The implemented rules contain random bit flips, dictionary token insertion,
+        Actions are random variables mapping substrings of an input to probabilistic rewriting rules.
+        The implemented rules include random bit flips, dictionary token insertion,
         input shifting, shuffling, and copying.
 
       \item \textbf{Reward.}
@@ -72,16 +72,16 @@ summarize the state, action and reward design.
           r(x, a) = E(x) + G(a),
         \]
 
-        where $E$ depends on runtime properties of an execution trace $x$ $G$
+        where $E$ depends on runtime properties of the generated input $x$ and $G$
         depends on the chosen action $a$. For $E$ they evaluate the number of
         newly discovered \glspl{bb}, the execution time, and the sum of both.
     \end{itemize}
-    They found that neither experience replay nor a persistent history of discovered \glspl{bb}
-    improve on a random baseline.
+    They find that neither experience replay nor a persistent history of discovered \glspl{bb}
+    improves on a random baseline.
 
   \item[Drozd and Wagner (2018)~\cite{drozd_fuzzergym_2018}]
-    FuzzerGym combines libFuzzer with OpenAI Gym, trained with deep double Q-learning and
-    prioritised replay (\cref{fig:rw-fuzzergym}).
+    FuzzerGym combines libFuzzer with OpenAI Gym and trains its agent with deep double
+    Q-learning and prioritized replay (\cref{fig:rw-fuzzergym}).
 
     \begin{itemize}
       \item \textbf{State.}
@@ -93,27 +93,27 @@ summarize the state, action and reward design.
         libFuzzer's thirteen mutation operators are selected as the action space.
 
       \item \textbf{Reward.}
-        Reward is modeled as newly unique line coverage:
+        Reward is modeled as newly covered unique lines:
         \[
           R_t = \mathit{cov}_t - \mathit{cov}_{t-1},
         \]
         where $\mathit{cov}_t$ denotes the number of unique lines covered at time $t$.
 
     \end{itemize}
-    To maintain the execution rate of libFuzzer of around \num{100000} executions per
+    To maintain libFuzzer's peak rate of around \num{100000} executions per
     second, the authors let the fuzzer loop over a fixed-size circular buffer
-    while new actions are only chosen every n'th fuzzing iteration, mirroring frame
+    while new actions are only chosen every $n$th fuzzing iteration, mirroring frame
     skipping in Atari environments.
-    The problem the agent solves is therefore a \gls{pomdp} for which the authors
+    The problem the agent solves is therefore a \gls{pomdp}, for which the authors
     employ an \gls{lstm}.
 
   \item[Fang and Yan (2018)~\cite{lopez_emulation-instrumented_2018}]
     LEFT (LTE-Oriented Emulation-Instrumented Fuzzing Testbed) is a fuzzer for the
-    4G/LTE protocol stack on Android devices uilizing a network emulator.
+    4G/LTE protocol stack on Android devices, driven through a network emulator.
 
     \begin{itemize}
       \item \textbf{State.}
-        States are modeled as message types which the protocol implementation switches on.
+        States are modeled as message types on which the protocol implementation switches.
 
       \item \textbf{Action.}
         An action is the switch branch the protocol dispatcher takes on an incoming message.
@@ -137,7 +137,7 @@ summarize the state, action and reward design.
 
     \begin{itemize}
       \item \textbf{State.}
-        Similar to~\textcite{bottinger_deep_2018}, states are program inputs
+        As in \textcite{bottinger_deep_2018}, states are program inputs
         $\mathcal{S}=\mathcal{I}=\Sigma^{*}$.
 
       \item \textbf{Action.}
@@ -157,7 +157,7 @@ summarize the state, action and reward design.
           R(p,I)=\frac{B(T_p)}{\cup_{\rho\in I} B(T_p)}
         \]
     \end{itemize}
-    They use an episodic framing instead of a continuous one like Böttinger.
+    Unlike \textcite{bottinger_deep_2018}, who fuzz continuously, they use an episodic framing.
 
   \item[Kuznetsov et al.\ (2019)~\cite{kuznetsov_automated_2019}]
     They provide a general architecture for applying deep RL to automated vulnerability
@@ -165,7 +165,7 @@ summarize the state, action and reward design.
 
     \begin{itemize}
       \item \textbf{State.}
-        The authors don't describe a specific state model, but stay general and
+        The authors do not describe a specific state model, but stay general and
         model \enquote{received data} as the state.
         This includes \enquote{program execution time, code coverage, code completion, etc.}.
 
@@ -175,8 +175,8 @@ summarize the state, action and reward design.
         lengthening and shortening strings, inserting integers or appending format specifiers.
 
       \item \textbf{Reward.}
-        A reward is granted when execution time of the mutated seed exceeds the
-        execution time of the previous seed or if a crash was encountered.
+        A reward is granted when the execution time of the mutated seed exceeds that
+        of the previous seed, or when a crash is encountered.
 
     \end{itemize}
     They evaluate their approach on synthetic targets.
@@ -184,7 +184,7 @@ summarize the state, action and reward design.
 \end{description}
 
 Most of the surveyed papers use a similar approach.
-They combine some form of Q-Learning with the program input as a state model
+They combine some form of Q-learning with the program input as a state model
 and an arbitrary list of mutations as actions.
 Whenever the state is not modeled by program inputs, it is instead modeled by
 handcrafted features.
@@ -195,14 +195,14 @@ This thesis aims to address these issues as follows:
     While the line of DQN has incorporated many improvements along the
     way~\cite{hessel_rainbow_2017}, the most impressive results have been
     achieved by some kind of MuZero~\cite{schrittwieser_mastering_2020}-style
-    architecture. We propose using EfficientZero~\cite{wang_efficientzero_2024}
+    architecture. We propose using EfficientZero~\cite{ye_mastering_2021}
     as the core RL algorithm for improved learning and sampling efficiency.
 
   \item \textbf{Coverage as the state model.}
     \Gls{cgf} makes use of program coverage mostly as a way to decide whether to keep
     or discard test cases.
     This throws away precious information.
-    We propose to include coverage information into the observations that the RL agent receives.
+    We propose to include coverage information in the observations that the RL agent receives.
     We expect this information to aid the agent in decision making and therefore improve fuzzing performance.
 
   \item \textbf{Generic mutations.}
@@ -214,7 +214,7 @@ This thesis aims to address these issues as follows:
     we plan to investigate empirically.
 
   \item \textbf{Generic reward signal.}
-    A big advantage of RL-based approaches is that they don't rely on binary decisions,
+    A big advantage of RL-based approaches is that they do not rely on binary decisions,
     but can flexibly shape the reward signal in a way that is conducive to the fuzzing goal.
     One could easily imagine a reward signal that includes promoting the execution of
     specific system calls or regions of code.

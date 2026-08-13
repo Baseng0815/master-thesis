@@ -19,7 +19,7 @@ network consists of convolutions, pooling stages, and residual blocks.
 
 This thesis does not make use of any image data.
 Observations are usually block hit counts as well as other heterogeneous data like current
-seed input, environment step phase, etc~(\cref{sec:mdp-states}).
+seed input and environment step phase~(\cref{sec:mdp-states}).
 In particular, we do not need to make use of translation invariance of convolutional networks
 which is necessary for image inputs.
 We therefore replace every convolution with a fully connected layer, and every convolutional
@@ -78,7 +78,7 @@ $B_x$ are the observation width, the action count and the two support sizes of
   \caption[Network bodies]{%
     The bodies of the seven networks.
     A superscript $\times 5$ repeats a block with its own parameters, daggers
-    mark a zero-initialized layers.
+    mark a zero-initialized layer.
     $\projnet$ and $\prednet$ are the projection and prediction heads of
     \cref{eq:ez-consistency}.
   }
@@ -131,7 +131,7 @@ from the hidden state it just produced, and its carry is zeroed every five steps
 
 \section{Hidden-Width Presets}\label{sec:app-ez-widths}
 
-The widths of the hidden layers in \cref{tab:app-ez-bodies} is set by one of three presets.
+The widths of the hidden layers in \cref{tab:app-ez-bodies} are set by one of three presets.
 \Cref{tab:app-ez-widths} lists them.
 \code{MEDIUM} is used as the baseline, while \code{SMALL} and \code{FULL} are used
 as arms in the cJSON ablation campaign~(\cref{tab:cjson-arms}).
@@ -345,7 +345,7 @@ The value targets are recomputed for every position of the batch as the $n$-step
 
 the value target of~\cref{eq:ez-value-target}.
 The bootstrap $\hat v$ is the value head of the current weights, decoded to a scalar with
-\cref{eq:app-scalar-transform-inverse}
+\cref{eq:app-scalar-transform-inverse}.
 Reading the value head directly halves the reanalyze search cost as compared
 to using the resulting \gls{mcts} root value, and the reference reports using the
 \gls{mcts} root value to be only a marginal improvement.

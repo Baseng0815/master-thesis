@@ -13,21 +13,21 @@ The execution environment is provided by \emph{MOGI}, an emulation framework tha
 provides deterministic execution capabilities, snapshotting, and cross-architecture emulation.
 We also provide a custom implementation of the EfficientZero algorithm in Rust.
 This has the advantage of not needing to rely on interfacing with the existing Python
-implementation which in general is very slow.
-It also allows to more flexibly include EfficientZero into the overall architecture.
-Third, we provide the actual fuzzer, \emph{mugiwara}, that implements the interface
+implementation, which in general is very slow.
+It also makes it easier to include EfficientZero in the overall architecture.
+Finally, we provide the actual fuzzer, \emph{mugiwara}, which implements the interface
 required by the EfficientZero learner and drives the execution of PUTs using MOGI.
 In addition, it contains utility functions that are shared between different PUTs
 like instrumentation and a model of a seed corpus.
 
 We chose to develop these three components separately to enable a clean architectural
 split.
-As a result, although MOGI was created for fuzzing, it is a general emulation framework
-that can serve many different purposes.
+Although MOGI was created for fuzzing, it is a general emulation framework
+that can serve other purposes.
 In addition, the EfficientZero algorithm requires the environment to
-only implement a minimal set of functions, making it applicable to
-fuzzing as well as general RL environments like the traditional Atari
-100K benchmark suite.
+implement only a minimal set of functions, making it applicable to
+fuzzing as well as general RL environments like the Atari
+100k benchmark suite.
 
 % TODO: Two things this section should state once the numbers are in:
 %   - the size of each layer (crates, and lines of code written for this thesis

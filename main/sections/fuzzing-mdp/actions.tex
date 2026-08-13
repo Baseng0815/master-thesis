@@ -2,7 +2,7 @@
 
 \section{Actions}\label{sec:mdp-actions}
 
-EfficientZero requires a discrete action space of tractable size, usually in the
+EfficientZero requires a discrete action space of tractable size, usually on the
 order of tens to hundreds of actions.
 In contrast to RL algorithms like Q-Learning that can deal well with probabilistic
 transitions, EfficientZero requires actions to have a deterministic effect to allow proper planning.
@@ -12,8 +12,8 @@ Designing a deterministic set of mutation operators is not easy since the effect
 of an action must be compatible with the observation model.
 
 Consider for example a seed $s$ that has been assigned a power of
-$4\leftarrow\textsc{AssignEnergy}(s)$ and where a
-mutation operator $m$ generated four new seeds $m(s,4)=\{s_0,s_1,s_2,s_3\}$.
+$4\leftarrow\textsc{AssignEnergy}(s)$ and on which a
+mutation operator $m$ generates four new seeds $m(s,4)=\{s_0,s_1,s_2,s_3\}$
 that must be reconciled into a single observation since the mutation operator is modeled
 as a single action, even if it generates multiple test cases.
 Reconciliation strategies and additional mutation operators are outlined in~\cref{chap:future-work}.
@@ -32,7 +32,7 @@ corpus-level actions.
 In general, we keep track of a seed corpus $\mathcal{S}$ that is evolved during an episode.
 A single action then decides three things: whether to retain the previous seed,
 which seed to select next, and how to mutate the current seed.
-In the simplified corpus setting, we only keep track of a single seed $s$ of fixed length $l$.
+In the simplified corpus setting, we keep track of only a single seed $s$ of fixed length $l$.
 Actions then represent a binary retain/discard decision, as well as mutations on $s$.
 Further, we include $s$ in the observations to allow the agent to base its decisions
 on the coverage as well as the input that produced this coverage.
@@ -41,12 +41,12 @@ chose to set the state space equal to the input space.
 We claim that keeping coverage information alongside the seed is advantageous.
 
 Classically, mutations are implemented by selecting a location and operation.
-We choose to keep the location selection, but replace the operator selection by
+We choose to keep the location selection, but replace the operator selection with
 the direct selection of a byte value to write to the selected location.
 This approach has two advantages.
 First, we rid ourselves of any probabilistic mutation operators.
 While these are usually an integral part of mutational fuzzers, their probabilistic
-nature is not suited well to MuZero-style architectures since they make planning more unpredictable.
+nature is ill-suited to MuZero-style architectures since it makes planning more unpredictable.
 Second, we do not need a handcrafted choice of mutation operators.
 We expect that the agent can learn a suitable set of operators itself,
 especially since the current seed state $s$ is included in the

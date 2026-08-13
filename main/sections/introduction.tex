@@ -36,8 +36,8 @@ Stateful targets present an even larger problem.
 Coverage-guided fuzzing models a program as a pure function from an
 input to a coverage vector, and resets it to its initial state before each new input.
 Stateful targets are different: their behavior depends not only on a new input,
-but on a (potentially very large) history of inputs.
-Examples for such targets include highly relevant software systems such as
+but also on a history of inputs.
+Examples of such targets include highly relevant software systems such as
 industrial control systems, and embedded and IoT
 stacks~\cite{zhang_iot_2014,sadeghi_security_2015,borcherding_bandits_2023,ang_quic-fuzz_2025}.
 
@@ -45,15 +45,15 @@ The information available to a fuzzer changes depending on how targets are execu
 While native execution provides high throughput, using emulation allows for easier
 program instrumentation without the need for recompilation and enables a fuzzer to
 run programs compiled for different architectures.
-Some emulators also allow the fuzzer to take a lightweight snapshot of a programs'
+Some emulators also allow the fuzzer to take a lightweight snapshot of a program's
 execution state and restore it afterwards, making emulation an attractive direction
 for stateful fuzzing.
 
 Fuzzing can be modeled as sequential decision making under uncertainty with a scalar progress signal.
-Reinforcement learning is a machine learning paradigm that aims at solving these
+Reinforcement learning is a machine learning paradigm that aims to solve these
 kinds of problems.
 While model-free RL methods have been applied to fuzzing before~\cite{bottinger_deep_2018,binosi_rainfuzz_2023,wang_reinforcement_2021,wang_syzvegas_2021,borcherding_bandits_2023},
-the use of model-based RL promises a higher sample efficiency, requiring fewer
+the use of model-based RL promises higher sample efficiency, requiring fewer
 executions of a program to achieve a given goal.
 
 EfficientZero~\cite{ye_mastering_2021} is a model-based RL method that learns a
@@ -76,11 +76,11 @@ We pose three research questions:
 \begin{enumerate}[label=\textbf{RQ\arabic*.}, ref=RQ\arabic*, leftmargin=*]
   \item\label{rq:learnability}
     Can EfficientZero learn a useful policy on fuzzing-shaped rewards?
-    Coverage rewards are sparse and observations are aliased and only a partial
-    view of a program's true state.
+    Coverage rewards are sparse, and observations alias distinct program states
+    while giving only a partial view of the true state.
 
   \item\label{rq:action-space}
-    How should the fuzzing action space be modelled?
+    How should the fuzzing action space be modeled?
     We pursue two approaches: modeling actual inputs a program expects as actions,
     as well as modeling mutation operators acting on a corpus as actions.
 
@@ -102,7 +102,7 @@ This thesis makes three contributions.
     built on top of the MOGI emulation framework.
 
   \item \emph{An empirical evaluation} including a detailed ablation study
-    on a simple json parser as well as fuzzing runs for various programs.
+    on a simple JSON parser as well as fuzzing runs for various programs.
 \end{enumerate}
 
 \section{Outline}\label{sec:introduction-outline}
@@ -115,17 +115,14 @@ reinforcement learning, \cref{chap:efficientzero} describes EfficientZero, and
 difficulties they report.
 
 \cref{chap:fuzzing-mdp} models emulator-based fuzzing as a Markov decision
-process: it states the interface a model-based learner demands, the constraints
-that interface imposes on any fuzzing MDP, and the two different ways we model
-the action space.
-\cref{chap:implementation} describes the resulting system, from the learning
-agent down to the MOGI emulation platform and the coverage and snapshot
-primitives it provides.
+process and states how we model states, actions and rewards.
+\cref{chap:implementation} describes the resulting system, including
+the execution environment, EfficientZero learner and MOGI execution environment.
 
 \cref{chap:targets} introduces the fuzzing targets, and \cref{chap:methodology}
 the experimental methodology.
 \cref{chap:results} reports the results for both formulations, and
-\cref{chap:discussion} interprets them: what the approach demonstrates, what it
-costs, and what the experiments cannot establish.
-\cref{chap:conclusion} concludes the research questions and
+\cref{chap:discussion} interprets them: what the approach demonstrates, where
+it succeeds and what its limits are.
+\cref{chap:conclusion} answers the research questions and
 \cref{chap:future-work} outlines follow-up work.

@@ -10,7 +10,7 @@ to monitor training progress.
 
 \subsection{The Environment Model}
 
-EfficientZero is a RL algorithm and therefore formally interacts with a MDP.
+EfficientZero is an RL algorithm and therefore formally interacts with an MDP.
 Making use of the rich type system of Rust, we model the MDP via an \code{Environment} trait
 with associated \code{Action} and \code{Observation} types.
 Actions and Observations must be representable as a list of floats for model inference and training.
@@ -93,10 +93,10 @@ kernel launch overhead and is therefore very inefficient.
 The solution lies in batching as many GPU calls as possible.
 This can be achieved for \gls{mcts} by stepping $n$ environments in parallel,
 reducing the kernel launch overhead by a factor of $n$.
-In practice, we implement this by keeping a pool of $n$ active environments and step
+In practice, we implement this by keeping a pool of $n$ active environments and stepping
 them in parallel while resetting any environments that have terminated.
 
-Another bottleneck are host-device transfers between CPU and GPU.
+Another bottleneck is host-device transfers between CPU and GPU.
 For example, when evaluating multiple model heads, we concatenate their outputs
 and transfer the result to the host in a single call instead of multiple calls.
 Other general optimizations include reusing buffers as much as possible and precalculating
@@ -107,19 +107,19 @@ We also make use of rayon for simple task parallelism during backup.
 
 The replay buffer stores past episodes including observations, actions and rewards,
 as well as \gls{mcts} results like the root visit count distribution.
-Because it must be efficiently sampleable for training, we use a struct-of-array representation
+Because it must be efficiently sampleable for training, we use a struct-of-arrays representation
 over ring buffers.
 Since episodes may have different lengths, we additionally keep metadata such
-as the offset of an episode into the data arrays as well as the episode length
-and their initial observations.
+as the offset of an episode into the data arrays as well as its length
+and its initial observation.
 The capacity of the replay buffer is fixed once at the beginning and can be
 adjusted to fit the memory available on the system.
 
-If the replay buffer is full, the oldest trajectory is evicted. Sampling
-happens per step rather than per in accordance to \gls{per}. Freshly inserted
-episodes receive the largest priority observed so far, so that new data is
-sampled at least once. Priorities are updated by the reanalyze workers once the
-value error of a position is known.
+If the replay buffer is full, the oldest trajectory is evicted.
+Sampling happens per step rather than per trajectory, in accordance with \gls{per}.
+Freshly inserted episodes receive the largest priority observed so far, so that new data is
+sampled at least once.
+Priorities are updated by the reanalyze workers once the value error of a position is known.
 Importantly, a sampled batch is assembled on the host and contains no GPU data.
 
 The replay buffer is shared between the data workers that generate new
@@ -156,15 +156,15 @@ using the updated model parameters.
 
 \paragraph{GPU workers}
 All GPU work is done by GPU workers.
-This has two reasons.
+There are two reasons for this.
 First, we found the Burn implementation to be extremely slow when relying on its internal
 task queue due to contention.
 Second, in its current implementation, Burn spawns a new CUDA stream for each thread.
-We found that sending data between threads causes a lot of unwanted tensor data synchronization
+We found that sending data between threads causes a lot of unwanted tensor data synchronization,
 which in turn breaks kernel fusion, causing a major slowdown.
-Wrapping all GPU work in a explicit GPU worker allows to better control queue
+Wrapping all GPU work in an explicit GPU worker gives better control over queue
 contention and data synchronization.
-It also allows adding a second GPU by spawning a second worker in the future.
+It also makes it possible to add a second device in the future by spawning a second worker.
 
 \input{figures/impl-ez-workers}
 
@@ -172,7 +172,7 @@ It also allows adding a second GPU by spawning a second worker in the future.
 
 To allow better diagnostics and instrumentation, the implementation
 includes a way to add various kinds of hooks to different parts of the learning process.
-This allows to build things like a visualization dashboard or persistence layer
+This makes it possible to build a visualization dashboard or persistence layer
 on top of the learner without needing to modify the learner itself.
 \Cref{tab:impl-ez-hooks} contains a list of the hooks and where they are fired.
 

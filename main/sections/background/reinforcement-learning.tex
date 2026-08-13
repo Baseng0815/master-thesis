@@ -94,7 +94,7 @@ The most important problem any RL agent encounters is that of the \emph{explorat
 At any point in time, the agent can either \emph{exploit} previously gained information
 to achieve a higher reward, or \emph{explore} yet unknown actions to gain more information
 that might come in useful in the future.
-Balancing the selection of actions that explore vs. actions that exploit is a key tradeoff in any RL algorithm.
+Balancing the selection of actions that explore versus actions that exploit is a key tradeoff in any RL algorithm.
 
 Any MDP where $\lvert\mathcal{S}\rvert=1$ and $\lvert\mathcal{A}\rvert=k$ is also known as
 a \emph{$k$-armed bandit}, where the $k$-th arm is equal to the $k$-th action $a_k\in\mathcal{A}$.
@@ -134,7 +134,7 @@ This is typically countered by decaying $\varepsilon$ over time~\cite{sutton_rei
 
 \paragraph{Upper confidence bounds}
 Directed exploration makes use of the \emph{upper confidence bounds}\index{upper confidence bound} rule to estimate which arms
-could still yield a high reward given how little it has been tried.
+could still yield a high reward given how little they have been tried.
 The rule is formulated in terms of the current estimate plus the visit count of each action
 and prioritizes high-value actions with low visit count.
 
@@ -154,16 +154,16 @@ Methods for solving MDPs can be classified along two axes.
 
 \paragraph{Representation of estimates}
 Classical algorithms represent estimates via tables.
-The size of the tables usually scales with action and state space size.
+The size of the tables usually scales with the size of the state and action spaces.
 This makes \emph{tabular methods} applicable only to small problems with tractable size.
 \emph{Function approximation methods} exploit regularities in the table data by fitting a parameterized model.
-Earlier work that made use of manually engineered features has been succeeded by modern, deep-learning based approaches.
+Earlier work that made use of manually engineered features has been succeeded by modern, deep-learning-based approaches.
 
 \paragraph{Model availability}
-Some algorithms require that a model of the transition function $p$ is available.
+Some algorithms require that a model of the transition function $p$ be available.
 Classically, the model is assumed to be specified. In more modern algorithms,
 the model is learned by the agent itself through interactions with the underlying MDP.
-\emph{Model-free methods} don't base their estimates on an underlying model, but
+\emph{Model-free methods} do not base their estimates on an underlying model, but
 derive them directly from the interactions.
 
 \input{figures/rl-taxonomy}
@@ -224,9 +224,9 @@ that provably converges to $\pi^*$.
 
 \paragraph{Policy iteration}
 Let $\pi_i$ be given. By repeatedly applying the Bellman equation,
-we can compute $v_{\pi_i}$. Once $v_{\pi_i}$ is known, we improve $\pi_i$ by acting greedy
+we can compute $v_{\pi_i}$. Once $v_{\pi_i}$ is known, we improve $\pi_i$ by acting greedily
 with respect to $v_{\pi_i}$. This then yields a strictly better policy $\pi_{i+1}$.
-A fixpoint after $n$ steps is then guaranteed to be optimal: $\pi_n=\pi^*$.
+A fixed point after $n$ steps is then guaranteed to be optimal: $\pi_n=\pi^*$.
 
 \paragraph{Value iteration}
 Instead of alternating between deriving $v_{\pi_i}$ and improving $\pi_i$, we can directly
@@ -240,7 +240,7 @@ Most RL algorithms make use of this general framework of estimating values and t
 using these estimates to improve the current policy.
 This framework is called \emph{generalized policy iteration} (GPI)~\cite{sutton_reinforcement_2020}.
 
-While Dynamic Programming guarantees convergence to an optimal policy, it requires a complete model $p$ and
+While dynamic programming guarantees convergence to an optimal policy, it requires a complete model $p$ and
 must sweep the entire state space each iteration, making it impractical for larger real-world problems.
 
 \subsubsection{Temporal-difference learning}\label{sec:rl-td}
@@ -248,7 +248,7 @@ must sweep the entire state space each iteration, making it impractical for larg
 Temporal-difference (TD) learning removes the need for a model.
 Values are estimated from sampled transitions $(S_t,A_t,R_{t+1},S_{t+1})$ obtained by interacting with the environment~\cite{sutton_learning_1988,sutton_reinforcement_2020}.
 TD methods, like DP, make use of \emph{bootstrapping} --- updating estimates based on other estimates.
-They don't require full state space sweeps, but update the value function using the sampled transition data.
+They do not require full state-space sweeps, but update the value function using the sampled transition data.
 A simple TD algorithm, TD(0), updates the estimate $V(S_t)$ as follows:
 
 \begin{equation}\label{eq:td0}
@@ -267,7 +267,7 @@ with TD(0) and Monte Carlo as the limit cases $\lambda=0$ and
 $\lambda=1$~\cite{sutton_learning_1988}.
 
 \paragraph{SARSA}
-SARSA~\cite{sutton_emphatic_2015} is similar to TD learning, but learns an action-value function $Q(s,a)$ instead of
+SARSA~\cite{sutton_reinforcement_2020} is similar to TD learning, but learns an action-value function $Q(s,a)$ instead of
 a value function $V(s)$. The update rule makes use of the action that the agent
 actually performed, making SARSA an \emph{on-policy} algorithm since it follows
 the currently active policy $\pi$:
@@ -277,9 +277,9 @@ the currently active policy $\pi$:
 \end{equation}
 
 \paragraph{Q-learning}
-Q-learning\cite{watkins_q-learning_1992} can be interpreted as an \emph{off-policy} SARSA:
+Q-learning~\cite{watkins_q-learning_1992} can be interpreted as an \emph{off-policy} SARSA:
 its target maximizes over the successor actions, making the update rule
-independent from the actually taken action:
+independent of the actually taken action:
 
 \begin{equation}\label{eq:q-learning}
   Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\left[R_{t+1}+\gamma\max_{a}Q(S_{t+1},a)-Q(S_t,A_t)\right],
@@ -287,10 +287,10 @@ independent from the actually taken action:
 
 \subsubsection{Function approximation}\label{sec:rl-fa}
 
-The three algorithms presented above are tabular: they maintain one entry per state or state-action pair,
+The algorithms presented above are tabular: they maintain one entry per state or state-action pair,
 requiring a state space small enough to enumerate.
 Realistic state spaces are far too large for tables.
-Additionally, tabular methods cannot generalize to new, yet unseen states.
+Additionally, tabular methods cannot generalize to unseen states.
 Function approximation addresses both problems by replacing the table with a parameterized
 function $\hat{v}(s;\theta)$ or $\hat{q}(s,a;\theta)$ whose parameter vector $\theta$
 can be learned, for example by (semi-)gradient descent on the TD error.

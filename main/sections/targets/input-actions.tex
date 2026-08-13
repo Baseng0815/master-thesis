@@ -49,12 +49,13 @@ Observations are the marginal block hit counts.
 \subsection{Sequence}\label{sec:target-sequence}
 
 The \emph{sequence} target is an artificial 16-byte passcode check implemented in C.
-It contains a fixed password and reads input byte-by-byte from standard in.
-Whenever a wrong byte was provided, the program terminates.
-Otherwise, at the end, we execute a high-coverage function.
+It contains a fixed passcode and reads input byte-by-byte from standard input.
+Whenever a wrong byte is provided, the program terminates.
+Otherwise, at the end, the program executes a high-coverage function.
 The main goal is for the learner to successively learn the passcode by following
 the non-terminating, coverage-increasing path of choosing correct bytes.
-The reward in this case is marginal coverage plus a flat survival bonus per step.
+The reward in this case is a flat survival bonus per step plus a final coverage
+reward on termination.
 \Cref{lst:target-sequence} shows a program excerpt.
 
 \begin{ccode}[float=htbp,
@@ -83,7 +84,7 @@ int main(void) {
 }
 \end{ccode}
 
-The action, reward and observation setting is similar to~\cref{sec:target-high-and-low}, with
+The action, reward and observation setting is similar to that of \cref{sec:target-high-and-low}, with
 two exceptions.
 First, since we are now in a full POMDP setting instead of just a bandit, we include
 the cumulative block hit counts in the observation to allow the learner to better identify

@@ -96,12 +96,12 @@ correct prefix, it can successively learn the password character-by-character.
 
 \subsection{libxml2}\label{sec:target-libxml2}
 
-libxml2 v2.15.3. is an XML parser commonly used in Linux.
+libxml2 v2.15.3 is an XML parser commonly used in Linux.
 We disable threads for deterministic execution as well as unreachable and out-of-scope
-features like \code{ICONV}, \code{MODULES} \code{CATALOG}, \code{HTML} and \code{XPATH}.
+features like \code{ICONV}, \code{MODULES}, \code{CATALOG}, \code{HTML} and \code{XPATH}.
 The library entry point the harness makes use of is \code{xmlReadMemory}.
-It is structured almost identically as~\cref{lst:target-cjson}.
-Instead of 16 bytes, we chose 32 byte seeds to allow richer seed structure.
+It is structured almost identically to~\cref{lst:target-cjson}.
+Instead of 16 bytes, we chose 32-byte seeds to allow richer seed structure.
 We also use parse with recovery mode (\code{XML\_PARSE\_RECOVER}).
 This causes the parser to ignore errors and instead return a partial tree of successfully parsed input,
 yielding a richer coverage signal than simple early abort.
@@ -113,5 +113,5 @@ We do not include a random control baseline.
 \subsection{picohttpparser}\label{sec:target-picohttpparser}
 
 picohttpparser is a header-only HTTP/1.x request parser.
-We use the latest version from the master branch with commit hash $\texttt{f4d94b4}$.
-The setup is identical to libxml2 except the block count of \num{4096}, since this is a smaller target.
+We use the version from the master branch with commit hash \code{f4d94b4}.
+The setup is identical to libxml2 except for the block count of \num{4096}, since this is a smaller target.

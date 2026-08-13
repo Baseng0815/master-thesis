@@ -60,7 +60,7 @@ We expect a larger PUT with richer structure to benefit more from a large model.
 
 The highest-coverage input any cJSON run produced covers \num{831}
 blocks~(\cref{tab:best-inputs}).
-It is \code{[[[[[2,[[[[[1\ldots}, which is nesting the agent was never told about.
+It is \code{[[[[[2,[[[[[1\ldots}, a nesting depth the agent was never told about.
 All four PRG seeds arrive at the same shape --- a run of opening brackets, a digit, a comma and
 more brackets --- and they do so from three different arms, so the motif is a property of the
 target and the reward rather than of one lucky run.
@@ -102,7 +102,7 @@ already reached.
 
 Over the same period, the policy tends to narrow onto fewer actions.
 Per-position \gls{mcts} visit entropy falls from about \num{2.4} nats to between \num{0.08} and
-\num{0.68} on cJSON, from \num{2.7} to between \num{0.37}, and \num{0.73} on libxml2 and from
+\num{0.68} on cJSON, from \num{2.7} to between \num{0.37} and \num{0.73} on libxml2 and from
 \num{2.1} to between \num{0.41} and \num{0.55} on picohttpparser, and the positions narrow in
 order, earliest first~(\cref{fig:collapse-entropy}).
 The share of self-play plays taken by the single most-played action at a position rises
@@ -119,5 +119,5 @@ The fraction of replay-buffer transitions with a non-zero reward climbs througho
 campaign~(\cref{fig:buffer-reward-density}).
 It rises over training on all three targets, from \num{0.012} to \num{0.147} on
 cJSON and from \num{0.004} to \num{0.104} on picohttpparser.
-This indicates an increasing competency in choosing actions that improve coverage of the agent.
+This indicates that the agent is increasingly able to choose actions that improve coverage.
 libxml2 peaks at \num{0.201} at iteration 327 and then turns around, ending at \num{0.188}.

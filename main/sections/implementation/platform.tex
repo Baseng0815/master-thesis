@@ -12,22 +12,22 @@ binaries and for taking snapshots and restoring program state.
 It is implemented as a Rust workspace with multiple crates.
 The core execution environment abstractions live in \code{mogi\_system} and provide
 CPU and MMU traits to support multiple backends.
-It also includes a \code{Hooks} and \code{Restorable} trait that allow installation
+It also includes \code{Hooks} and \code{Restorable} traits that allow installation
 of hooks for collecting instrumentation information and taking snapshots of the system
 state and then restoring them.
-Unicorn\cite{bellard_qemu_2005} is a popular emulator based on QEMU and is
-wrapped by \code{mogi\_unicorn}, including it as an execution backend.
+Unicorn is a popular emulator based on QEMU~\cite{bellard_qemu_2005} and is
+wrapped by \code{mogi\_unicorn}, which includes it as an execution backend.
 A second backend tailored to MOGI is under development.
-Its main components are implemented in \code{mogi\_cpu} as well as \code{mogi\_mmu}.
-It strives to be more flexible, more correct and faster than unicorn.
+Its main components are implemented in \code{mogi\_cpu} as well as \code{mogi\_mem}.
+It strives to be more flexible, more correct and faster than Unicorn.
 Because not all features are fully implemented yet, we use the
 \code{mogi\_unicorn} backend for this thesis.
 Including the native MOGI backend is left as future work.
 
 Since the main goal is to emulate Linux userspace binaries, we also include a full Linux
 user-space emulation framework under \code{mogi\_emulator}.
-It provides a generic model of system components like clocks, file systems,
-network stacks, standard I/O etc., as well as concrete implementations of these components.
+It provides a generic model of system components such as clocks, file systems,
+network stacks and standard I/O, as well as concrete implementations of these components.
 It also includes an ELF loader and scheduler to allow execution of guest binaries.
 
 Combining the backend provided by \code{mogi\_system} as well as the userspace
@@ -35,7 +35,7 @@ emulation framework provided by \code{mogi\_emulator} is done via the \code{Emul
 trait.
 It allows access to system components as well as execution of the guest binary with
 a given run limit.
-The program will \emph{yield} control back to the user whenever it encounters a stopping
+The program \emph{yields} control back to the caller whenever it encounters a stopping
 error condition like a missing syscall implementation or an unsupported instruction and
 whenever it requires an external input to continue.
 To allow a user to quickly get an emulator up and running without having to manually

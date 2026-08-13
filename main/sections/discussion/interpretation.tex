@@ -77,7 +77,7 @@ picohttpparser ends at around \num{81} covered blocks for all four seeds,
 reaches \SI{90}{\percent} of that ceiling within \SI{25}{\percent} of its
 budget and gains nothing in the final
 quarter~(\cref{fig:saturation,tab:campaign-inventory}).
-This is a property of the PUT itself, showing that the success of a fuzzing campaign
+This is a property of the PUT itself, showing the success of a fuzzing campaign
 and the usefulness of optimizing for the given reward to be highly target-dependent.
 The same holds for other \gls{cgf} fuzzers, but they can better overcome this problem
 due to their high execution rate and therefore higher likelihood of finding interesting seeds
@@ -89,7 +89,7 @@ but finishes below this peak in the end~(\cref{fig:structural-decay}).
 During experimentation, we found learning to sometimes converge onto a bad policy
 with entropy collapsing to zero.
 One failure mode we often encountered was the agent producing a slight majority
-of action $a_i$ which the found its way into the replay buffer, and under uniform
+of action $a_i$, which then found its way into the replay buffer, and under uniform
 sampling, $a_i$ then is overtrained and all other actions $a_{j\neq i}$ are undertrained,
 further nudging the policy towards $a_i$, causing a policy collapse onto $a_i$ in the end.
 This is mostly solved by prioritized experience replay.
@@ -109,7 +109,7 @@ new seed to select, and what mutations to apply.
 In this example, the resulting (non-hierarchical) action space has a size of about
 
 \[
-  \lvert\mathcal{A}\rvert=2*32*16*256=262144,
+  \lvert\mathcal{A}\rvert=2\cdot 32\cdot 16\cdot 256=262144,
 \]
 
 which is way too large for a vanilla EfficientZero agent.

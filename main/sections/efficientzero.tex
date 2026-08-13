@@ -13,7 +13,7 @@ benchmark~\cite{ye_mastering_2021}.
 
 \section{From AlphaGo to EfficientZero}\label{sec:ez-lineage}
 
-AlphaGo~\cite{silver_mastering_2016} was released in 2016 and was the first program to defeat a
+AlphaGo~\cite{silver_mastering_2016} was published in 2016 and was the first program to defeat a
 professional human player at the game of Go, a challenging task due to Go's extremely large state space.
 It combines Monte-Carlo tree search with two deep neural networks: a policy
 network that proposes promising moves and narrows the search, and a value
@@ -43,13 +43,13 @@ of the environment and plans inside it.
 Unlike previous approaches, the model is not trained to predict actual observations,
 but encodes observations through a representation network and plans in a latent space.
 This makes the approach applicable to domains whose rules are unknown, and
-MuZero matched AlphaZero's performance in board games while simultaneously
+MuZero matched AlphaZero's performance in board games while
 setting a new state of the art on the Atari benchmark.
 
 EfficientZero~\cite{ye_mastering_2021} improves the sample efficiency of MuZero.
 It targets the Atari 100k benchmark~\cite{kaiser_model-based_2024}, a benchmark
 set that wraps many classic Atari games and allows an agent to interact with each
-game for only \num{100000} steps which is equal to roughly two hours of real-time play.
+game for only \num{100000} steps, which is equal to roughly two hours of real-time play.
 It achieves this through three additions to MuZero, described in
 \cref{sec:ez-improvements}.
 A successor, EfficientZero V2~\cite{wang_efficientzero_2024}, extends the
@@ -131,7 +131,7 @@ of the Go rules.
 The use of imagined rollouts is a key factor in the sample efficiency of EfficientZero.
 
 The MCTS variant used in EfficientZero consists of three phases that are
-repeated for a fixed number of times: \emph{selection}, \emph{expansion}, and
+repeated a fixed number of times: \emph{selection}, \emph{expansion}, and
 \emph{backup}.
 MCTS stores the current state of its search tree in nodes, where
 already visited nodes are marked as \emph{expanded}.
@@ -252,11 +252,11 @@ The rollout workers repeatedly sample positions from the replay buffer and
 prepare training batches.
 Each trajectory position inside the replay buffer has a sampling priority associated with it~\cite{schaul_prioritized_2016}.
 This priority is proportional to the loss of the value network $v$ evaluated at this position.
-Prioritizing such positions with a high loss accelerates learning.
+Prioritizing positions with a high loss accelerates learning.
 
 \paragraph{Reanalyze workers}
 
-Prepared batches then get processed by reanalyze workers.
+Prepared batches are then processed by reanalyze workers.
 \emph{MuZero Reanalyze} is an extension to the basic MuZero algorithm that improves the freshness of
 data by re-running MCTS on old data with updated model weights, contributing to data reuse and sample efficiency.
 Reanalyzed batches are finally passed to the GPU workers where the model is trained.
@@ -322,9 +322,8 @@ term supervises, and the exact form the four terms take in our implementation.
 
 \section{EfficientZero's Improvements}\label{sec:ez-improvements}
 
-The EfficientZero paper~\cite{ye_mastering_2021} identifies three weaknesses of
-the vanilla architecture. To improve the learner performance, they introduce
-three changes:
+\Textcite{ye_mastering_2021} identify three weaknesses of MuZero and address
+each of them with one change:
 
 \subsection{Self-Supervised Consistency Loss}\label{sec:ez-consistency}
 
@@ -333,7 +332,7 @@ of rewards, policies and values.
 In a reward-sparse environment, this signal is often not strong enough and causes
 the dynamics function $g$ to lose its predictive power.
 
-EfficientZero adds an additional, SimSiam-inspired~\cite{chen_exploring_2020}
+EfficientZero adds a SimSiam-inspired~\cite{chen_exploring_2020}
 training signal.
 The idea is that the imagined next state $s^{k}=g(s^{k-1},a^{k};\theta)$
 and the encoded real next state $h(o_{t+k};\theta)$ should be similar.
@@ -354,8 +353,8 @@ solution of mapping every observation to a constant.
 The loss is applied at every unroll step, giving the dynamics function a dense
 training signal.
 The idea is closely related to SPR~\cite{schwarzer_data-efficient_2021}, which
-uses the momentum-encoder variant BYOL~\cite{grill_bootstrap_2020} for the
-same purpose in a model-free agent.
+uses BYOL~\cite{grill_bootstrap_2020}, a method relying on a momentum encoder,
+for the same purpose in a model-free agent.
 
 \subsection{End-to-End Value-Prefix Prediction}\label{sec:ez-value-prefix}
 
