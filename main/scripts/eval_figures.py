@@ -53,20 +53,23 @@ TARGETS = {
 INPUT_TARGETS = {
     "high-and-low": "high-and-low",
     "sequence": "sequence",
+    "open62541": "open62541",
 }
 
 # Size of each input-level target's action space.  Its logarithm is the entropy
 # of the uniform policy, which is where an untrained agent starts and therefore
 # the reference the entropy curves are read against.
-INPUT_ACTION_SPACE = {"high-and-low": 256, "sequence": 26}
+INPUT_ACTION_SPACE = {"high-and-low": 256, "sequence": 26, "open62541": 15}
 
-# The episode length that counts as solving the target, where the target has
-# one.  On sequence it is the length of the passcode: the program exits on the
-# first wrong byte, so a 16-step episode is a fully recovered passcode.  Taken
-# from the target rather than from the highest length the run happened to
-# reach, so that the reference line means what the caption says it means even
-# if a run never gets there.
-INPUT_EPISODE_CEILING = {"sequence": 16}
+# The episode length that counts as running the target out, where the target
+# has one.  On sequence it is the length of the passcode: the program exits on
+# the first wrong byte, so a 16-step episode is a fully recovered passcode.  On
+# open62541 it is the episode cap, which an episode reaches by keeping the
+# session alive for every one of its twelve steps.  Taken from the target
+# rather than from the highest length the run happened to reach, so that the
+# reference line means what the caption says it means even if a run never gets
+# there.
+INPUT_EPISODE_CEILING = {"sequence": 16, "open62541": 12}
 
 # The cjson arms that carry the head-to-head story, in plotting order.  The
 # rest of the campaign appears only in the ablation figures.
@@ -1102,7 +1105,7 @@ def fig_buffer(root: Path, cache: Path, arms: dict):
 # than a band across seeds. Where a band appears it is the spread across the
 # 128 environments within one learner iteration, which is a different quantity
 # from the seed spread of the corpus figures and is named as such in every
-# caption. Two panels per figure rather than three, side by side.
+# caption. Panels are laid out two to a row rather than one per target.
 # --------------------------------------------------------------------------
 
 
@@ -1142,13 +1145,18 @@ def fig_input_learning(root: Path, cache: Path, arms: dict):
     take the high-coverage branch, against the measured chance rate; for
     sequence the trajectory length, which because the program exits on the
     first wrong byte is exactly the number of passcode bytes the agent has
-    right. Both make "solved" a value on the ordinate rather than an assertion.
+    right; for open62541 the trajectory length against the episode cap, which
+    is how long the agent kept the session alive before it broke it, activated
+    it or ran out of budget.  They make "solved" a value on the ordinate rather
+    than an assertion.
     """
     panels = []
+    drawn: list[str] = []
     for target, display in INPUT_TARGETS.items():
         run = input_run(arms, target)
         if run is None:
             continue
+        drawn.append(target)
 
         returns = load(cache, run, "return")
         if returns:
@@ -1226,7 +1234,8 @@ def fig_input_learning(root: Path, cache: Path, arms: dict):
         "input-learning",
         figure(
             "input-learning",
-            "Learning on the two input-level targets. The left column is the episode return, "
+            f"Learning on the {_count_word(len(drawn))} input-level targets. The left column "
+            "is the episode return, "
             "the quantity the agent optimises, as the median over the 128 environments of one "
             "learner iteration inside their interquartile range; each target ran once, so the "
             "band is the spread across environments and not across seeds. The right column "
@@ -1234,7 +1243,9 @@ def fig_input_learning(root: Path, cache: Path, arms: dict):
             "line is the rate at which an untrained policy hits the high-coverage branch, "
             "measured at iteration 0; for sequence the dashed line is the full 16-byte "
             "passcode, and since the program exits on the first wrong byte the episode length "
-            "is the length of the correct prefix.",
+            "is the length of the correct prefix; for open62541 the dashed line is the "
+            "twelve-step episode cap, an episode ending when the channel closes, when the "
+            "session is activated or at that cap.",
             "Learning on the input-level targets",
             input_grid(panels),
             placement="tbp",
@@ -1247,8 +1258,8 @@ def fig_input_losses(root: Path, cache: Path, arms: dict):
 
     The same training-health diagnostic as \\cref{fig:losses} carries for the
     corpus targets: it says the optimiser behaved, not that the agent fuzzed.
-    It matters more here than there, because these two targets exist to test
-    the learner rather than the fuzzer.
+    It matters more here than there, because these targets exist to test the
+    learner rather than the fuzzer.
     """
     chosen = {target: input_run(arms, target) for target in INPUT_TARGETS}
     sources, pooled = _loss_data(root, cache, chosen, "loss")
@@ -1259,12 +1270,13 @@ def fig_input_losses(root: Path, cache: Path, arms: dict):
         "input-losses",
         figure(
             "input-losses",
-            "The five EfficientZero training losses on the two input-level targets, against "
+            f"The five EfficientZero training losses on the {_count_word(len(sources))} "
+            "input-level targets, against "
             "training batches. Logarithmic ordinate on the three supervised losses, which "
             "stay positive; linear on the consistency loss, which is a negative cosine "
             "similarity, and on the total, which carries the consistency loss with a "
             "coefficient of two and therefore turns negative once the supervised terms fall "
-            "below it. The two targets ran for different numbers of iterations, so their "
+            "below it. The targets ran for different numbers of iterations, so their "
             "curves end at different batch counts.",
             "Training losses on the input-level targets",
             _loss_panels(sources, pooled, INPUT_TARGETS),
@@ -1276,16 +1288,19 @@ def fig_input_losses(root: Path, cache: Path, arms: dict):
 def fig_input_entropy(root: Path, cache: Path, arms: dict):
     """Entropy of the played action distribution, against the uniform policy.
 
-    This quantity is pooled over episode positions, which is why the two
-    targets look so different and why the sequence curve must not be read as a
-    failure to converge.  high-and-low wants the same byte at every position,
-    so the pooled entropy is the per-state entropy and collapses with it.
-    sequence wants a different byte at each of its sixteen positions, so a
+    This quantity is pooled over episode positions, which is why the targets
+    look so different and why the sequence and open62541 curves must not be
+    read as a failure to converge.  high-and-low wants the same byte at every
+    position, so the pooled entropy is the per-state entropy and collapses with
+    it.  sequence wants a different byte at each of its sixteen positions, so a
     policy that is deterministic everywhere still pools to about ln 16, and
-    that is where the curve settles.  Per-state determinism on sequence is
-    visible in the visit counts, not here.
+    that is where the curve settles; open62541 spreads its plays over twelve
+    episode positions, whose deterministic ceiling of ln 12 its curve settles
+    just below.  Per-state determinism on those two is visible in the visit
+    counts, not here.
     """
     panels = []
+    drawn: list[str] = []
     for target, display in INPUT_TARGETS.items():
         run = input_run(arms, target)
         rows_in = load(cache, run, "sampled") if run else []
@@ -1309,6 +1324,7 @@ def fig_input_entropy(root: Path, cache: Path, arms: dict):
             f"      xmin=0, ymin=0, ymax={uniform * 1.12:.3f}"
         )
         panels.append(input_panel(options, plots, display))
+        drawn.append(target)
     if not panels:
         return None
     return write_tex(
@@ -1316,17 +1332,21 @@ def fig_input_entropy(root: Path, cache: Path, arms: dict):
         "input-entropy",
         figure(
             "input-entropy",
-            "Shannon entropy of the actions in the batches trained on, for the two "
+            f"Shannon entropy of the actions in the batches trained on, for the "
+            f"{_count_word(len(drawn))} "
             "input-level targets. The dashed line is the entropy of the uniform policy over "
-            "the target's action space, $\\ln 256 \\approx 5.55$ for high-and-low and "
-            "$\\ln 26 \\approx 3.26$ for sequence, which is where an untrained agent starts. "
-            "The quantity is pooled over episode positions, which is what makes the two "
+            "the target's action space, $\\ln 256 \\approx 5.55$ for high-and-low, "
+            "$\\ln 26 \\approx 3.26$ for sequence and $\\ln 15 \\approx 2.71$ for open62541, "
+            "which is where an untrained agent starts. "
+            "The quantity is pooled over episode positions, which is what makes the "
             "curves differ in kind. high-and-low rewards the same byte at every position, so "
             "the pooled entropy is the per-state entropy and collapses with it. sequence "
             "rewards a different byte at each of its sixteen positions, so a policy that is "
             "deterministic at every position still pools to about $\\ln 16 \\approx 2.77$, "
             "which is where the curve settles; that value is evidence of a solved passcode "
-            "and not of a policy that failed to converge.",
+            "and not of a policy that failed to converge. open62541 spreads its plays over "
+            "twelve episode positions, so a policy that is deterministic at every position "
+            "pools to at most $\\ln 12 \\approx 2.48$, just above where its curve settles.",
             "Action entropy on the input-level targets",
             input_grid(panels),
             placement="tbp",

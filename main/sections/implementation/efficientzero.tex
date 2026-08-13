@@ -114,7 +114,6 @@ as the offset of an episode into the data arrays as well as the episode length
 and their initial observations.
 The capacity of the replay buffer is fixed once at the beginning and can be
 adjusted to fit the memory available on the system.
-For example, a single cjson (\todo{cref to cjson}) environment step carries with it
 
 If the replay buffer is full, the oldest trajectory is evicted. Sampling
 happens per step rather than per in accordance to \gls{per}. Freshly inserted

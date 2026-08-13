@@ -17,3 +17,143 @@ This is necessary to determine whether planning is useful at all, or whether the
 agent only learns a value function.
 It is important to quantify how many planning iterations should be used exactly since wall-clock
 execution time scales with the number of iteration.
+
+\paragraph{Coverage stands in for bug finding, and no bug is searched for.}
+The reward, the primary metric and every result of \cref{chap:results} are coverage.
+Nothing in the pipeline detects, records or triages a faulting input, so an execution that corrupts
+memory scores like any other execution that reaches new blocks.
+All three corpus targets are mature libraries under continuous fuzzing, where a new bug within our
+budget is unlikely in any case.
+Whether the coverage the agent gains converts into bugs is therefore untested here.
+
+\paragraph{Reported coverage counts buckets, not blocks.}
+The block hit tracker folds block addresses into \num{4096} buckets on cJSON and picohttpparser and
+\num{16384} on libxml2, and two blocks that collide are indistinguishable in the observation, in the
+reward and in the reported coverage~(\cref{sec:impl-coverage}).
+Assuming addresses hash uniformly, the \num{958} buckets of the best cJSON arm correspond to about
+\num{1090} distinct blocks and libxml2's \num{5281} to about \num{6380}, an undercount of
+\SI{12}{\percent} and \SI{17}{\percent}.
+The compression grows with the coverage reached, so the distance between the best and the worst arm
+is larger than the reported numbers suggest and every coverage figure in this thesis is a lower
+bound on a saturating scale.
+The agent optimizes the same aliased signal, so part of the reward it collects is a collision
+artefact rather than new behavior of the \gls{put}.
+
+\paragraph{The structural byte rate measures byte class, not well-formedness.}
+It is the fraction of mutation-value actions that play a byte from a hand-picked, target-specific
+set, 22 of 256 bytes for cJSON, and says nothing about where that byte lands or whether the seed
+parses.
+picohttpparser reaches a peak rate of \num{0.732}~(\cref{sec:results-picohttpparser}) while its best
+inputs show no recognizable request structure at all~(\cref{tab:best-inputs}), and the best cJSON
+seed \code{[[[[[2,[[[[[1\ldots}\ is unbalanced and never yields a document the parser accepts.
+The metric supports the claim that the agent learns which bytes the parser reacts to, not the
+stronger claim that it learns the grammar.
+
+\paragraph{The two summary metrics of the cJSON campaign do not agree on the ranking.}
+End-of-training coverage puts \code{T25} first at \num{958} blocks and \code{SIMS100} last among the
+trained arms at \num{640}~(\cref{tab:campaign-inventory}), while the deep-seed rate puts
+\code{REUSE4} first at \SI{87.46}{\percent} and \code{SIMS50} last at \SI{68.68}{\percent}, with
+\code{W0} second at \SI{81.63}{\percent} from the second-worst coverage in the
+campaign~(\cref{tab:deep-seed}).
+The conclusion that exploration dominates rests on the first metric; under the second, \code{T25}
+leads the baseline by \num{3.55} points, less than the seed spread of either arm.
+Both are defensible summaries of the same runs and we have no principled argument for preferring
+one, so which factor a reader takes to matter is decided by which metric is read.
+
+\paragraph{Four seeds cannot separate arms this close.}
+The within-arm spread of the deep-seed rate reaches \num{30.0} points on \code{SIMS50}
+(\SI{56.16}{\percent} to \SI{86.14}{\percent}), \num{26.9} on \code{EDGE} and \num{22.2} on
+\code{W0}~(\cref{tab:deep-seed}), larger than the distance between most pairs of arms.
+On coverage, only five of the thirteen trained arms besides the baseline have a seed range disjoint
+from the baseline's \num{613} to \num{668}: \code{ALPHA004}, \code{NOCOV}, \code{REUSE4},
+\code{T15} and \code{T25}~(\cref{tab:campaign-inventory}).
+We report medians and ranges and no significance test, and at $n=4$ no test would separate the
+remaining arms.
+Every ordering in \cref{sec:results-cjson} outside those five arms is compatible with run-to-run
+variance.
+
+\paragraph{The campaign ran in two waves on two revisions of the fuzzer.}
+\code{BASE}, \code{CTRL-RAND}, \code{NOCOV}, \code{REUSE4}, \code{SIMS50}, \code{SIMS100},
+\code{T15}, \code{T25} and \code{W0} ran between 29 July and 1 August 2026 on one revision, and
+\code{ALPHA004}, \code{ALPHA010}, \code{EDGE}, \code{NOSEED} and \code{SMALL} between 2 and 4 August
+on a later one that added the observation-hiding switches, the edge granularity and the per-episode
+best-mutant probe.
+That later revision also carries \code{MEDIUM}, a replication of the baseline under an identical
+learner configuration and the same four PRG seeds, and it reaches \num{680} blocks against the
+baseline's \num{645}.\todo{\code{MEDIUM} is labelled \code{FULL} in \cref{tab:campaign-inventory}
+and \cref{sec:results-cjson}; no arm above the baseline width was ever run.}
+Whether that gap comes from the revision or from nondeterminism between identically seeded runs, it
+is larger than the baseline's distance to \code{W0}, \code{SIMS100} or \code{NOSEED} and bounds what
+a difference of that size can mean.
+Measured against the replication that shares their revision rather than against the baseline, the
+effects of \code{SMALL} (\num{683}) and \code{NOSEED} (\num{669}) disappear.
+
+\paragraph{Two arms barely perturb the factor they name.}
+Under the level-based coverage score of \cref{sec:mdp-rewards}, an edge map and a block map differ by
+about \SI{1}{\percent} per execution on a recursive-descent parser: a loop trips the same number of
+times whichever map counts it, and most blocks have one dominant predecessor.
+\code{EDGE} therefore compares a reward against a nearly identical one and does not test edge
+coverage as a different signal.
+The arm reported as the large model ran at the baseline's own hidden width, so the campaign varies
+capacity downwards only and holds no evidence about the larger model that
+\cref{sec:discussion-interpretation} expects to pay off on a richer target.
+
+\paragraph{Blinding the observation does not cost coverage.}
+\code{NOCOV} zeroes both coverage bitmaps in the observation~(\cref{tab:cjson-arms}), shares the
+baseline's revision, and ends at \num{755} blocks (\num{678} to \num{799}) against the baseline's
+\num{645} (\num{613} to \num{668}), a disjoint range~(\cref{tab:campaign-inventory}).
+An agent that cannot see the coverage it has reached still improves coverage, which is evidence that
+on cJSON the observation design of \cref{sec:mdp-states} carries little of the result and
+the reward and exploration parameters carry it instead.
+The same observation is used on the other two targets, where no arm tests it at all.
+
+\paragraph{libxml2 and picohttpparser run a configuration that no arm evaluated.}
+Both campaigns use a constant temperature of $T=2$ with a root concentration of
+$\xi=\num{0.03906}$~(\cref{tab:campaign-inventory}), while the cJSON arms vary one factor at a time:
+$T=1.5$ or $T=2.5$ at $\xi=1$, and $\xi\approx\num{0.04}$ under the default temperature schedule.
+The transferred setting sits between two arms instead of reproducing one, and no interaction between
+temperature and root noise is measured anywhere.
+Its tuning basis is a single 16-byte JSON target, and neither transfer campaign carries a control
+arm, so nothing tests whether the transfer succeeded.
+
+\paragraph{The random control is matched in executions, not in compute.}
+\code{CTRL-RAND} runs the baseline's execution budget in \SI{11.3}{\hour} against
+\SI{21.3}{\hour}~(\cref{tab:campaign-inventory}), so at an equal wall-clock budget it would execute
+roughly twice as many inputs.
+The factor of \num{71} in \cref{sec:discussion-interpretation} is a per-execution statement, which is
+the favorable framing for a method whose cost is time.
+The control also exists on cJSON alone, so nothing separates the libxml2 and picohttpparser coverage
+curves from what undirected mutation would have reached on those targets.
+
+\paragraph{Wall-clock figures are measured under contention.}
+The hours of \cref{tab:campaign-inventory} come from runs that share one GPU with the other runs of
+their campaign~(\cref{sec:methodology-setup}).
+Measured on the baseline arm, one learner iteration takes about \SI{300}{\second} under the
+campaign's concurrency against \SI{96}{\second} with the GPU to itself.
+The execution rates between \num{21} and \num{23} inputs per second and the three-orders-of-magnitude
+gap to a native harness in \cref{sec:discussion-interpretation} are therefore contended figures that
+overstate the gap by roughly that factor of three.
+Wall-clock comparisons between arms hold only where concurrency was equal, which the campaign's
+rolling schedule does not guarantee.
+
+\paragraph{Every number is read at a fixed budget and from the final policy.}
+Coverage in \cref{tab:campaign-inventory} is the median over the 128 parallel environments at the end
+of training, not the best seed a run produced, and the structural byte rate ends below its peak on
+all three targets~(\cref{fig:structural-decay}).
+An arm is therefore scored partly on where in its decay it happened to be stopped, and a run that
+peaked early and degraded is indistinguishable from one that never reached that level.
+The budgets are 200 learner iterations on cJSON and 400 on the other two targets, one to two days per
+run, against the days to weeks a \gls{cgf} campaign is given, so no ordering reported here
+extrapolates to a budget an order of magnitude larger.
+
+\paragraph{The corpus formulation is evaluated with a single fixed-length seed.}
+Every corpus-action run holds one seed of 16 or 32 bytes~(\cref{sec:impl-corpus}), so the selection
+and retention decisions that make the formulation a corpus \gls{mdp} are never exercised, and the
+coverage a run can reach is bounded by what fits into that record.
+picohttpparser's ceiling of \num{81} blocks is as consistent with a 32-byte request being too short
+to reach the parser's interesting paths as with the target being unrewarding, and we do not separate
+the two~(\cref{sec:results-picohttpparser}).
+The targets are further emulated, parse a fixed-length buffer in a loop and are built for
+determinism, libxml2 without threads and with several features disabled~(\cref{sec:target-libxml2}),
+so the results describe a deterministic, length-fixed variant of each library rather than the
+configuration a conventional fuzzer would attack.

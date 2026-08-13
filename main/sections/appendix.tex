@@ -198,7 +198,7 @@ of a target actually produces.
 \chapter{Detailed Loss Calculation}\label{app:loss}
 
 \Cref{sec:ez-loss} gives the training objective in the form the EfficientZero paper states it.
-We give the computation that produces it here: how a batch is assembled, which positions each
+We explain in detail how batches are assembled, which positions each
 term of \cref{eq:ez-loss} is allowed to see, and the exact form of the four terms.
 
 Throughout, $N$ is the batch size, $K$ the number of unroll steps, and a batch therefore covers
@@ -207,14 +207,13 @@ $k\in\{0,\dots,K\}$.
 At the frozen configuration of \cref{tab:app-ez-params}, $N=128$ and $K=5$, so one gradient step
 sees 768 positions.
 
-\section{Anatomy of a Sampled Batch}\label{sec:app-loss-batch}
+\section{Sampled Batches}\label{sec:app-loss-batch}
 
-A batch passes three workers before a gradient is taken~(\cref{fig:ez-workers}).
-The rollout worker draws the positions and reads off the replay buffer everything that does not
-depend on the current weights.
-The reanalyze worker replaces the policy and value targets with ones computed under the current
-weights, and writes back the sampling priorities.
-The training engine unrolls the model and evaluates the loss.
+A raw batch is created by the rollout worker when sampling positions from the replay buffer.
+The reanalyze worker then re-runs \gls{mcts} with updated model parameters and receives
+updated policy and value targets which it includes in the final batch.
+It also updates the step priorities.
+The training engine then unrolls the model and evaluates the loss.
 
 \paragraph{Drawing the positions}
 The rollout worker draws $N$ positions from the replay buffer with replacement, at a probability
@@ -226,7 +225,7 @@ proportional to their priority~\cite{schaul_prioritized_2016}:
 \end{equation}
 
 where $p_i$ is the priority of position $i$ and $M$ the number of positions the buffer holds.
-Drawing with replacement means a buffer holding fewer than $N$ trajectories still yields a full
+Drawing with replacement means a buffer holding fewer than $N$ episodes still yields a full
 batch, which matters early in a run.
 A position enters the buffer at the largest priority seen so far, so every collected transition
 is trained on at least once before its priority becomes a measured quantity.
@@ -244,20 +243,18 @@ normalized by the largest weight in the batch, so that $\max_b w_b=1$ and the co
 scales a gradient down.
 
 Each drawn position becomes the root of one training sample.
-Sample $b$ starts at offset $t_b$ inside a trajectory $\tau_b$ of length $|\tau_b|$ and supervises
+Sample $b$ starts at offset $t_b$ inside an episode $\tau_b$ of length $|\tau_b|$ and supervises
 the $K+1$ positions $t_b,\dots,t_b+K$.
-The last $K+n$ positions of a \emph{truncated} trajectory are held at priority zero and can never
-be drawn, with $n$ the \gls{td} horizon of \cref{eq:ez-value-target}: their unroll or their
-bootstrap would need data from past the cut.
-Trajectories that ended in a genuine terminal keep every position samplable: what lies past their
-end is an absorbing state, not missing data.
+The last $K+n$ positions of a \emph{truncated} episode are held at priority zero and can never
+be drawn, with $n$ the \gls{td} horizon of \cref{eq:ez-value-target}.
+Episodes that end in a terminal keep every position afterwards sampleable and
+everything past their end is an absorbing state.
 
 \paragraph{Layout}
 Every per-step field is stored step-major as $[K{+}1,N,\Cdot]$, so position $(b,k)$ occupies the
 flat index $i=kN+b$.
 This is the order in which the training engine concatenates the unrolled latents, which lets every
-head evaluation and every loss reduction run once over all $(K+1)N$ rows instead of $K+1$ times
-over $N$ rows.
+head evaluation and every loss reduction run once over all $(K+1)N$ rows.
 \Cref{tab:app-loss-batch} lists what the rollout worker writes.
 
 \begin{table}[htbp]
@@ -314,17 +311,18 @@ over $N$ rows.
   \end{tabularx}
 \end{table}
 
-Each observation is the one the action at its position was chosen in, not the one that action
-produced, so \code{observations} at $k=0$ is exactly \code{initial\_observations}.
+Observations at index $k$ are the ones that were used for choosing action $a_k$,
+and not the ones that were produced by action $a_k$, so \code{observations} at
+$k=0$ is exactly \code{initial\_observations}.
 The bootstrap horizon $n_b$ is the age-scaled one of \cref{sec:ez-off-policy}: it is a property of
 the sample rather than of the position, so it is constant along a sample's unroll.
 
-\paragraph{What reanalyze replaces}
+\paragraph{What Reanalyze modifies}
 The reanalyze worker runs one representation pass over the observation, bootstrap and initial rows
 of the batch, then refreshes three quantities.
 
 The policy targets are re-searched for the first $\lfloor\rho_r N\rfloor=126$ samples of every
-depth block, at $\rho_r=0.99$; the remaining samples keep the visit counts stored at self-play
+depth block, at $\rho_r=0.99$, the remaining samples keep the visit counts stored at self-play
 time.
 Masked positions are zeroed after the search, because a search over a masked position's
 all-zero observation still returns nonzero visit counts.
@@ -345,13 +343,14 @@ The value targets are recomputed for every position of the batch as the $n$-step
         \hat v\!\left(o_{t_b+k+n_b}\right),
 \end{equation}
 
-the batch's realization of \cref{eq:ez-value-target}.
+the value target of~\cref{eq:ez-value-target}.
 The bootstrap $\hat v$ is the value head of the current weights, decoded to a scalar with
-\cref{eq:app-scalar-transform-inverse}, and not the root value of a fresh search: reading the head
-directly halves the reanalyze search cost, and the reference reports the root value to be only a
-marginal improvement.
-Positions whose bootstrap falls past the end of the trajectory drop the bootstrap term, which
-leaves the truncated reward sum as the target; at a position past the end of a terminal trajectory
+\cref{eq:app-scalar-transform-inverse}
+Reading the value head directly halves the reanalyze search cost as compared
+to using the resulting \gls{mcts} root value, and the reference reports using the
+\gls{mcts} root value to be only a marginal improvement.
+Positions whose bootstrap falls past the end of the episode drop the bootstrap term, which
+leaves the truncated reward sum as the target; at a position past the end of a terminal episode
 that sum is empty and the target is exactly $0$.
 
 The priorities are recomputed for the $N$ root positions, which are the ones that were drawn:
@@ -362,16 +361,16 @@ The priorities are recomputed for the $N$ root positions, which are the ones tha
   \qquad \epsilon_{\mathrm{per}}=10^{-6}.
 \end{equation}
 
-The first term is the value error of \cref{sec:ez-loop}, taken in scalar space rather than as the
-categorical loss the gradient step later computes, and available before that step runs.
+The first term is the value error of \cref{sec:ez-loop}.
 The optional second term keeps high-return transitions in the training mix after the value head
-has learned to predict them, at which point the error term alone would decay to zero and drop them;
-it is off ($c_r=0$) unless a run states otherwise.
+has learned to predict them, at which point the error term alone would decay to zero and drop them.
+It was used for preliminary testing only and is turned off for all experiments ($c_r=0$).
 
 \section{Mask Calculation}\label{sec:app-loss-masks}
 
-Two masks separate the positions a batch may supervise from the padding that fills the rest.
-The in-range mask marks the positions that lie inside the sampled trajectory,
+Two masks separate the positions a batch may supervise from the padding that fills the rest
+due to mismatching episode lengths.
+The in-range mask marks the positions that lie inside the sampled episode,
 
 \begin{equation}\label{eq:app-loss-mask}
   m^k_b=\ind{t_b+k<|\tau_b|},
@@ -383,16 +382,17 @@ and the value mask additionally admits a bounded number of positions past the en
   m^{v,k}_b=\ind{t_b+k<|\tau_b|+d_a},\qquad d_a=5.
 \end{equation}
 
-Past the end of a terminal trajectory a position is a genuine absorbing state, and the targets
-\cref{eq:app-loss-value-target} already produces there describe it correctly: a value of $0$ and a
+Past the end of a terminal episode a position is an absorbing state, and the targets
+\cref{eq:app-loss-value-target} already produces correct values of $0$ and a
 value prefix that no longer grows.
-Supervising them is what teaches the model that a terminal action pays nothing; without it, the
-value head is never evaluated at a post-terminal latent and its extrapolation there is
-uncontrolled.
+Supervising them is what teaches the model that a terminal action pays nothing.
+without it, the value head is never evaluated at a post-terminal latent and its
+extrapolation there is uncontrolled.
+We found this to be essential to the sequence target (\cref{sec:target-sequence}).
 The dynamics network unrolls across an absorbing position under a \emph{random} action rather than
 under the padded action $0$, so that the signal covers the whole action space instead of one
 action of it.
-A truncated trajectory can never reach this case, since the buffer already excluded the positions
+A truncated episode can never reach this case, since the buffer already excluded the positions
 whose unroll would cross the cut.
 The depth $d_a$ bounds how far the supervision reaches: on a target whose episodes are much
 shorter than $K$, admitting every position past the end would fill the value and value-prefix
@@ -412,11 +412,9 @@ one weight per position and loss term:
 
 Each loss term is then a single weighted sum over the $(K+1)N$ rows, with no per-step masking or
 reduction of its own.
-Normalization is by the full batch size $N$ and not by the number of positions a term actually
-covers, matching the reference: a batch of short trajectories contributes proportionally less
-gradient rather than being scaled back up.
+Normalization is by the full batch size $N$: a batch of short episodes
+contributes proportionally less gradient rather than being scaled back up.
 
-Three properties of \cref{eq:app-loss-weights} are worth naming.
 The policy term carries no mask, because \cref{eq:app-loss-policy-target} leaves a masked row as
 the zero vector and a zero target contributes zero to a cross entropy.
 The value and value-prefix terms run on $m^{v,k}_b$ and therefore include the absorbing positions.
@@ -452,9 +450,6 @@ projection and prediction networks are evaluated once over it.
 \paragraph{Carry resets}
 The \gls{lstm} carry is zeroed every $5$ steps, so that training runs the recurrence over exactly
 the windows the search runs it over.
-At the frozen $K=5$ the boundary falls on the last supervised position of the unroll, so the reset
-never fires inside a training batch; it is the search, whose trees are deeper than $K$, that
-observes it.
 The value-prefix targets of \cref{sec:app-loss-vp} restart at the same boundary.
 
 \section{The Four Loss Terms}\label{sec:app-loss-terms}
@@ -512,16 +507,11 @@ $x^k_b$ deviates from \cref{eq:ez-value-prefix} in two ways.
 $x^k_b$ accumulates the rewards collected to \emph{reach} step $k$, so the root carries the empty
 sum $x^0_b=0$ and the terminal reward of an episode enters a supervised target only at the first
 absorbing position.
-This is what makes the difference of two consecutive prefixes the reward on the edge between them,
-which is how the search recovers a per-edge reward~(\cref{sec:ez-value-prefix}).
-The reference accumulates inclusively and reads the edge reward one step too deep.
 
 \paragraph{The sum is undiscounted}
 The reference drops the $\gamma^{i}$ of \cref{eq:ez-value-prefix} on the grounds that the horizon
 is short and $\gamma$ close to one, and we follow it.
-Keeping the discount would break the telescoping above, since consecutive prefixes would then
-differ by $\gamma^{k-1}u_{t+k}$ rather than by $u_{t+k}$.
-Accumulation is gated by $m^j_b$ so that padded steps cannot drift the target.
+Accumulation is gated by $m^j_b$ so that padded steps cannot introduce errors to the target.
 
 \subsection{Consistency}\label{sec:app-loss-consistency}
 
@@ -553,12 +543,8 @@ one fewer than the number of supervised positions.
 
 The gradient of \cref{eq:app-loss-total} is clipped to a norm of $5$ and applied with
 AdamW~\cite{adamw} at weight decay $10^{-4}$.
-The clip is per parameter tensor rather than over the global gradient norm, which is what the
-backend provides; it addresses the same failure mode, the occasional spike out of the categorical
-cross entropy and the unrolled \gls{lstm}.
-The four term values and their weighted sum are kept on the device and read back at the start of
-the following step, so that reporting them never stalls the training thread on the current step's
-kernels.
+The four term values and their weighted sum are kept on the device and read
+back at the start of the following step.
 
 \chapter{Frozen Configuration}\label{app:configuration}
 
@@ -605,7 +591,7 @@ kernels.
     Reanalyzed policy targets
       & & \SI{99}{\percent} of a batch & \SI{99}{\percent} of a batch \\
     Replay capacity
-      & & \num{10000} trajectories & \num{1000000} transitions \\
+      & & \num{10000} episodes & \num{1000000} transitions \\
     Priority and importance-sampling exponents
       & & 0.6, 0.4 & 0.6, 0.4 \\
     \addlinespace
@@ -636,34 +622,25 @@ kernels.
 
 \chapter{Additional Results}\label{app:results}
 
-The figures collected here are the diagnostic series behind \cref{sec:results-degradation}.
-Each resolves a claim that section makes across all three corpus-action targets into its
-per-target or per-position detail.
+The figures collected here further describe the behavior from~\cref{sec:results-degradation}.
 
-\Cref{fig:structural-rate} is the per-seed, per-target view of the structural byte rate that
-\cref{fig:structural-decay} normalizes onto a common budget.
-It carries the untrained rate each target starts from, so the rise above chance and the later decay
-can be read against an absolute scale rather than against each run's own peak.
+\Cref{fig:structural-rate} is the structural byte rate that was normalized by~\cref{fig:structural-decay}.
 
 \input{figures/generated/structural-rate}
 
-\Cref{fig:depth-actions} breaks the narrowing of the policy down by episode step.
-A share approaching one at a step means the agent plays a single byte there almost regardless of
-state, which locates the collapse within the episode rather than only establishing that it happened.
+\Cref{fig:depth-actions} breaks the collapse of the policy onto single actions down by episode step.
+An action approaching a share of one at a step means the agent plays a single byte there almost regardless of
+state, which indicates a collapsed policy.
 
 \input{figures/generated/depth-actions}
 
 \Cref{fig:policy-improvement} tracks how much search still moves the policy.
-The divergence between the prior and the \gls{mcts} visit distribution is what planning contributes
-on top of the network, so its decline over training is the measurement behind the finding that
-search contributes less as training proceeds.
+The divergence between the prior and the \gls{mcts} visit count distribution can be
+interpreted as the usefulness of \gls{mcts} planning at that learner iteration.
 
 \input{figures/generated/policy-improvement}
 
 \Cref{fig:buffer-reward-density} gives the fraction of replay-buffer transitions carrying a
 non-zero reward.
-The coverage reward is scored against the corpus union of the current episode and that union is
-re-bootstrapped at every reset, so a block found once pays again in the next episode and the signal
-does not thin out as run-level coverage saturates.
 
 \input{figures/generated/buffer-reward-density}

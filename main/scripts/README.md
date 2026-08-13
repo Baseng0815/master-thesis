@@ -46,6 +46,7 @@ than Python would be anyway.
 |---|---|---|---|
 | high-and-low | 1 × 1 | 100 | within-run (chance rate) |
 | sequence | 1 × 1 | 400 | none |
+| open62541 | 1 × 1 | 100 | none |
 | cjson | 15 × 4 | 200 | `CTRL-RAND` |
 | libxml2 | 1 × 4 | 400 | none |
 | picohttpparser | 1 × 4 | 400 | none |
@@ -55,28 +56,31 @@ target-agnostic across them. The one per-target difference is the name of the
 `action_rate` series — `json_bytes` / `xml_bytes` / `http_bytes` — which
 `eval_campaigns.py` normalises to the abstract *structural byte rate*.
 
-The two input-level targets are the exception in every one of those respects,
+The three input-level targets are the exception in every one of those respects,
 which is why they get their own emitters rather than a panel in the corpus
 figures:
 
 - **One run each, one seed.** They are feasibility checks that were stopped
   once the target was solved, not campaigns. Their database sits directly in
-  the campaign root instead of in a `LABEL-sNN` run directory, so
-  `eval_campaigns.discover` reads them through `read_single_run` and labels the
-  arm `MAIN`. Nothing about them carries a seed spread; where their figures
-  show a band it is the spread across the 128 environments of one iteration,
-  and every caption says so.
+  the campaign root instead of in a `LABEL-sNN` run directory — for open62541
+  it *is* the campaign root, since it landed at the data root next to the other
+  campaigns and next to an aborted partial run, so `CAMPAIGNS` names the file
+  rather than a directory. `eval_campaigns.discover` reads all three through
+  `read_single_run` and labels the arm `MAIN`. Nothing about them carries a
+  seed spread; where their figures show a band it is the spread across the 128
+  environments of one iteration, and every caption says so.
 - **Fewer probes, and not the same ones.** high-and-low has `action_rate` (its
   series is `high_coverage`) but no `collapse_entropy`; sequence has
   `collapse_entropy`, `depth_action_counts` and `action_tree_*` but no
-  `action_rate`. Neither has `run_union`, so neither yields a coverage curve
-  and neither appears in `tab-campaign-inventory`.
+  `action_rate`; open62541 has what sequence has except the `action_tree_*`
+  tables. None of the three has `run_union`, so none yields a coverage curve
+  and none appears in `tab-campaign-inventory`.
 - **`iteration` is NULL** on their `trajectory` and `loss` tables, as it is on
   the corpus runs', so both are binned on `env_steps` / `train_batches`.
 
 An extractor whose probe a run does not carry is skipped by the `requires`
 decorator rather than reported as a failure — an absent probe is not an error,
-and without it two healthy runs would report ten.
+and without it three healthy runs would report fifteen.
 
 Because libxml2 and picohttpparser have no random control arm, their claims
 rest on the within-run control instead: the structural byte rate at iteration 0
@@ -168,9 +172,10 @@ targets:
   the outcome: the high-coverage byte rate against its measured chance level
   for high-and-low, the episode length against the 16-byte passcode for
   sequence, which because the program exits on the first wrong byte is the
-  length of the correct prefix
+  length of the correct prefix, and the episode length against the twelve-step
+  cap for open62541, which is how long the session stayed alive
 - `input-entropy` — action entropy against the uniform policy $\ln|\mathcal{A}|$
-- `input-losses` — the five training losses on both targets
+- `input-losses` — the five training losses on all three targets
 
 Ablations and appendix:
 
