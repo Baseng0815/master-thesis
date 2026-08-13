@@ -2,10 +2,12 @@
 
 \section{Corpus-Level Action Spaces}\label{sec:results-corpus-actions}
 
-All corpus-action targets improve over time.
+All corpus-action targets improve over time, with the per-trajectory return rising
+monotonically on each of them~(\cref{fig:return}).
 Each target is run under 4 different seeds and steps 128 environments in parallel.
-The achieved union coverage is reported against actual guest executions as well
-as wall-clock time.
+The achieved union coverage is reported against actual guest
+executions~(\cref{fig:coverage-executions}) as well as wall-clock
+time~(\cref{fig:coverage-wallclock}).
 A tabular summary can be found in~\cref{tab:campaign-inventory}.
 
 \input{figures/generated/tab-campaign-inventory}
@@ -48,20 +50,20 @@ Wall-clock time scales close to linearly with the number of \gls{mcts} simulatio
 This shows that planning at 100 or even 50 steps does not decrease performance
 compared to the baseline of 200 steps.
 It is an open question whether this is a general limit of planning-based fuzzing,
-or an artefact of the SUTs being too small.
+or an artefact of the \glspl{sut} being too small.
 
 Disabling the depth-record reward term leaves \code{W0} at \num{641} blocks, and it is the arm
 whose structural byte rate decays furthest, ending at \num{0.214}.
 
 The models of size \code{FULL} as well as \code{SMALL} perform better than the baseline, albeit
 not significantly.
-We expect a larger SUT with richer structure to benefit more from a large model.
+We expect a larger \gls{sut} with richer structure to benefit more from a large model.
 \code{EDGE} coverage also performs slightly better than the baseline block coverage.
 
 The highest-coverage input any cJSON run produced covers \num{831}
 blocks~(\cref{tab:best-inputs}).
 It is \code{[[[[[2,[[[[[1\ldots}, a nesting depth the agent was never told about.
-All four PRG seeds arrive at the same shape --- a run of opening brackets, a digit, a comma and
+All four \gls{prg} seeds arrive at the same shape --- a run of opening brackets, a digit, a comma and
 more brackets --- and they do so from three different arms, so the motif is a property of the
 target and the reward rather than of one lucky run.
 
@@ -111,7 +113,7 @@ correspondingly~(\cref{fig:depth-actions}).
 \input{figures/generated/collapse-entropy}
 
 Search contributes less as training proceeds.
-The mean KL divergence between the network's policy prior and the \gls{mcts} visit distribution at
+The mean \gls{kl} divergence between the network's policy prior and the \gls{mcts} visit distribution at
 the root falls from \num{0.99} to \num{0.28} nats on cJSON, from \num{4.16} to \num{0.59} on
 libxml2 and from \num{4.16} to \num{0.44} on picohttpparser~(\cref{fig:policy-improvement}).
 

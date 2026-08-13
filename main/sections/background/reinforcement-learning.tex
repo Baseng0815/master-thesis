@@ -2,14 +2,14 @@
 
 \section{Reinforcement Learning}\label{sec:reinforcement-learning}
 
-Reinforcement learning (RL)\index{reinforcement learning} is an extremely general framework for approaching problems
+\Gls{rl}\index{reinforcement learning} is an extremely general framework for approaching problems
 in which an agent strives to maximize a reward signal through a selection of actions
 in certain states~\cite{sutton_reinforcement_2020}.
 
 \subsection{Agent, Environment, and Markov Decision Processes}\label{sec:rl-mdp}
 
 The problems reinforcement learning is typically applied to can be modeled as
-finite Markov decision processes (MDPs).\index{Markov decision process} Formally, a Markov decision process is
+finite \glspl{mdp}.\index{Markov decision process} Formally, a Markov decision process is
 a 3-tuple $\mathit{MDP}=(\mathcal{S},\mathcal{A},p)$ where
 
 \begin{itemize}
@@ -22,11 +22,11 @@ a 3-tuple $\mathit{MDP}=(\mathcal{S},\mathcal{A},p)$ where
     $p$ depends only on the current state and not the full history.
 \end{itemize}
 
-An RL agent's goal is to learn a policy\index{policy} $\pi:\mathcal{S}\times\mathcal{A}\rightarrow [0,1]$
+An \gls{rl} agent's goal is to learn a policy\index{policy} $\pi:\mathcal{S}\times\mathcal{A}\rightarrow [0,1]$
 mapping each state $s$ to probabilities of taking each possible action $a$ to maximize
 the cumulative reward.
 
-A common way to visualize MDPs is via a directed graph: nodes model the state
+A common way to visualize \glspl{mdp} is via a directed graph: nodes model the state
 space $\mathcal{S}$ while edges $(s_i,s_j)$ labeled with an action-reward-probability
 tuple $(a,r,p)\in\mathcal{A}\times\mathbb{R}\times[0,1]$ model potential
 transitions.
@@ -42,12 +42,12 @@ A simple greedy approach is to always select the $\mathtt{search}$ action since 
 pays the highest rewards in expectation.
 This approach incurs the penalty of searching while the battery is in the $\mathtt{low}$ state.
 An agent must therefore recognize the state it is in and choose its action accordingly.
-While this example is easily solved, MDPs with larger state and action spaces present
+While this example is easily solved, \glspl{mdp} with larger state and action spaces present
 a much harder problem.
 
 \subsubsection{Partially Observable Markov Decision Processes}\label{sec:rl-pomdp}
 
-In the previous formulation of MDPs, the true state of the environment is available
+In the previous formulation of \glspl{mdp}, the true state of the environment is available
 to the agent.
 In reality, this is often not the case.
 An agent perceives its environment as a lossy function of the underlying state.
@@ -58,10 +58,10 @@ the true program state.
 Observing the environment may therefore introduce uncertainty.
 The Markov property then still holds for the underlying state, but not for what the agent sees.
 
-This situation is modeled through a \emph{partially observable Markov decision process}%
+This situation is modeled through a \emph{\gls{pomdp}}%
 \index{Markov decision process!partially observable}
-(POMDP)~\cite{ASTROM1965174,kaelbling_planning_1998}, which
-extends the original 3-tuple MDP $(\mathcal{S},\mathcal{A},p)$ to a 5-tuple $\mathit{POMDP}=(\mathcal{S},\mathcal{A},p,\mathcal{O},o)$, by adding
+~\cite{ASTROM1965174,kaelbling_planning_1998}, which
+extends the original 3-tuple \gls{mdp} $(\mathcal{S},\mathcal{A},p)$ to a 5-tuple $\mathit{POMDP}=(\mathcal{S},\mathcal{A},p,\mathcal{O},o)$, by adding
 
 \begin{itemize}
   \item $\mathcal{O}$, the set of observations the agent can receive, and
@@ -70,35 +70,35 @@ extends the original 3-tuple MDP $(\mathcal{S},\mathcal{A},p)$ to a 5-tuple $\ma
     $s^\prime$ under action $a$.
 \end{itemize}
 
-The environment still evolves as an MDP over $\mathcal{S}$ according to $p$.
+The environment still evolves as an \gls{mdp} over $\mathcal{S}$ according to $p$.
 However, the agent must act on observation $O_t$ instead of on the true state $S_t$.
-An ordinary MDP is the special case $\mathcal{O}=\mathcal{S}$ with $o=\operatorname{id}(\cdot)$.
+An ordinary \gls{mdp} is the special case $\mathcal{O}=\mathcal{S}$ with $o=\operatorname{id}(\cdot)$.
 
-POMDPs introduce the problem of \emph{state aliasing}.\index{state aliasing}
+\glspl{pomdp} introduce the problem of \emph{state aliasing}.\index{state aliasing}
 If two states that require different actions map to the same observation, then no deterministic
 memoryless policy $\pi:\mathcal{O}\times\mathcal{A}\rightarrow[0,1]$ can act correctly in both,
 and the best achievable memoryless policy can be arbitrarily worse than a policy that is
 allowed to consult the history~\cite{SINGH1994284}.
 
-A POMDP can be made Markovian by treating not the actual observations, but the
+A \gls{pomdp} can be made Markovian by treating not the actual observations, but the
 entire observation-action history $H_t=O_0,A_0,O_1,A_1,\dots,O_t$ as the state space.\index{observation-action history}
 Another classical solution is to summarize the observation-action history in a probability distribution
 and treat this distribution as the actual state.
 This state is called a \emph{belief state}\index{belief state} $b_t(s)=\Pr\{S_t=s|H_t\}$ and suffices
 to allow the agent to act optimally~\cite{puterman_markov_2009}.
 Practically speaking, the belief-state approach is restricted in that it presupposes
-the existence of a known model $(p,o)$. Solving the resulting belief MDP is also intractable
+the existence of a known model $(p,o)$. Solving the resulting belief \gls{mdp} is also intractable
 for all but the simplest problems~\cite{papadimitriou_complexity_1987}.
 
 \subsection{The Exploration-Exploitation Tradeoff}\label{sec:rl-exploration}
 
-The most important problem any RL agent encounters is that of the \emph{exploration-exploitation tradeoff}.\index{exploration--exploitation tradeoff}
+The most important problem any \gls{rl} agent encounters is that of the \emph{exploration-exploitation tradeoff}.\index{exploration--exploitation tradeoff}
 At any point in time, the agent can either \emph{exploit} previously gained information
 to achieve a higher reward, or \emph{explore} yet unknown actions to gain more information
 that might come in useful in the future.
-Balancing the selection of actions that explore versus actions that exploit is a key tradeoff in any RL algorithm.
+Balancing the selection of actions that explore versus actions that exploit is a key tradeoff in any \gls{rl} algorithm.
 
-Any MDP where $\lvert\mathcal{S}\rvert=1$ and $\lvert\mathcal{A}\rvert=k$ is also known as
+Any \gls{mdp} where $\lvert\mathcal{S}\rvert=1$ and $\lvert\mathcal{A}\rvert=k$ is also known as
 a \emph{$k$-armed bandit}\index{k-armed bandit@$k$-armed bandit}, where the $k$-th arm is equal to the $k$-th action $a_k\in\mathcal{A}$.
 This view is inspired by a slot machine with $k$ arms, where pulling a lever produces a reward $r_k\sim R_k$
 drawn from a stationary distribution $R_k$.
@@ -145,14 +145,14 @@ and prioritizes high-value actions with low visit count.
 \end{equation}
 
 This rule has been proven to be optimal in terms of regret minimization up to a constant factor~\cite{auer_finite-time_nodate}.
-\Gls{ucb} is generalizable from bandits to full MDPs by treating every decision point
+\Gls{ucb} is generalizable from bandits to full \glspl{mdp} by treating every decision point
 of a search tree over the action space as its own bandit.
 This gives rise to the \gls{uct} rule\index{upper confidence bound!applied to trees}~\cite{hutchison_bandit_2006} that is used in an
-algorithm called Monte-Carlo Tree Search (MCTS)~\cite{hutchison_efficient_2007}.
+algorithm called \gls{mcts}~\cite{hutchison_efficient_2007}.
 
 \subsection{Solving MDPs}\label{sec:rl-solving}
 
-Methods for solving MDPs can be classified along two axes.
+Methods for solving \glspl{mdp} can be classified along two axes.
 
 \paragraph{Representation of estimates}
 Classical algorithms represent estimates via tables.
@@ -164,9 +164,10 @@ Earlier work that made use of manually engineered features has been succeeded by
 \paragraph{Model availability}
 Some algorithms require that a model of the transition function $p$ be available.\index{model-based method}
 Classically, the model is assumed to be specified. In more modern algorithms,
-the model is learned by the agent itself through interactions with the underlying MDP.
+the model is learned by the agent itself through interactions with the underlying \gls{mdp}.
 \emph{Model-free methods}\index{model-free method} do not base their estimates on an underlying model, but
 derive them directly from the interactions.
+\Cref{tab:rl-taxonomy} places the algorithms of this section along both axes.
 
 \input{figures/rl-taxonomy}
 
@@ -238,20 +239,20 @@ apply the Bellman optimality equation to get a one-step update rule~\cite{puterm
   v_{k+1}(s)=\max_a\sum_{s^\prime,r}p(s^\prime,r|s,a)\left[r+\gamma v_k(s^\prime)\right].
 \end{equation}
 
-Most RL algorithms make use of this general framework of estimating values and then
+Most \gls{rl} algorithms make use of this general framework of estimating values and then
 using these estimates to improve the current policy.
-This framework is called \emph{generalized policy iteration} (GPI)\index{generalized policy iteration}~\cite{sutton_reinforcement_2020}.
+This framework is called \emph{\gls{gpi}}\index{generalized policy iteration}~\cite{sutton_reinforcement_2020}.
 
 While dynamic programming guarantees convergence to an optimal policy, it requires a complete model $p$ and
 must sweep the entire state space each iteration, making it impractical for larger real-world problems.
 
 \subsubsection{Temporal-difference learning}\label{sec:rl-td}
 
-Temporal-difference (TD) learning\index{temporal-difference learning} removes the need for a model.
+\Gls{td} learning\index{temporal-difference learning} removes the need for a model.
 Values are estimated from sampled transitions $(S_t,A_t,R_{t+1},S_{t+1})$ obtained by interacting with the environment~\cite{sutton_learning_1988,sutton_reinforcement_2020}.
-TD methods, like DP, make use of \emph{bootstrapping}\index{bootstrapping} --- updating estimates based on other estimates.
+\Gls{td} methods, like dynamic programming, make use of \emph{bootstrapping}\index{bootstrapping} --- updating estimates based on other estimates.
 They do not require full state-space sweeps, but update the value function using the sampled transition data.
-A simple TD algorithm, TD(0), updates the estimate $V(S_t)$ as follows:
+A simple \gls{td} algorithm, \gls{td}(0), updates the estimate $V(S_t)$ as follows:
 
 \begin{equation}\label{eq:td0}
   V(S_t)\leftarrow V(S_t)+\alpha\,\delta_t,
@@ -264,14 +265,14 @@ sampled outcome deviates from the current estimate.
 
 Monte Carlo methods\index{Monte Carlo method} form the bootstrap-free alternative by simulating a whole
 episode, updating toward the full observed return $G_t$ at the end.
-The TD($\lambda$) family interpolates between the two extremes via \emph{eligibility traces}\index{eligibility trace},
-with TD(0) and Monte Carlo as the limit cases $\lambda=0$ and
+The \gls{td}($\lambda$) family interpolates between the two extremes via \emph{eligibility traces}\index{eligibility trace},
+with \gls{td}(0) and Monte Carlo as the limit cases $\lambda=0$ and
 $\lambda=1$~\cite{sutton_learning_1988}.
 
 \paragraph{SARSA}
-SARSA\index{SARSA}~\cite{sutton_reinforcement_2020} is similar to TD learning, but learns an action-value function $Q(s,a)$ instead of
+\Gls{sarsa}\index{SARSA}~\cite{sutton_reinforcement_2020} is similar to \gls{td} learning, but learns an action-value function $Q(s,a)$ instead of
 a value function $V(s)$. The update rule makes use of the action that the agent
-actually performed, making SARSA an \emph{on-policy}\index{on-policy learning} algorithm since it follows
+actually performed, making \gls{sarsa} an \emph{on-policy}\index{on-policy learning} algorithm since it follows
 the currently active policy $\pi$:
 
 \begin{equation}\label{eq:sarsa}
@@ -279,7 +280,7 @@ the currently active policy $\pi$:
 \end{equation}
 
 \paragraph{Q-learning}
-Q-learning\index{Q-learning}~\cite{watkins_q-learning_1992} can be interpreted as an \emph{off-policy}\index{off-policy learning} SARSA:
+Q-learning\index{Q-learning}~\cite{watkins_q-learning_1992} can be interpreted as an \emph{off-policy}\index{off-policy learning} \gls{sarsa}:
 its target maximizes over the successor actions, making the update rule
 independent of the actually taken action:
 
@@ -295,7 +296,7 @@ Realistic state spaces are far too large for tables.
 Additionally, tabular methods cannot generalize to unseen states.
 Function approximation addresses both problems by replacing the table with a parameterized
 function $\hat{v}(s;\theta)$ or $\hat{q}(s,a;\theta)$ whose parameter vector $\theta$
-can be learned, for example by (semi-)gradient descent on the TD error.
+can be learned, for example by (semi-)gradient descent on the \gls{td} error.
 
 Historically, the approximators were linear in hand-crafted features.
 Today, they are deep neural networks, giving rise to the field of \emph{deep reinforcement learning}.\index{reinforcement learning!deep}
@@ -304,24 +305,24 @@ bootstrapping, off-policy learning, and function approximation together can
 make training diverge~\cite{sutton_reinforcement_2020}.
 
 The two large families of model-free deep reinforcement learning algorithms are
-the deep Q-network (DQN)\index{deep Q-network}~\cite{mnih_human-level_2015} and policy gradient
-methods\index{policy gradient method} such as proximal policy optimization
-(PPO)\index{proximal policy optimization}~\cite{schulman_proximal_2017}. DQN uses the standard Q-learning update
+the \gls{dqn}\index{deep Q-network}~\cite{mnih_human-level_2015} and policy gradient
+methods\index{policy gradient method} such as
+\gls{ppo}\index{proximal policy optimization}~\cite{schulman_proximal_2017}. \Gls{dqn} uses the standard Q-learning update
 rule, but represents $Q$ as a function approximator instead, allowing it to
-deal with large state and action spaces. PPO directly learns a parameterized
+deal with large state and action spaces. \gls{ppo} directly learns a parameterized
 policy $\pi_\theta$ by performing gradient updates on a clipped objective
 function that increases the probability of advantageous actions while limiting
 the magnitude of policy changes.
 
 \subsubsection{Model-based deep reinforcement learning and sample efficiency}\label{sec:rl-sample-efficiency}
 
-Model-free deep RL algorithms require a large amount of data.
-For instance, DQN and its successors require on the order of tens to hundreds
+Model-free deep \gls{rl} algorithms require a large amount of data.
+For instance, \gls{dqn} and its successors require on the order of tens to hundreds
 of millions of environment interactions to learn a useful $Q$ function.
 This is a major drawback if environment interactions are expensive.
 Many real-world applications therefore require high \emph{sample efficiency}.\index{sample efficiency}
 
-Model-based deep RL algorithms allow higher sample efficiency by learning a model of the underlying dynamics
+Model-based deep \gls{rl} algorithms allow higher sample efficiency by learning a model of the underlying dynamics
 while they interact with the environment.\index{world model}
 This allows them to generate additional, cheap experience~\cite{moerland_model-based_2022},
 and to train the policy inside the learned environment.

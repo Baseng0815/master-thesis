@@ -80,7 +80,7 @@
 
     % --- the agent: reusable, knows nothing about fuzzing ---------------------
     \node[font=\small] at ([yshift=-3.5mm]ez.north)
-      {\code{efficientzero} --- the RL agent};
+      {\code{efficientzero} --- the \gls{rl} agent};
     \node[svc] at ([xshift=-39mm,yshift=-16.5mm]ez.north)
       {\code{driver}\\training, evaluation,\\checkpoints};
     \node[svc] at ([xshift=-13mm,yshift=-16.5mm]ez.north)
@@ -127,7 +127,7 @@
   \end{tikzpicture}
   \caption[System architecture]{%
     The main system architecture and the fuzzing loop of~\cref{sec:rl-mdp}.
-    \code{mugiwara} wraps each SUT into an environment as expected by \code{efficientzero}.
+    \code{mugiwara} wraps each \gls{sut} into an environment as expected by \code{efficientzero}.
     \code{efficientzero} generates an action, \code{mugiwara} converts it to a concrete
     input, forwards the input to MOGI and receives raw execution feedback like
     block hits and the exit reason.

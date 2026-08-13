@@ -17,7 +17,7 @@ The reinforcement-learning-based fuzzers that they survey for each fuzzing step 
 
 \section{Modeling Fuzzing as a Markov Decision Process}\label{sec:rw-mdp-formulations}
 
-For six of the seven papers that use a form of Q-learning or SARSA, we
+For six of the seven papers that use a form of Q-learning or \gls{sarsa}, we
 outline how they model their problem as an \gls{mdp} and
 summarize the state, action and reward design.
 
@@ -108,7 +108,7 @@ summarize the state, action and reward design.
     employ an \gls{lstm}.
 
   \item[Fang and Yan (2018)~\cite{lopez_emulation-instrumented_2018}]
-    LEFT (LTE-Oriented Emulation-Instrumented Fuzzing Testbed)\index{LEFT} is a fuzzer for the
+    LEFT (\glsentryshort{lte}-Oriented Emulation-Instrumented Fuzzing Testbed)\index{LEFT} is a fuzzer for the
     4G/\gls{lte} protocol stack on Android devices, driven through a network emulator.
 
     \begin{itemize}
@@ -160,7 +160,7 @@ summarize the state, action and reward design.
     Unlike \textcite{bottinger_deep_2018}, who fuzz continuously, they use an episodic framing.
 
   \item[Kuznetsov et al.\ (2019)~\cite{kuznetsov_automated_2019}]
-    They provide a general architecture for applying deep RL to automated vulnerability
+    They provide a general architecture for applying deep \gls{rl} to automated vulnerability
     testing.
 
     \begin{itemize}
@@ -191,30 +191,30 @@ handcrafted features.
 This thesis aims to address these issues as follows:
 
 \begin{itemize}
-  \item \textbf{Better deep RL algorithms.}
-    While the line of DQN has incorporated many improvements along the
+  \item \textbf{Better deep \gls{rl} algorithms.}
+    While the line of \gls{dqn} has incorporated many improvements along the
     way~\cite{hessel_rainbow_2017}, the most impressive results have been
     achieved by some kind of MuZero~\cite{schrittwieser_mastering_2020}-style
     architecture. We propose using EfficientZero~\cite{ye_mastering_2021}
-    as the core RL algorithm for improved learning and sampling efficiency.
+    as the core \gls{rl} algorithm for improved learning and sampling efficiency.
 
   \item \textbf{Coverage as the state model.}
     \Gls{cgf} makes use of program coverage mostly as a way to decide whether to keep
     or discard test cases.
     This throws away precious information.
-    We propose to include coverage information in the observations that the RL agent receives.
+    We propose to include coverage information in the observations that the \gls{rl} agent receives.
     We expect this information to aid the agent in decision making and therefore improve fuzzing performance.
 
   \item \textbf{Generic mutations.}
     Instead of choosing from a list of handcrafted mutations, we allow the agent
     to specify a location to mutate and a concrete value to set the location to.
     In theory, this allows the agent to learn the best mutation operators applicable
-    to that specific SUT.
+    to that specific \gls{sut}.
     Whether this beats a curated list of fixed mutation operators is an open question
     we plan to investigate empirically.
 
   \item \textbf{Generic reward signal.}
-    A big advantage of RL-based approaches is that they do not rely on binary decisions,
+    A big advantage of \gls{rl}-based approaches is that they do not rely on binary decisions,
     but can flexibly shape the reward signal in a way that is conducive to the fuzzing goal.
     One could easily imagine a reward signal that includes promoting the execution of
     specific system calls or regions of code.

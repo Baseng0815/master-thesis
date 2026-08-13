@@ -26,16 +26,16 @@ pretraining and a perfect simulator of the game rules.
 AlphaGo Zero\index{AlphaGo!Zero}~\cite{silver_mastering_2017-1} removes the dependency on human
 data.
 It learns exclusively from self-play, using a single network with a policy and a value head.
-The training loop is an instance of GPI (\cref{sec:rl-dp}): MCTS improves
+The training loop is an instance of \gls{gpi} (\cref{sec:rl-dp}): \gls{mcts} improves
 the policy and the improved policy is used to generate new games to train the
-networks to predict the output of MCTS.
+networks to predict the output of \gls{mcts}.
 AlphaGo Zero defeated the published AlphaGo by 100 games to 0.
 
 AlphaZero\index{AlphaZero}~\cite{silver_general_2018} rids itself entirely of the Go-specific dependencies.
 The resulting algorithm is general enough to be trained not only on Go, but
 also on other board games like chess and shogi and defeated the strongest
 existing programs in each of the three games.
-AlphaZero still requires a perfect simulator for MCTS.
+AlphaZero still requires a perfect simulator for \gls{mcts}.
 
 MuZero\index{MuZero}~\cite{schrittwieser_mastering_2020} removes the dependency on the simulator.
 Instead of planning with the true environment dynamics, MuZero learns a model
@@ -96,18 +96,17 @@ The value prefix\index{network!value-prefix} $\vpnet:\mathcal{S}\times\mathcal{A
 the expected discounted sum of all rewards when starting in a state $s_t$ and
 applying actions $(a^1,\dots,a^k)$.
 Combining the value network $v$ with the value-prefix network $\vpnet$ allows
-MCTS to guide its search towards high-valued actions and states.
+\gls{mcts} to guide its search towards high-valued actions and states.
 
 \paragraph{Policy network $p$}
 The policy network\index{network!policy} $p:\mathcal{S}\to\Delta(\mathcal{A})$ maps a state $s_t$ to a
 probability distribution over actions, whose component for action $a$ is written
 $p_a(s)$.
-It models a learned policy $\pi(a|s)$ and acts as a search prior for MCTS.
+It models a learned policy $\pi(a|s)$ and acts as a search prior for \gls{mcts}.
 
 \section{Monte-Carlo Tree Search}\label{sec:ez-mcts}
 
-Monte-Carlo tree search
-(MCTS)\index{Monte-Carlo tree search}~\cite{hutchison_bandit_2006,hutchison_efficient_2007} is a tree search
+\Gls{mcts}\index{Monte-Carlo tree search}~\cite{hutchison_bandit_2006,hutchison_efficient_2007} is a tree search
 algorithm. It makes use of the \gls{uct} rule that derives from the \gls{ucb} rule (\cref{eq:ucb}) introduced in
 \cref{sec:rl-exploration}.
 It searches through the action space $\mathcal{A}$ to find an action that maximizes the
@@ -118,23 +117,23 @@ $v$ and value-prefix network $\vpnet$ to prefer higher-valued states.
 The use of a prior entails a slight modification of the \gls{uct} rule, called pUCT (prior UCT).\index{upper confidence bound!prior (pUCT)}
 The dynamics network $g$ is used to \enquote{imagine} the successor states when
 taking certain actions without actually needing to interact with the environment.
-MCTS is applied in each state and produces a root visit count distribution as well
+\gls{mcts} is applied in each state and produces a root visit count distribution as well
 as a root value estimate.
 The root visit count distribution can then be sampled to choose an action with
 which to step the environment.
 
-MCTS itself is a general framework that can be adapted to many situations.
+\gls{mcts} itself is a general framework that can be adapted to many situations.
 It can be interpreted as a policy improvement operator:\index{policy improvement operator} given a policy prior
 and search heuristics, it produces a new, better policy.
 Previous algorithms like AlphaGo did not use imagined rollouts, but relied on a perfect simulator
 of the Go rules.
 The use of imagined rollouts is a key factor in the sample efficiency of EfficientZero.
 
-The MCTS variant used in EfficientZero consists of three phases that are
+The \gls{mcts} variant used in EfficientZero consists of three phases that are
 repeated a fixed number of times: \emph{selection}\index{Monte-Carlo tree search!selection},
 \emph{expansion}\index{Monte-Carlo tree search!expansion}, and
 \emph{backup}\index{Monte-Carlo tree search!backup}.
-MCTS stores the current state of its search tree in nodes, where
+\gls{mcts} stores the current state of its search tree in nodes, where
 already visited nodes are marked as \emph{expanded}.
 Each node stores a latent state $s^k$, its visit count $N$, and the sum of the
 returns $Q_\Sigma$ backed up through it.
@@ -145,7 +144,7 @@ phases on a worked example.
 
 \paragraph{Selection}\label{sec:ez-mcts-selection}
 Starting at a given root state $s^0$, an action is chosen until a yet unexpanded
-node is reached.
+node is reached~(\cref{fig:ez-mcts-selection}).
 Actions are chosen using the pUCT rule~\cite{schrittwieser_mastering_2020}:
 
 \begin{equation}\label{eq:ez-puct}
@@ -187,13 +186,14 @@ controls its shape.
 \paragraph{Expansion and Evaluation}\label{sec:ez-mcts-expansion}
 
 When a sequence of actions has been selected and an unexpanded node is reached,
-it is expanded: the previous latent state is unrolled one step to get the new
-latent $s^{k+1}=g(s^k,a^k;\theta)$ and the value statistics are initialized.
+it is expanded~(\cref{fig:ez-mcts-expansion}): the previous latent state is
+unrolled one step to get the new latent $s^{k+1}=g(s^k,a^k;\theta)$ and the value
+statistics are initialized.
 
 \paragraph{Backup}\label{sec:ez-mcts-backup}
 
 The leaf value is propagated back along the search path
-$s^0, a^1, s^1, \dots, a^l, s^l$.
+$s^0, a^1, s^1, \dots, a^l, s^l$~(\cref{fig:ez-mcts-backup}).
 For every node on the path, the backed-up return is the discounted sum of the
 rewards below it, bootstrapped with the leaf estimate:
 
@@ -223,7 +223,7 @@ EfficientZero uses a parallel architecture with multiple worker types.
 
 New data is generated by interacting with the environment.\index{worker!data}
 At every time step $t$, a worker encodes the latest observation into
-$s_t = h(o_t;\theta)$ and runs MCTS from this root.
+$s_t = h(o_t;\theta)$ and runs \gls{mcts} from this root.
 The resulting root visit count distribution\index{visit count distribution} is then sampled using a temperature
 $T$\index{temperature} and the action passed to the environment:
 
@@ -253,11 +253,11 @@ Prioritizing positions with a high loss accelerates learning.
 
 Prepared batches are then processed by reanalyze workers.\index{worker!reanalyze}
 \emph{MuZero Reanalyze}\index{MuZero!Reanalyze} is an extension to the basic MuZero algorithm that improves the freshness of
-data by re-running MCTS on old data with updated model weights, contributing to data reuse and sample efficiency.
-Reanalyzed batches are finally passed to the GPU workers where the model is trained.
+data by re-running \gls{mcts} on old data with updated model weights, contributing to data reuse and sample efficiency.
+Reanalyzed batches are finally passed to the \gls{gpu} workers where the model is trained.
 
-This architecture is an instance of generalized policy iteration:
-MCTS serves as the policy improvement operator~\cite{grill_monte-carlo_2020}, while learning from stored experience
+This architecture is an instance of \gls{gpi}:
+\gls{mcts} serves as the policy improvement operator~\cite{grill_monte-carlo_2020}, while learning from stored experience
 improves the value estimates.
 
 \section{Training Objective}\label{sec:ez-loss}
@@ -268,22 +268,22 @@ unrolled\index{unroll} for $K$ steps with the actions that were actually taken,
 $s^k=g(s^{k-1},a_{t+k};\theta)$.
 Each unrolled latent $s^k$ is supervised with the targets located at the real
 position $t+k$. These include the actual reward and actual observation as well
-as MCTS root visit distribution and root value target.
+as \gls{mcts} root visit distribution and root value target.
 
 \paragraph{Policy target}
-The policy head is trained toward the MCTS root visit distribution $\pi_{t+k}$
-to align the current policy with the improved MCTS policy.\index{training target!policy}
+The policy head is trained toward the \gls{mcts} root visit distribution $\pi_{t+k}$
+to align the current policy with the improved \gls{mcts} policy.\index{training target!policy}
 
 \paragraph{Value target}
 The value head is trained toward an $n$-step return of actual rewards,
-bootstrapped with the root value that MCTS produced:\index{training target!value}
+bootstrapped with the root value that \gls{mcts} produced:\index{training target!value}
 
 \begin{equation}\label{eq:ez-value-target}
   z_t=\sum_{i=0}^{n-1}\gamma^{i}\,u_{t+i+1}+\gamma^{n}\,v^{\text{MCTS}}_{t+n},
 \end{equation}
 
 where $u$ are the actual rewards observed by the data workers and
-$v^{\text{MCTS}}_{t+n}$ is the MCTS root value.
+$v^{\text{MCTS}}_{t+n}$ is the \gls{mcts} root value.
 
 \paragraph{Value-prefix target}
 The value-prefix head is trained toward $x_{t,k}$ of \cref{eq:ez-value-prefix},

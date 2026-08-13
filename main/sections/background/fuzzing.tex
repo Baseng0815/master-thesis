@@ -11,7 +11,7 @@
 Fuzz testing, or \textit{fuzzing} for short, is a widely deployed method for automatic
 software testing and vulnerability discovery that makes use of a diverse set of
 tools~\cite{manes_art_2019}.
-Its goal is to find inputs to a System Under Test (SUT) that trigger a certain
+Its goal is to find inputs to a \gls{sut} that trigger a certain
 behavior, often a crash that might then lead to the discovery of bugs or security
 vulnerabilities.
 % --- End excerpt ---
@@ -42,24 +42,24 @@ OSS-Fuzz has helped to identify over \num{13000} security vulnerabilities and \n
 We will introduce some general definitions that mainly follow \textcite{manes_art_2019}.
 
 \begin{enumerate}
-  \item \emph{System Under Test (SUT):}\index{system under test}
+  \item \emph{\Gls{sut}:}\index{system under test}
     The system under test is an executable software artifact like a command-line utility
     or library together with an interface that consumes input. In our case it denotes
     a binary executed through the MOGI emulator (\cref{chap:implementation}).
 
   \item \emph{Security Policy:}\index{security policy}
-    A security policy defines which observable behaviors of the SUT are acceptable.
+    A security policy defines which observable behaviors of the \gls{sut} are acceptable.
     Each execution either satisfies or violates a given security policy. A common
     security policy deems all executions that result in crashes like segmentation
     faults to be violations.
 
   \item \emph{Bug Oracle:}\index{bug oracle}
-    A bug oracle is a program that decides whether a given input to the SUT violates
+    A bug oracle is a program that decides whether a given input to the \gls{sut} violates
     a given security policy. A widely used bug oracle might deem an execution
-    a violation if the SUT crashes or hangs.
+    a violation if the \gls{sut} crashes or hangs.
 
   \item \emph{Fuzzing:}\index{fuzzing}
-    Fuzzing denotes the process of feeding the SUT with inputs sampled from an input space.
+    Fuzzing denotes the process of feeding the \gls{sut} with inputs sampled from an input space.
     This input space may include expected and valid inputs as well as invalid, unexpected
     ones, which are sampled in the hope of violating a given security policy.
 
@@ -67,14 +67,14 @@ We will introduce some general definitions that mainly follow \textcite{manes_ar
     Fuzz testing denotes the software testing technique that makes use of fuzzing.
 
   \item \emph{Fuzzer:}\index{fuzzer}
-    A fuzzer is a program that performs fuzz testing on a SUT.
+    A fuzzer is a program that performs fuzz testing on a \gls{sut}.
 
   \item \emph{Fuzz Campaign:}\index{fuzz campaign}
-    A fuzz campaign is a specific execution of a fuzzer on a SUT with a specific
-    security policy. Its goal is to find bugs in the SUT that violate this policy.
+    A fuzz campaign is a specific execution of a fuzzer on a \gls{sut} with a specific
+    security policy. Its goal is to find bugs in the \gls{sut} that violate this policy.
 
   \item \emph{Test Case:}\index{test case}
-    A test case denotes a concrete input that the fuzzer feeds to the SUT during
+    A test case denotes a concrete input that the fuzzer feeds to the \gls{sut} during
     a fuzzing campaign. The resulting execution is then judged by the bug oracle
     and the test case is recorded if the bug oracle deems it a violation of the
     security policy.
@@ -82,7 +82,7 @@ We will introduce some general definitions that mainly follow \textcite{manes_ar
     complete byte sequence.
 
   \item \emph{Seed:}\index{seed}
-    A seed is a commonly well-structured input to the SUT that the fuzzer uses
+    A seed is a commonly well-structured input to the \gls{sut} that the fuzzer uses
     as the basis for deriving new test cases by modifying it.
 
   \item \emph{Corpus:}
@@ -99,40 +99,40 @@ We will introduce some general definitions that mainly follow \textcite{manes_ar
 \subsection{Taxonomy}\label{sec:fuzzing-taxonomy}
 
 Fuzzers can be roughly divided into four classes, defined by the amount of
-information from the execution of the SUT available to them~\cite{liang_fuzzing_2018}.
+information from the execution of the \gls{sut} available to them~\cite{liang_fuzzing_2018}.
 
 \subsubsection{Black-box fuzzing}
 
-Black-box fuzzers\index{fuzzing!black-box} have no access to the internal behavior of a SUT during execution.
+Black-box fuzzers\index{fuzzing!black-box} have no access to the internal behavior of a \gls{sut} during execution.
 They can only make use of the bug oracle to decide whether a given input violates
 the security policy or not.
 The core advantage of this approach is the wide applicability since no instrumentation
 is required.
 This lack of potential instrumentation overhead also benefits execution throughput
 as well as timing and reproducibility for targets like network interfaces.
-The disadvantage is the lack of information about SUT behavior.
+The disadvantage is the lack of information about \gls{sut} behavior.
 This makes it difficult for fuzzers to generate high-coverage inputs.
 
 \subsubsection{White-box fuzzing}
 
 In contrast to pure black-box fuzzers, white-box fuzzers\index{fuzzing!white-box} have full access to
-the internal logic of the SUT as well as usually any original source code or
+the internal logic of the \gls{sut} as well as usually any original source code or
 documentation which can greatly aid the fuzzing process.
 In practice, this allows an approach known as \emph{symbolic execution}\index{symbolic execution}: instead
 of relying on actual execution traces, a white-box fuzzer can gather symbolic
 constraints at branching points and use constraint solving to find inputs that exercise
 a specific path.
 While this makes it easy to find test cases of interest in theory, this approach scales poorly
-to large SUTs due to the path explosion problem.\index{path explosion}
+to large \glspl{sut} due to the path explosion problem.\index{path explosion}
 A popular white-box fuzzer is SAGE~\cite{godefroid_sage_2012}.
 
 \subsubsection{Greybox fuzzing}
 
 Since full information is often not available but observing certain parts
-of the internal behavior of the SUT might still be possible, \textit{greybox}
+of the internal behavior of the \gls{sut} might still be possible, \textit{greybox}
 fuzzing\index{fuzzing!greybox} represents an important middle ground between the previous two extremes.
 By making use of runtime instrumentation information like code coverage, the fuzzer can
-better judge the behavior of the SUT for a given input and direct its exploration efforts towards promising regions.
+better judge the behavior of the \gls{sut} for a given input and direct its exploration efforts towards promising regions.
 
 \subsubsection{Hybrid approaches}
 
@@ -152,7 +152,7 @@ Input generation can be categorized into either generation- or mutation-based.
 \subsubsection{Generation-based input generation}
 
 Generation-based input generation\index{input generation!generation-based} makes use of a model of the input expected by
-the SUT, often represented through a grammar specification.
+the \gls{sut}, often represented through a grammar specification.
 These models can be \emph{predefined}, \emph{inferred}, or \emph{encoder-based}.
 
 Predefined models are specified by the user.
@@ -162,20 +162,20 @@ call interfaces.
 
 Inferred models do not rely on an explicitly specified model but rather infer it through some automatic means.
 Inference can either take place as a preprocessing step or during a fuzz campaign.
-TestMiner~\cite{toffola_saying_2017} searches for literals inside the SUT and derives suitable inputs.
-PULSAR~\cite{thuraisingham_pulsar_2015} infers a network protocol from a set of captured network packets generated by the SUT.
+TestMiner~\cite{toffola_saying_2017} searches for literals inside the \gls{sut} and derives suitable inputs.
+PULSAR~\cite{thuraisingham_pulsar_2015} infers a network protocol from a set of captured network packets generated by the \gls{sut}.
 
-Encoder-based models interpret the SUT as a decoder for inputs generated by an existing encoder.
+Encoder-based models interpret the \gls{sut} as a decoder for inputs generated by an existing encoder.
 An example for an encoder-based fuzzer is MutaGen~\cite{kargen_turning_2015}.
 
 \subsubsection{Mutation-based input generation}
 
 Generating purely random inputs is not an effective strategy beyond the
-shallowest layers of a SUT~\cite{manes_art_2019,godefroid_sage_2012}.
-In general, a SUT contains checks that reject invalid inputs, making it
+shallowest layers of a \gls{sut}~\cite{manes_art_2019,godefroid_sage_2012}.
+In general, a \gls{sut} contains checks that reject invalid inputs, making it
 difficult to reach code paths that violate a given security policy~\cite{manes_art_2019}.
 This motivates the use of an \emph{initial corpus}, a set of well-structured inputs
-to the SUT like valid network packets or files.
+to the \gls{sut} like valid network packets or files.
 The seeds inside the corpus are then successively mutated\index{input generation!mutation-based} with the goal
 of triggering abnormal behavior.
 Mutation operators can be divided into four sets:
@@ -200,9 +200,9 @@ Mutation operators can be divided into four sets:
 
 \subsection{Coverage-Guided Greybox Fuzzing}\label{sec:fuzzing-cgf}
 
-This work will focus primarily on coverage-guided greybox fuzzing,\index{fuzzing!coverage-guided greybox} \emph{CGF} for short.
+This work will focus primarily on \gls{cgf}\index{fuzzing!coverage-guided greybox} in its greybox variant.
 It is the dominant design among modern general-purpose fuzzers, popularized by
-AFL~\cite{zalewski2014afl} and its successor AFL++~\cite{fioraldi_afl_nodate}.
+\gls{afl}~\cite{zalewski2014afl} and its successor AFL++~\cite{fioraldi_afl_nodate}.
 We will outline the general approach following \textcite{bohme_coverage-based_2016}.
 
 \subsubsection{Overview}
@@ -212,7 +212,7 @@ A coverage-guided greybox fuzzer in general uses mutational input generation
 For this, it keeps a corpus $T$ as part of its runtime state.
 This corpus is initialized from an initial corpus $S$.
 The fuzzer then selects a seed $t\in T$ and derives a new test case $t^\prime$.
-If the fuzzer deems the execution of the SUT under $t^\prime$ to be interesting, $t^\prime$
+If the fuzzer deems the execution of the \gls{sut} under $t^\prime$ to be interesting, $t^\prime$
 is retained in the corpus $T$ and is thereafter available as a seed itself.
 
 \begin{algorithm}[H]
@@ -246,10 +246,10 @@ is retained in the corpus $T$ and is thereafter available as a seed itself.
   \end{algorithmic}
 \end{algorithm}
 
-\Cref{alg:cgf} states the CGF loop.
+\Cref{alg:cgf} states the \gls{cgf} loop.
 The fuzzer must solve three main problems: selecting an appropriate
 seed (\textsc{ChooseNext}, \textsc{AssignEnergy}), applying appropriate mutations (\textsc{MutateInput}), and deciding whether to retain the
-mutated input or not based on SUT behavior (\textsc{IsInteresting}).
+mutated input or not based on \gls{sut} behavior (\textsc{IsInteresting}).
 In addition, \textsc{AssignEnergy} decides how much of the execution budget the selected seed receives.
 
 Two independent decisions are made after every execution.
@@ -281,7 +281,7 @@ schedule}\index{power schedule}~\cite{manes_art_2019,bohme_coverage-based_2016}.
 
 An optimal seed and power schedule would choose seeds in such a way as to maximize coverage
 after they are mutated.
-This coverage is not known to the fuzzer unless it executes the SUT with a mutated seed,
+This coverage is not known to the fuzzer unless it executes the \gls{sut} with a mutated seed,
 that is, only once the budget has already been spent on that seed.
 Scheduling is therefore subject to what \textcite{manes_art_2019} call the
 \emph{exploration versus exploitation conflict}\index{exploration--exploitation tradeoff}: time can be spent either on gathering more
@@ -346,12 +346,12 @@ This enables constant-time coverage lookups, but may cause coverage information 
 
 \subsubsection{Instrumentation}
 
-Collecting coverage information requires instrumenting the SUT.
+Collecting coverage information requires instrumenting the \gls{sut}.
 There are several categories of instrumentation in use~\cite{fioraldi_afl_nodate}:
 
 \begin{enumerate}
   \item \emph{Compile-time instrumentation}\index{instrumentation!compile-time}
-    inserts instrumentation during compile time of the SUT.
+    inserts instrumentation during compile time of the \gls{sut}.
     This is very cheap and flexible, but requires access to the source code.
 
   \item \emph{Static binary rewriting}\index{instrumentation!static binary rewriting}
@@ -374,7 +374,7 @@ There are several categories of instrumentation in use~\cite{fioraldi_afl_nodate
 
 The most prominent instantiation of \cref{alg:cgf} is
 AFL++\index{AFL++}~\cite{fioraldi_afl_nodate}, a reengineered fork of Zalewski's
-now-unmaintained American Fuzzy Lop.
+now-unmaintained \gls{afl}.
 AFL++ consolidates various forks and research prototypes and exposes them as switchable modules~\cite{fioraldi_afl_nodate}.
 It is therefore a customary baseline in the fuzzing literature.
 
@@ -403,7 +403,7 @@ It is noteworthy that a fixed schedule is picked before the start of the campaig
 
 \subsubsection{Test case mutation}
 
-AFL's mutation pipeline has two stages~\cite{fioraldi_afl_nodate}.
+\gls{afl}'s mutation pipeline has two stages~\cite{fioraldi_afl_nodate}.
 The \emph{deterministic} stage\index{mutation!deterministic stage} applies single, reproducible mutations systematically along
 the input.
 These include bit flips, arithmetic increments and decrements over byte, word and
@@ -431,7 +431,7 @@ positions alongside AFL++ through this interface~\cite{binosi_rainfuzz_2023}.
 
 \subsubsection{Test case retention}
 
-AFL implements \textsc{IsInteresting} through a hybrid metric combining edge coverage with
+\gls{afl} implements \textsc{IsInteresting} through a hybrid metric combining edge coverage with
 the number of times each edge was taken~\cite{fioraldi_afl_nodate}.
 Basic blocks are assigned identifiers at instrumentation time.
 Edges are represented by a hash of the identifiers of their source and destination blocks.
@@ -478,8 +478,8 @@ methods using some form of symbolic execution and constraint solving~\cite{godef
 Since execution throughput is usually correlated with the effectiveness of a fuzzer,
 this is an important advantage~\cite{fioraldi_afl_nodate,manes_art_2019}.
 It also does not require an input model: an iteratively refined corpus can
-implicitly generate inputs that adhere to the specification and grammar of the SUT.
-This makes CGF applicable to a wide range of targets~\cite{manes_art_2019}.
+implicitly generate inputs that adhere to the specification and grammar of the \gls{sut}.
+This makes \gls{cgf} applicable to a wide range of targets~\cite{manes_art_2019}.
 It works well at scale and has found tens of thousands of
 bugs~\cite{arya_oss-fuzz_nodate} in a wide range of software.
 
@@ -491,28 +491,28 @@ discovering new bugs requires an exponentially increasing fuzzing budget.
 AFLFast attributes this plateau to the budget being spent on high-frequency
 paths~\cite{bohme_coverage-based_2016}.
 
-CGF is also blind to any input-coverage correspondence~\cite{manes_art_2019}, therefore
+\gls{cgf} is also blind to any input-coverage correspondence~\cite{manes_art_2019}, therefore
 discarding a large amount of potentially useful information.
 Gradient-guided optimization techniques have been shown to outperform evolutionary
-techniques like the ones used by AFL.
-\textcite{she_neuzz_2019,she_mtfuzz_2020} show that learning an approximation to a SUT's branching
+techniques like the ones used by \gls{afl}.
+\textcite{she_neuzz_2019,she_mtfuzz_2020} show that learning an approximation to a \gls{sut}'s branching
 behavior improves fuzzing performance.
-\textcite{gan_greyone_nodate} use taint analysis to discover more edges than baseline AFL.
+\textcite{gan_greyone_nodate} use taint analysis to discover more edges than baseline \gls{afl}.
 Further approaches are surveyed by~\textcite{wang_systematic_2020} and~\textcite{qiu_survey_2025}.
 
-Magic bytes and checksums present a major barrier to the success of CGF since
+Magic bytes and checksums present a major barrier to the success of \gls{cgf} since
 they are highly unlikely to be found by random mutation (\cref{sec:fuzzing-input-generation}).
-Overcoming these checks can be done by augmenting CGF with symbolic
+Overcoming these checks can be done by augmenting \gls{cgf} with symbolic
 execution~\cite{stephens_driller_2016} or by learned input-coverage
 correspondence using the aforementioned methods~\cite{aschermann_redqueen_2019}.
 
 Coverage itself might also be an insufficient objective to optimize for. While
-it has been empirically proven to be effective for general SUTs, in some use
-cases like embedded systems, corruption of a SUT's state is not related to its
+it has been empirically proven to be effective for general \glspl{sut}, in some use
+cases like embedded systems, corruption of a \gls{sut}'s state is not related to its
 coverage~\cite{muench_what_2018} or might require additional sanitization
 efforts~\cite{zhang_debloating_nodate}.
 
-Coverage is also a lossy representation that only approximates the SUT's state
+Coverage is also a lossy representation that only approximates the \gls{sut}'s state
 at a certain point and might suffer from aliasing due to hash collisions~\cite{gan_collafl_2018}.
 
 Fuzzing itself can be modeled as a decision problem under uncertainty whose
@@ -526,14 +526,14 @@ none of which uses raw coverage information (\cref{sec:afl-test-case-selection})
 
 \subsection{Stateful and Protocol Fuzzing}\label{sec:fuzzing-stateful}
 
-CGF models the SUT as a pure function mapping an input to a coverage.
-A new input requires the SUT to be reset to its initial state.
-For stateful SUTs, the coverage depends on the current input as well as the
+\gls{cgf} models the \gls{sut} as a pure function mapping an input to a coverage.
+A new input requires the \gls{sut} to be reset to its initial state.
+For stateful \glspl{sut}, the coverage depends on the current input as well as the
 history of previous inputs.
-Stateful targets\index{fuzzing!stateful} are especially prevalent in IoT applications and present a
+Stateful targets\index{fuzzing!stateful} are especially prevalent in \gls{iot} applications and present a
 significant attack surface~\cite{zhang_iot_2014,sadeghi_security_2015}.
 Examples include industrial control systems~\cite{borcherding_bandits_2023},
-network protocols like QUIC~\cite{ang_quic-fuzz_2025} and OPC~UA,
+network protocols like QUIC~\cite{ang_quic-fuzz_2025} and \gls{opcua},
 operating system kernels~\cite{wang_syzvegas_2021}, and web applications~\cite{doupe_enemy_2012}.
 
 We distinguish three kinds of state:
@@ -542,17 +542,17 @@ We distinguish three kinds of state:
 The current fuzzing configuration and corpus.\index{state!fuzzer}
 
 \paragraph{Program state}
-The state of the SUT as seen from the execution engine.\index{state!program} It is made up
+The state of the \gls{sut} as seen from the execution engine.\index{state!program} It is made up
 of memory and register file state as well as peripheral states like filesystems or network interfaces.
 
 \paragraph{Protocol state}
-The state inside the protocol as given by a protocol specification.\index{state!protocol} For a SUT initiating
+The state inside the protocol as given by a protocol specification.\index{state!protocol} For a \gls{sut} initiating
 a TCP connection, this might include the protocol state after a \texttt{SYN} has been sent.
 
 \subsubsection{Challenges}
 
 Fuzzers like AFL++ were mainly designed to test stateless programs and
-therefore cannot deal natively with highly stateful SUTs.
+therefore cannot deal natively with highly stateful \glspl{sut}.
 Coverage in this case is not sufficient to identify the state the program is currently
 in since it does not contain enough information about the input history.
 In addition, protocol state is not observable and must be inferred, for instance from response codes,
@@ -565,7 +565,7 @@ might create lots of files that then need to be removed again.
 We provide such an execution environment in~\cref{sec:impl-platform}.
 
 AFLNet\index{AFLNet}~\cite{pham_aflnet_2020} is the canonical greybox fuzzer for network protocols\index{fuzzing!protocol}
-and works by combining traditional CGF with automatic state inference to guide exploration
+and works by combining traditional \gls{cgf} with automatic state inference to guide exploration
 towards more important code paths.
 Various prior works describe how a protocol state machine can be learned~\cite{dongol_grey-box_2020,marksteiner_learning_2025,giraud_l-scale_2026}.
 A detailed survey of fuzzers that incorporate protocol state information is given by~\textcite{daniele_fuzzers_2023}.

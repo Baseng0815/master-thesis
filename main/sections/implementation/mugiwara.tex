@@ -3,7 +3,7 @@
 \section{Mugiwara}\label{sec:impl-mugiwara}
 
 \code{mugiwara} connects the EfficientZero agent with the MOGI execution environment.
-It does this by implementing the \code{Environment} trait for each SUT.
+It does this by implementing the \code{Environment} trait for each \gls{sut}.
 This necessitates the mapping of generic learner actions to executable input and
 generated MOGI instrumentation to observations as well as providing an adequate
 reward signal.
@@ -67,7 +67,7 @@ observation and plain reward of 0.
 This makes the action space size additive and yields a final size of $\max(2\times 16,256)=256$.
 For the first step that only has $2\times 16=32$ distinct actions, we reduce the 256 categories
 modulo 32.
-An episode is fixed at 64 mutations, which equals 128 MDP steps and 64 guest
+An episode is fixed at 64 mutations, which equals 128 \gls{mdp} steps and 64 guest
 executions under this model.
 The reward is implemented as described in~\cref{sec:mdp-rewards} and derived from the
 collected \code{Coverage}.
@@ -88,7 +88,7 @@ An environment reset can then be implemented as a simple snapshot restore.
 \subsubsection{Input-level action execution}
 
 The execution loop for the input-level action model as introduced in~\cref{sec:input-level-actions}
-consists of pushing a single input, usually a byte, into the input stream of the SUT
+consists of pushing a single input, usually a byte, into the input stream of the \gls{sut}
 and then waking it up via MOGI.
 The environment is only reset on episode end, i.e., whenever an error condition is
 encountered or the step limit of the episode is exceeded.
@@ -108,9 +108,9 @@ fn execute(&mut self, action: Action) -> (Vec<f32>, bool) {
 
 \subsubsection{Corpus-level action execution}
 
-During each step, the SUT is re-executed with a given seed.
+During each step, the \gls{sut} is re-executed with a given seed.
 This is done by resetting the environment and block hit trackers, pushing the
-seed data, waking and running the SUT, and collecting any observations and is
+seed data, waking and running the \gls{sut}, and collecting any observations and is
 illustrated in~\cref{lst:mugiwara-execution}.
 
 \begin{rust}[caption={One guest execution in the corpus-action setting},label={lst:mugiwara-execution}]
@@ -219,5 +219,5 @@ across different hardware.
 Parallel execution of evaluations is constrained by the hardware, usually the memory.
 This can either be too little RAM to hold multiple replay buffers with
 the desired capacity, or too little VRAM to store all tensors at once.
-Actual GPU compute is also a bottleneck, but only slows down parallel runs and does
+Actual \gls{gpu} compute is also a bottleneck, but only slows down parallel runs and does
 not cause them to be killed.

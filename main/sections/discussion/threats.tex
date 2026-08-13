@@ -43,10 +43,10 @@ target-dependent, but have not tested this.
 
 \paragraph{Wall-clock figures are measured under contention.}
 For a given campaign, we run multiple evaluations in parallel as described in~\cref{sec:methodology-setup}.
-Since these evaluations share the GPU, the actual wall-clock figures are likely to be
+Since these evaluations share the \gls{gpu}, the actual wall-clock figures are likely to be
 pessimistic.
 Measured on the baseline arm, one learner iteration takes about \SI{300}{\second} under the
-campaign's concurrency versus \SI{96}{\second} with the GPU to itself.
+campaign's concurrency versus \SI{96}{\second} with the \gls{gpu} to itself.
 The execution rates between \num{21} and \num{23} inputs per second and the three-orders-of-magnitude
 gap to a native harness in \cref{sec:discussion-interpretation} are therefore contended figures that
 overstate the gap by roughly that factor of three.

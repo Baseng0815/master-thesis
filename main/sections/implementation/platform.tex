@@ -6,12 +6,13 @@ We implement our fuzzer on top of the MOGI emulation framework~\cite{giraud_l-sc
 MOGI supports \gls{cpu} and \gls{mmu} emulation for various architectures and includes
 instrumentation support as well as the possibility for emulating Linux userspace
 binaries and for taking snapshots and restoring program state.
+\Cref{fig:platform-architecture} shows how its crates fit together.
 
 \input{figures/platform-architecture}
 
 It is implemented as a Rust workspace with multiple crates.
 The core execution environment abstractions live in \code{mogi\_system} and provide
-CPU and MMU traits to support multiple backends.
+\gls{cpu} and \gls{mmu} traits to support multiple backends.
 It also includes \code{Hooks} and \code{Restorable} traits that allow installation
 of hooks for collecting instrumentation information and taking snapshots of the system
 state and then restoring them.

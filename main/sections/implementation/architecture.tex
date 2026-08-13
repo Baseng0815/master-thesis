@@ -16,8 +16,8 @@ This has the advantage of not needing to rely on interfacing with the existing P
 implementation, which in general is very slow.
 It also makes it easier to include EfficientZero in the overall architecture.
 Finally, we provide the actual fuzzer, \emph{mugiwara}\index{mugiwara}, which implements the interface
-required by the EfficientZero learner and drives the execution of SUTs using MOGI.
-In addition, it contains utility functions that are shared between different SUTs
+required by the EfficientZero learner and drives the execution of \glspl{sut} using MOGI.
+In addition, it contains utility functions that are shared between different \glspl{sut}
 like instrumentation and a model of a seed corpus.
 
 We chose to develop these three components separately to enable a clean architectural
@@ -26,5 +26,5 @@ Although MOGI was created for fuzzing, it is a general emulation framework
 that can serve other purposes.
 In addition, the EfficientZero algorithm requires the environment to
 implement only a minimal set of functions, making it applicable to
-fuzzing as well as general RL environments like the Atari
+fuzzing as well as general \gls{rl} environments like the Atari
 100k benchmark suite.

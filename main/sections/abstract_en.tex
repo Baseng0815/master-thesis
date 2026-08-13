@@ -14,7 +14,7 @@ We frame emulator-based greybox fuzzing as a Markov decision process and apply E
 to it, a sample-efficient MuZero variant that plans with Monte-Carlo tree search inside a
 learned latent model of its environment.
 To the best of our knowledge, this is the first fuzzer that plans with a learned model of the target's behavior.
-Prior RL-based fuzzers usually use model-free variants of Q-learning, and planning-based fuzzers
+Prior \gls{rl}-based fuzzers usually use model-free variants of Q-learning, and planning-based fuzzers
 apply Monte-Carlo tree search to an explicitly constructed model.
 Basic-block coverage collected from an emulator is used as an observation as well as to derive a reward.
 We formulate two action spaces: input-level actions, where an action is an input the program
@@ -25,7 +25,7 @@ and the MOGI emulation framework.
 
 We evaluate six targets, three in the input-action setting and three in the corpus-action setting.
 The agent solves all three input-action targets: it recovers a 16-byte passcode one position at a
-time and activates an OPC~UA session against open62541.
+time and activates an \gls{opcua} session against open62541.
 On the corpus-action targets it beats the random control baseline at identical execution budget
 and improves on it by a factor of \num{1.77} in the best run.
 It also manages to derive structure related to the target program's input grammar:

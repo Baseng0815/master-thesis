@@ -35,19 +35,19 @@ We answer the research questions posed in~\cref{sec:introduction-rqs} as follows
     \enquote{Does planning with a learned model help? A core part of EfficientZero is
     \enquote{imagining} how a program behaves given an input. How well can this be learned?}
 
-    This question can also be answered with a \enquote{yes} as seen by the KL divergence
+    This question can also be answered with a \enquote{yes} as seen by the \gls{kl} divergence
     between the policy prior and \gls{mcts} root visit count distribution and the
     empirical results of a growing return.
 \end{enumerate}
 
-Whether this deep RL-based approach can ultimately beat conventional \gls{cgf} fuzzers
+Whether this deep \gls{rl}-based approach can ultimately beat conventional \gls{cgf} fuzzers
 is not clear.
 Trying to act \enquote{smarter} sounds good in theory and also works for toy examples,
 but the major advantage of \gls{cgf}, namely the high execution throughput to test
 millions of seeds in a short time, is hard to beat.
 In addition, our approach suffers from the same major drawback of not being able
-to pass checksum and magic byte checks, as well as RL-specific problems like policy collapse.
-The potential in our approach lies in learning regularity in SUT behavior and exploiting
+to pass checksum and magic byte checks, as well as \gls{rl}-specific problems like policy collapse.
+The potential in our approach lies in learning regularity in \gls{sut} behavior and exploiting
 this in the fuzzing process, as well as being able to flexibly plug in new observation
 and action models and steer exploration using reward shaping.
 Considering the open points in~\cref{chap:future-work}, we think various

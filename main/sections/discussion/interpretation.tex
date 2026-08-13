@@ -3,12 +3,12 @@
 \section{Successes and Limitations}\label{sec:discussion-interpretation}
 
 The agents manage to learn how to generate structured input and successfully
-improve the return over time, showing that the approach of applying deep RL to fuzzing can work.
+improve the return over time, showing that the approach of applying deep \gls{rl} to fuzzing can work.
 Nevertheless, the approach also comes with major limitations.
 
 \subsection{Successes}
 
-The results show that the agent is able to learn how to fuzz a SUT.
+The results show that the agent is able to learn how to fuzz a \gls{sut}.
 It is capable of successful credit assignment as illustrated by the input-action targets.
 On high-and-low the agent plays high-coverage bytes at a rate above \num{0.99} where a random
 policy reaches $\frac{4}{256}\approx\num{0.0156}$~(\cref{sec:results-high-and-low}).
@@ -22,7 +22,7 @@ recognizable structure.
 The highest-coverage cJSON input is \code{[[[[[2,[[[[[1\ldots}\ and the highest-coverage libxml2
 input nests tags to a comparable depth~(\cref{tab:best-inputs}), which the agent derived
 itself by optimizing the reward only without any prior baked-in knowledge.
-The agent also learned to prefer to generate structural bytes that are useful to the SUT.
+The agent also learned to prefer to generate structural bytes that are useful to the \gls{sut}.
 For cJSON, the structural byte rate rises from \num{0.08} to a peak of \num{0.90} and
 from \num{0.05} to \num{0.725} for libxml2~(\cref{fig:structural-decay}).
 A recursive-descent parser rewards nesting with coverage which is what the agent found.
@@ -35,7 +35,7 @@ of the random control run, we see a strong separation by a factor of roughly \nu
 
 \subsection{Limitations}
 
-While the results show that it is in principle feasible to design an RL-based fuzzer,
+While the results show that it is in principle feasible to design an \gls{rl}-based fuzzer,
 there are multiple drawbacks to this approach.
 The main cost is throughput.
 EfficientZero is a very compute-heavy algorithm and requires a careful implementation
@@ -62,13 +62,13 @@ We found an increasing \gls{mcts} simulation count to not contribute much to the
 targets tested here.
 For the cJSON ablation, coverage is flat across simulation counts: \num{687}, \num{640} and \num{645} blocks at 50, 100
 and 200 simulations.
-The rapidly falling KL divergence between the MCTS root visit count
+The rapidly falling \gls{kl} divergence between the \gls{mcts} root visit count
 distribution and policy prior shown in~\cref{fig:policy-improvement} provides a
 quantification of this problem.
-The falling KL in this case shows planning being less and less useful as time goes on.
+The falling \gls{kl} in this case shows planning being less and less useful as time goes on.
 It is important to mention though that planning has a major effect in the first few iterations.
 We hypothesize that planning with a high number of \gls{mcts} iterations only
-becomes useful for campaigns on larger SUTs with more complicated behavior and
+becomes useful for campaigns on larger \glspl{sut} with more complicated behavior and
 more training budget to learn this behavior.
 
 For picohttpparser, coverage does not grow much with input structure.
@@ -77,7 +77,7 @@ picohttpparser ends at around \num{81} covered blocks for all four seeds,
 reaches \SI{90}{\percent} of that ceiling within \SI{25}{\percent} of its
 budget and gains nothing in the final
 quarter~(\cref{fig:saturation,tab:campaign-inventory}).
-This is a property of the SUT itself, showing the success of a fuzzing campaign
+This is a property of the \gls{sut} itself, showing the success of a fuzzing campaign
 and the usefulness of optimizing for the given reward to be highly target-dependent.
 The same holds for other \gls{cgf} fuzzers, but they can better overcome this problem
 due to their high execution rate and therefore higher likelihood of finding interesting seeds

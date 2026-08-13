@@ -9,7 +9,7 @@
         xlabel={learner iteration}, ylabel={nats},
         xmin=0, ymin=0, legend pos=north east, legend style={font=\scriptsize}]
       \addplot [KIT line plot A] table [col sep=comma, x=iteration, y=selfplay_kl_mean] {figures/data/improvement-cjson.csv};
-      \addlegendentry{search vs.\ prior (KL)}
+      \addlegendentry{search vs.\ prior (\acrshort{kl})}
       \addplot [KIT line plot B] table [col sep=comma, x=iteration, y=selfplay_prior_entropy] {figures/data/improvement-cjson.csv};
       \addlegendentry{prior entropy}
       \addplot [KIT line plot C] table [col sep=comma, x=iteration, y=selfplay_posterior_entropy] {figures/data/improvement-cjson.csv};
@@ -26,7 +26,7 @@
         xlabel={learner iteration}, ylabel={nats},
         xmin=0, ymin=0, legend pos=north east, legend style={font=\scriptsize}]
       \addplot [KIT line plot A] table [col sep=comma, x=iteration, y=selfplay_kl_mean] {figures/data/improvement-libxml2.csv};
-      \addlegendentry{search vs.\ prior (KL)}
+      \addlegendentry{search vs.\ prior (\acrshort{kl})}
       \addplot [KIT line plot B] table [col sep=comma, x=iteration, y=selfplay_prior_entropy] {figures/data/improvement-libxml2.csv};
       \addlegendentry{prior entropy}
       \addplot [KIT line plot C] table [col sep=comma, x=iteration, y=selfplay_posterior_entropy] {figures/data/improvement-libxml2.csv};
@@ -43,7 +43,7 @@
         xlabel={learner iteration}, ylabel={nats},
         xmin=0, ymin=0, legend pos=north east, legend style={font=\scriptsize}]
       \addplot [KIT line plot A] table [col sep=comma, x=iteration, y=selfplay_kl_mean] {figures/data/improvement-picohttpparser.csv};
-      \addlegendentry{search vs.\ prior (KL)}
+      \addlegendentry{search vs.\ prior (\acrshort{kl})}
       \addplot [KIT line plot B] table [col sep=comma, x=iteration, y=selfplay_prior_entropy] {figures/data/improvement-picohttpparser.csv};
       \addlegendentry{prior entropy}
       \addplot [KIT line plot C] table [col sep=comma, x=iteration, y=selfplay_posterior_entropy] {figures/data/improvement-picohttpparser.csv};
@@ -53,8 +53,8 @@
     \caption{picohttpparser}
   \end{subfigure}
   \caption[Policy improvement of search over the prior]{
-    The KL divergence between the MCTS visit count distribution and the policy prior.
-    A high KL indicates the policy prior chasing a moving MCTS visit count distribution
+    The \gls{kl} divergence between the \gls{mcts} visit count distribution and the policy prior.
+    A high \gls{kl} indicates the policy prior chasing a moving \gls{mcts} visit count distribution
     and therefore quantifies the effectiveness of planning.
     It falls close to monotonically for all targets.}
   \label{fig:policy-improvement}

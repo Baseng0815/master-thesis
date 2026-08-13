@@ -10,14 +10,15 @@ to monitor training progress.
 
 \subsection{The Environment Model}
 
-EfficientZero is an RL algorithm and therefore formally interacts with an MDP.
-Making use of the rich type system of Rust, we model the MDP via an \code{Environment} trait
+EfficientZero is an \gls{rl} algorithm and therefore formally interacts with an \gls{mdp}.
+Making use of the rich type system of Rust, we model the \gls{mdp} via an \code{Environment} trait
 with associated \code{Action} and \code{Observation} types.\index{environment interface}
 Actions and Observations must be representable as a list of floats for model inference and training.
 The environment supports stepping its current state using an action and then returns
 a reward and observation to the caller, as well as a flag \code{done} that indicates
 that the episode has finished.
 It also supports resetting its state to the beginning which returns an initial observation.
+\Cref{lst:ez-abstraction} shows the resulting interface.
 
 \begin{rust}[caption={The environment interface of the EfficientZero
     implementation.},label={lst:ez-abstraction}]
@@ -84,19 +85,19 @@ While implementing basic \gls{mcts} is straightforward, some tweaks must be
 introduced to guarantee a good throughput since \gls{mcts} is the main bottleneck of
 training and self-play.
 The core issue any \gls{mcts} implementation with imagined rollouts encounters
-is the quick alternation between model inference on the GPU and using said inference
-results for CPU work.
+is the quick alternation between model inference on the \gls{gpu} and using said inference
+results for \gls{cpu} work.
 Node selection requires policy priors as well as state value and therefore
 necessitates evaluating the policy and value heads $p$ and $v$.
 Repeatedly running model inference on very small, unbatched inputs introduces major
 kernel launch overhead and is therefore very inefficient.
-The solution lies in batching as many GPU calls as possible.
+The solution lies in batching as many \gls{gpu} calls as possible.
 This can be achieved for \gls{mcts} by stepping $n$ environments in parallel,
 reducing the kernel launch overhead by a factor of $n$.
 In practice, we implement this by keeping a pool of $n$ active environments and stepping
 them in parallel while resetting any environments that have terminated.
 
-Another bottleneck is host-device transfers between CPU and GPU.
+Another bottleneck is host-device transfers between \gls{cpu} and \gls{gpu}.
 For example, when evaluating multiple model heads, we concatenate their outputs
 and transfer the result to the host in a single call instead of multiple calls.
 Other general optimizations include reusing buffers as much as possible and precalculating
@@ -120,7 +121,7 @@ Sampling happens per step rather than per trajectory, in accordance with \gls{pe
 Freshly inserted episodes receive the largest priority observed so far, so that new data is
 sampled at least once.
 Priorities are updated by the reanalyze workers once the value error of a position is known.
-Importantly, a sampled batch is assembled on the host and contains no GPU data.
+Importantly, a sampled batch is assembled on the host and contains no \gls{gpu} data.
 
 The replay buffer is shared between the data workers that generate new
 episodes, the rollout workers that sample raw batches, and the reanalyze
@@ -136,7 +137,7 @@ They communicate via message passing except for the replay buffer which is share
 In general, each worker has access to a shared task queue on which it blocks and waits for
 new tasks.
 Once a task is finished, it publishes its result to a result queue that can then be consumed by other workers.
-Since we assume the GPU to always be the bottleneck for training as well as data generation,
+Since we assume the \gls{gpu} to always be the bottleneck for training as well as data generation,
 we run the workers in two phases: data collection and training.
 
 \paragraph{Data workers}
@@ -155,14 +156,14 @@ They consume raw batches that have been prepared by the rollout workers and re-r
 using the updated model parameters.
 
 \paragraph{GPU workers}
-All GPU work is done by GPU workers.\index{worker!GPU}
+All \gls{gpu} work is done by \gls{gpu} workers.\index{worker!GPU}
 There are two reasons for this.
 First, we found the Burn implementation to be extremely slow when relying on its internal
 task queue due to contention.
 Second, in its current implementation, Burn spawns a new CUDA stream for each thread.
 We found that sending data between threads causes a lot of unwanted tensor data synchronization,
 which in turn breaks kernel fusion, causing a major slowdown.
-Wrapping all GPU work in an explicit GPU worker gives better control over queue
+Wrapping all \gls{gpu} work in an explicit \gls{gpu} worker gives better control over queue
 contention and data synchronization.
 It also makes it possible to add a second device in the future by spawning a second worker.
 
@@ -198,10 +199,10 @@ on top of the learner without needing to modify the learner itself.
       & data worker
       & transitions produced by one data task \\
     \code{on\_finished\_mcts}
-      & GPU worker
+      & \gls{gpu} worker
       & tree count, iterations per tree, root value of every tree \\
     \code{on\_search\_roots}
-      & GPU worker
+      & \gls{gpu} worker
       & root priors next to the visit counts they were improved into,
         the only point at which the two coexist \\
     \code{on\_sampled\_batch}
@@ -215,7 +216,7 @@ on top of the learner without needing to modify the learner itself.
       & the training-ready batch, its scalar value targets, the root value
         predictions and the priorities written back \\
     \code{on\_finished\_training\_batch}
-      & GPU worker
+      & \gls{gpu} worker
       & the four loss terms and the total loss of one gradient step \\
     \addlinespace
     \code{on\_finished\_data\_iteration}

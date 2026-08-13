@@ -38,7 +38,7 @@ input to a coverage vector, and resets it to its initial state before each new i
 Stateful targets are different: their behavior depends not only on a new input,
 but also on a history of inputs.
 Examples of such targets include highly relevant software systems such as
-industrial control systems, and embedded and IoT
+industrial control systems, and embedded and \gls{iot}
 stacks~\cite{zhang_iot_2014,sadeghi_security_2015,borcherding_bandits_2023,ang_quic-fuzz_2025}.
 
 The information available to a fuzzer changes depending on how targets are executed.
@@ -50,13 +50,13 @@ execution state and restore it afterwards, making emulation an attractive direct
 for stateful fuzzing.
 
 Fuzzing can be modeled as sequential decision making under uncertainty with a scalar progress signal.
-Reinforcement learning is a machine learning paradigm that aims to solve these
+\Gls{rl} is a machine learning paradigm that aims to solve these
 kinds of problems.
-While model-free RL methods have been applied to fuzzing before~\cite{bottinger_deep_2018,binosi_rainfuzz_2023,wang_reinforcement_2021,wang_syzvegas_2021,borcherding_bandits_2023},
-the use of model-based RL promises higher sample efficiency, requiring fewer
+While model-free \gls{rl} methods have been applied to fuzzing before~\cite{bottinger_deep_2018,binosi_rainfuzz_2023,wang_reinforcement_2021,wang_syzvegas_2021,borcherding_bandits_2023},
+the use of model-based \gls{rl} promises higher sample efficiency, requiring fewer
 executions of a program to achieve a given goal.
 
-EfficientZero~\cite{ye_mastering_2021} is a model-based RL method that learns a
+EfficientZero~\cite{ye_mastering_2021} is a model-based \gls{rl} method that learns a
 latent model of the environment's dynamics and plans inside it with Monte-Carlo
 tree search, reaching above-average human performance on Atari from roughly two
 hours of game experience~\cite{kaiser_model-based_2024}.
@@ -66,7 +66,7 @@ This makes it an interesting research direction for fuzzing.
 
 \section{Problem Statement and Research Questions}\label{sec:introduction-rqs}
 
-The main question this thesis addresses is whether model-based RL can be
+The main question this thesis addresses is whether model-based \gls{rl} can be
 successfully used as the core of a fuzzer. EfficientZero is extremely slow
 compared to traditional fuzzers, but can learn a useful model of its
 environment and make better use of information.
@@ -94,8 +94,8 @@ We pose three research questions:
 This thesis makes three contributions.
 
 \begin{enumerate}
-  \item \emph{Two MDP formulations of emulator-based greybox fuzzing} that allow
-    RL algorithms to drive fuzzing of various target executables.
+  \item \emph{Two \gls{mdp} formulations of emulator-based greybox fuzzing} that allow
+    \gls{rl} algorithms to drive fuzzing of various target executables.
 
   \item \emph{An implementation}: a reusable EfficientZero implementation in Rust
     using the \code{Burn} deep-learning framework, and the fuzzer \emph{mugiwara}
@@ -111,7 +111,7 @@ The rest of this document is structured as follows.
 
 \cref{chap:background} introduces coverage-guided greybox fuzzing and
 reinforcement learning, \cref{chap:efficientzero} describes EfficientZero, and
-\cref{chap:related-work} surveys prior applications of RL to fuzzing and the
+\cref{chap:related-work} surveys prior applications of \gls{rl} to fuzzing and the
 difficulties they report.
 
 \cref{chap:fuzzing-mdp} models emulator-based fuzzing as a Markov decision

@@ -91,7 +91,7 @@
     \draw[flow] (data.north) --
       node[lbl,right,pos=0.62] {batched\\MCTS} (data.north |- gpu.south);
     \draw[flow] ([xshift=7mm]rean.north) --
-      node[lbl,left,pos=0.7] {target MCTS,\\gradient step}
+      node[lbl,left,pos=0.7] {target \gls{mcts},\\gradient step}
       ([xshift=7mm]rean.north |- gpu.south);
 
     % --- the one non-neighbour edge, routed through the top lane -------------

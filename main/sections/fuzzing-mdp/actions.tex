@@ -4,7 +4,7 @@
 
 EfficientZero requires a discrete action space of tractable size, usually on the
 order of tens to hundreds of actions.
-In contrast to RL algorithms like Q-Learning that can deal well with probabilistic
+In contrast to \gls{rl} algorithms like Q-Learning that can deal well with probabilistic
 transitions, EfficientZero requires actions to have a deterministic effect to allow proper planning.
 This rules out the direct use of probabilistic mutation operators like random
 bit flips, bit insertions or structural mutations like random splicing.
@@ -20,10 +20,10 @@ Reconciliation strategies and additional mutation operators are outlined in~\cre
 
 \subsection{Input-level Actions}\label{sec:input-level-actions}
 
-One way to model actions is as actual SUT inputs.\index{action space!input-level}
-This is a viable approach for SUTs that consume their inputs byte-by-byte.
+One way to model actions is as actual \gls{sut} inputs.\index{action space!input-level}
+This is a viable approach for \glspl{sut} that consume their inputs byte-by-byte.
 The learned policy $\pi$ in this case represents a generative model for inputs
-that conform to the SUT's grammar.
+that conform to the \gls{sut}'s grammar.
 
 \subsection{Corpus-level Actions}\label{sec:corpus-level-actions}
 

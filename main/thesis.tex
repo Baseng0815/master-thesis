@@ -56,6 +56,12 @@
 
 \mainmatter
 
+% The abstracts use the same acronyms as the main text. Reset every acronym to
+% "not yet used" here so the front matter does not consume the first-use
+% expansions --- both the abstract and \cref{chap:introduction} onwards spell
+% each acronym out on their own first use.
+\glsresetall
+
 % Document order is defined here and only here: exactly one \input per chapter,
 % in reading order. The Makefile derives the chapter list for `make chapters'
 % from these lines, so a chapter is always one file under sections/ -- chapters

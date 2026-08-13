@@ -84,7 +84,7 @@ The different parameter arms are listed in~\cref{tab:cjson-arms}.
   \end{tabularx}
 \end{table}
 
-The corpus holds a single 16-byte seed, an episode is bounded at 64 mutations and therefore 128 MDP
+The corpus holds a single 16-byte seed, an episode is bounded at 64 mutations and therefore 128 \gls{mdp}
 steps, and 128 environments run in parallel (\cref{sec:impl-corpus}).
 Every reset rebuilds the corpus from uniformly random bytes, so the agent has to
 apply mutations to reach valid \gls{json} syntax on its own.
@@ -93,7 +93,7 @@ which it out-parses the deepest execution of its episode (\cref{sec:mdp-rewards}
 
 \subsection{libxml2}\label{sec:target-libxml2}
 
-libxml2 v2.15.3 is an XML parser commonly used in Linux~\cite{veillard_libxml2_nodate}.\index{target!libxml2}
+libxml2 v2.15.3 is an \gls{xml} parser commonly used in Linux~\cite{veillard_libxml2_nodate}.\index{target!libxml2}
 We disable threads for deterministic execution as well as unreachable and out-of-scope
 features like \code{ICONV}, \code{MODULES}, \code{CATALOG}, \code{HTML} and \code{XPATH}.
 The library entry point the harness makes use of is \code{xmlReadMemory}.
@@ -109,6 +109,6 @@ We do not include a random control baseline.
 
 \subsection{picohttpparser}\label{sec:target-picohttpparser}
 
-picohttpparser is a header-only HTTP/1.x request parser~\cite{oku_picohttpparser_nodate}.\index{target!picohttpparser}
+picohttpparser is a header-only \gls{http}/1.x request parser~\cite{oku_picohttpparser_nodate}.\index{target!picohttpparser}
 We use the version from the master branch with commit hash \code{f4d94b4}.
 The setup is identical to libxml2 except for the block count of \num{4096}, since this is a smaller target.

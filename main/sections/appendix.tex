@@ -37,7 +37,7 @@ Following the depth of the reference, the next layers include five residual bloc
 \paragraph{Layer instead of batch normalization}
 The reference uses batch normalization~\cite{ioffe_batch_2015} at momentum 0.1.
 Batch statistics mix different inputs together in a way that is not helpful
-for RL due to the constantly shifting distributions and differing episodes.
+for \gls{rl} due to the constantly shifting distributions and differing episodes.
 We use layer normalization~\cite{ba_layer_2016} instead.
 
 \paragraph{No latent renormalization}
@@ -124,7 +124,7 @@ $B_x$ are the observation width, the action count and the two support sizes of
   \end{tabularx}
 \end{table}
 
-The value-prefix network is the only recurrent one and is modeled as an LSTM.
+The value-prefix network is the only recurrent one and is modeled as an \gls{lstm}.
 It is stepped once per unroll step, consumes the latent of that step and emits the prefix logits
 from the hidden state it just produced, and its carry is zeroed every five steps
 (\cref{sec:app-loss-unroll}).
@@ -204,7 +204,7 @@ term of \cref{eq:ez-loss} is allowed to see, and the exact form of the four term
 Throughout, $N$ is the batch size, $K$ the number of unroll steps, and a batch therefore covers
 $(K+1)N$ supervised positions, indexed by the sample $b\in\{0,\dots,N-1\}$ and the unroll step
 $k\in\{0,\dots,K\}$.
-At the frozen configuration of \cref{tab:app-ez-params}, $N=128$ and $K=5$, so one gradient step
+According to the EfficientZero configuration of \cref{tab:app-ez-params}, $N=128$ and $K=5$, so one gradient step
 sees 768 positions.
 
 \section{Sampled Batches}\label{sec:app-loss-batch}
@@ -546,7 +546,7 @@ AdamW~\cite{adamw} at weight decay $10^{-4}$.
 The four term values and their weighted sum are kept on the device and read
 back at the start of the following step.
 
-\chapter{Frozen Configuration}\label{app:configuration}
+\chapter{EfficientZero Configuration}\label{app:configuration}
 
 \Cref{tab:app-ez-params} lists the EfficientZero parameters every run of this thesis uses.
 
@@ -571,7 +571,7 @@ back at the start of the following step.
       & $c_1$, $c_2$ & 1.25, \num{19652} & 1.25, \num{19652} \\
     Discount
       & $\gamma$ & 0.99 & 0.988 \\
-    Value-prefix LSTM horizon
+    Value-prefix \gls{lstm} horizon
       & & 5 & 5 \\
     Root Dirichlet concentration
       & $\xi$ & 1.0 & 0.3 \\
@@ -584,7 +584,7 @@ back at the start of the following step.
     \multicolumn{4}{@{}l}{\emph{Targets and replay}} \\
     Unroll steps
       & $K$ & 5 & 5 \\
-    TD steps
+    \gls{td} steps
       & $n$ & 5 & 5 \\
     Off-policy correction of $n$
       & & scaled by the buffer capacity & $0.3 \times$ training steps \\
@@ -613,7 +613,7 @@ back at the start of the following step.
     \addlinespace
     \multicolumn{4}{@{}l}{\emph{Model}} \\
     Trunk
-      & & residual MLP, latent width 128 & convolutional ResNet, 64 channels \\
+      & & residual \gls{mlp}, latent width 128 & convolutional ResNet, 64 channels \\
     Value and value-prefix support
       & & 71 bins on $[-30, 30]$, resized per target & 601 bins on $[-300, 300]$ \\
     \bottomrule
@@ -645,6 +645,13 @@ interpreted as the usefulness of \gls{mcts} planning at that learner iteration.
 non-zero reward.
 
 \input{figures/generated/buffer-reward-density}
+
+\Cref{fig:tree-depth} counts the distinct action prefixes a run ever executed, by depth in the
+action-execution trie.
+A trie that widens without deepening is the signature of the corpus formulation spending its
+budget on variations of the same prefix.
+
+\input{figures/generated/tree-depth}
 
 \Cref{fig:input-losses} gives the five training losses of the input-level campaigns and
 \cref{fig:losses} those of the corpus campaigns.
