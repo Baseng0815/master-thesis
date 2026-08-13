@@ -77,20 +77,15 @@ blocks.
 
 \subsection{picohttpparser}\label{sec:results-picohttpparser}
 
-picohttpparser learns as much structure as the other two and gains almost no coverage for it.
-It runs the same budget as libxml2, 400 iterations and \num{3328128} executions in
-\SI{40.7}{\hour}, and ends at a median of \num{81} covered blocks from a bootstrap level of
-\num{26}.
+picohttpparser manages to improve its starting coverage from \num{26} to a
+final median coverage across seeds of \num{81} in \SI{40.7}{\hour}.
 The seed-to-seed range is a single block, \num{80} to \num{81}.
 Coverage reaches \SI{90}{\percent} of its final level within the first quarter of the budget and
 adds nothing in the final quarter~(\cref{fig:saturation}).
 
-The structural byte rate tells a different story from the coverage curve.
-It rises from a chance level of \num{0.030} to a peak of \num{0.732}, the same magnitude of rise
-as on the other two targets, and it peaks earlier than either, at \SI{11}{\percent} of the budget.
-The agent produces better-formed requests throughout; the target does not pay for them.
-As with libxml2 there is no random control, and the four seeds again split across two
-revisions.
+The structural byte rate rises from a chance level of \num{0.030} to a peak of
+\num{0.732}, the same magnitude of rise as on the other two targets, while
+peaking earlier at \SI{11}{\percent} of the budget.
 
 \subsection{Structure, Collapse and Degradation}\label{sec:results-degradation}
 
@@ -106,9 +101,9 @@ already reached.
 \input{figures/generated/structural-rate}
 \input{figures/generated/structural-decay}
 
-The policy narrows over the same period.
+Over the same period, the policy tends to narrow onto fewer actions.
 Per-position \gls{mcts} visit entropy falls from about \num{2.4} nats to between \num{0.08} and
-\num{0.68} on cJSON, from \num{2.7} to between \num{0.37} and \num{0.73} on libxml2 and from
+\num{0.68} on cJSON, from \num{2.7} to between \num{0.37}, and \num{0.73} on libxml2 and from
 \num{2.1} to between \num{0.41} and \num{0.55} on picohttpparser, and the positions narrow in
 order, earliest first~(\cref{fig:collapse-entropy}).
 The share of self-play plays taken by the single most-played action at a position rises

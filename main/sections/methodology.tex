@@ -57,8 +57,9 @@ We collect data at various points as described in~\cref{sec:impl-probes}.
 What we are most interested in is the reward over time as well as the actual
 coverage attained.
 We further record EfficientZero-specific metrics like the loss curves of the
-various models as well as the action entropy to decide whether a policy has
-collapsed or is still in a state of exploration.
+various models as well as the taken-action as well as MCTS visit count action
+entropy to decide whether a policy has collapsed or is still in a state of
+exploration.
 From this information, we can show at what exact point the learner has first
 encountered promising seeds and whether the learner was able to hold on to
 these seeds without collapsing and giving up exploration.
@@ -68,6 +69,9 @@ solution might be useful.
 Action entropy is pooled over the positions of an episode, so it measures per-state determinism
 only on a target whose optimal action does not depend on the position; where it does, the
 per-position visit entropy is the quantity that separates a converged policy from a collapsed one.
+We also measure the structural byte rate to verify that the fuzzer learns to
+supply the PUT with relevant bytes only, as well as the number of steps inside
+the replay buffer that carry a non-zero reward.
 
 The metrics described above can be found in~\cref{chap:results}.
 Additional data is included in the Appendix.
