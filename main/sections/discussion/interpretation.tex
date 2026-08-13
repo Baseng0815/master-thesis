@@ -24,7 +24,7 @@ input nests tags to a comparable depth~(\cref{tab:best-inputs}), which the agent
 itself by optimizing the reward only without any prior baked-in knowledge.
 The agent also learned to prefer to generate structural bytes that are useful to the SUT.
 For cJSON, the structural byte rate rises from \num{0.08} to a peak of \num{0.90} and
-from \num{0.05} to \num{0.75} for libxml2~(\cref{fig:structural-decay}).
+from \num{0.05} to \num{0.725} for libxml2~(\cref{fig:structural-decay}).
 A recursive-descent parser rewards nesting with coverage which is what the agent found.
 
 We also showed that planning beats undirected mutation at an identical execution budget.
@@ -108,10 +108,10 @@ A single action then has to decide whether to retain the previous test case, whi
 new seed to select, and what mutations to apply.
 In this example, the resulting (non-hierarchical) action space has a size of about
 
-\begin{equation*}
+\begin{equation}
   \label{eq:action-space-size}
   \lvert\mathcal{A}\rvert=2\cdot 32\cdot 16\cdot 256=262144,
-\end{equation*}
+\end{equation}
 
 which is way too large for a vanilla EfficientZero agent.
 Approaches to solve this problem are outlined in~\cref{chap:future-work}.

@@ -111,6 +111,14 @@
     \end{tikzpicture}
     \caption{open62541: episode length}
   \end{subfigure}
-  \caption[Learning on the input-level targets]{Learning on the three input-level targets. The left column is the episode return, the quantity the agent optimises, as the median over the 128 environments of one learner iteration inside their interquartile range; each target ran once, so the band is the spread across environments and not across seeds. The right column restates the same run in the target's own units. For high-and-low the dashed line is the rate at which an untrained policy hits the high-coverage branch, measured at iteration 0; for sequence the dashed line is the full 16-byte passcode, and since the program exits on the first wrong byte the episode length is the length of the correct prefix; for open62541 the dashed line is the twelve-step episode cap, an episode ending when the channel closes, when the session is activated or at that cap.}
+  \caption[Learning on the input-level targets]{
+    Learning on the three input-level targets.
+    The left columns contains the episode return as a median over the 128 parallel environments
+    of one learner iteration as well as the interquartile range.
+    The right column presents the return as a program-specific success metric.
+    For the high-and-low and sequence targets, the left and right plots are
+    identical up to a constant.
+    For open62541, there are multiple ways to reach the same return, so the figures
+    don't align. }
   \label{fig:input-learning}
 \end{figure}
