@@ -14,6 +14,8 @@
     \addlegendentry{picohttpparser}
     \end{axis}
   \end{tikzpicture}
-  \caption[Reward density in the replay buffer]{The fraction of replay-buffer transitions that carry a non-zero reward. Coverage rewards are sparse --- a step pays only when it reaches a block the episode had not reached before --- but they are scored against the corpus union of the current episode, which is re-bootstrapped at every reset, so a block found once pays again in the next episode and the signal does not thin out as run-level coverage saturates. The share rises with competence instead, as the agent finds more new blocks per episode. libxml2 is the one target that turns over, peaking at \num{0.201} and ending at \num{0.188}.}
+  \caption[Reward density in the replay buffer]{
+    The fraction of replay-buffer transitions that carry a non-zero reward.
+    The fraction rises with agent competency as it learns to find more new blocks per episode.}
   \label{fig:buffer-reward-density}
 \end{figure}

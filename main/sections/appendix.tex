@@ -386,7 +386,7 @@ Past the end of a terminal episode a position is an absorbing state, and the tar
 \cref{eq:app-loss-value-target} already produces correct values of $0$ and a
 value prefix that no longer grows.
 Supervising them is what teaches the model that a terminal action pays nothing.
-without it, the value head is never evaluated at a post-terminal latent and its
+Without it, the value head is never evaluated at a post-terminal latent and its
 extrapolation there is uncontrolled.
 We found this to be essential to the sequence target (\cref{sec:target-sequence}).
 The dynamics network unrolls across an absorbing position under a \emph{random} action rather than
@@ -622,7 +622,8 @@ back at the start of the following step.
 
 \chapter{Additional Results}\label{app:results}
 
-The figures collected here further describe the behavior from~\cref{sec:results-degradation}.
+The figures collected here further describe the campaigns of~\cref{chap:results}, most of them the
+behavior from~\cref{sec:results-degradation}.
 
 \Cref{fig:structural-rate} is the structural byte rate that was normalized by~\cref{fig:structural-decay}.
 
@@ -644,3 +645,10 @@ interpreted as the usefulness of \gls{mcts} planning at that learner iteration.
 non-zero reward.
 
 \input{figures/generated/buffer-reward-density}
+
+\Cref{fig:input-losses} gives the five training losses of the input-level campaigns and
+\cref{fig:losses} those of the corpus campaigns.
+
+\input{figures/generated/input-losses}
+
+\input{figures/generated/losses}

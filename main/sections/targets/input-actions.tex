@@ -16,7 +16,7 @@ or low-coverage region.
 Importantly, it does not change program state.
 This makes it easy to learn since EfficientZero must only internalize what inputs
 produce what coverage.
-The reward is marginal coverage.
+The reward is the raw sum of block hit counts.
 \Cref{lst:target-high-and-low} shows an excerpt of the program.
 
 \begin{ccode}[float=htbp,
@@ -93,35 +93,26 @@ Second, we restrict the action space to the 26 alphabetic characters \code{[A-Z]
 to reduce the branching factor.
 Past actions are not included in the observations, so the learner has to base its
 decision only on the actual blocks that were executed.
+Because the target executes additional blocks for each correctly guessed
+character and therefore rewards guesses in proportion to the length of the
+correct prefix, it can successively learn the password character-by-character.
 
 \subsection{open62541}\label{sec:target-open62541}
 
-open62541 is an open-source OPC~UA implementation, a protocol stack of the stateful kind
-described in~\cref{sec:fuzzing-stateful}.\index{target!open62541}
-The PUT is its \code{tutorial\_server\_firststeps} example server, and the goal is to reach the
-connected state: an activated session on an open secure channel.
-We boot the server until it blocks accepting connections, inject a client connection and let the
-server accept it, and snapshot there, so every episode starts with the server blocked on the first
-read of an established stream.
+open62541 is an open-source OPC~UA implementation.\index{target!open62541}
+We use the \code{tutorial\_server\_firststeps} example server as the harness
+with the goal of learning an action sequence that reaches the connected state.
 
-The target is a protocol-level \emph{sequence} (\cref{sec:target-sequence}): an ordered prefix of
-correct choices keeps the PUT alive, a wrong choice ends the episode, and the observation carries
-the cumulative block hit counts next to those of the current step.
-What differs is that an action is a whole protocol message instead of a byte.
-The 15 actions are the message templates of the target's OPC~UA corpus, of which \code{hel},
-\code{opn}, \code{create\_sess} and \code{activate\_sess} form the connect path, ten further channel
-and session requests are self-loops the server answers without advancing towards a session, and
-\code{clo} closes the channel.
-Each template carries session-coupling fields, the secure channel identifier and the authentication
-token, which the environment rewrites from the server's responses so that the agent learns which
-message to send when rather than how to forge an identifier.
+The action space is made up of 15 protocol messages instead of single bytes.
+To reach the connect state, the agent must send \code{hel}, then \code{opn},
+then \code{create\_sess} and finally \code{activate\_sess}.
+We boot the server until it blocks on accepting a connection, inject a client connection and let the
+server accept it, and then take a snapshot, so all episodes start with an existing TCP connection.
 
 The reward is a flat survival bonus of one for every step the server survives plus ten for the step
 that activates a session.
-Coverage is observed but never paid for.
-The episode ends when the server closes the channel after a rejected message, when a session is
-activated, or at the twelve-step cap.
-Because activating also terminates the episode, loitering on self-loops for the full budget returns
-\num{12} while connecting immediately returns \num{14}, an undiscounted margin of two for the exact
-four-message ordering, and the maximum of \num{22} requires holding the channel open for eleven
-steps and activating on the twelfth.
+Coverage is part of the observation, but not the reward.
+The episode ends when the server closes the channel after a rejected message,
+when a session is activated, or after twelve steps.
+The optimal policy in this case consists of looping for all 12 steps, with the
+final step being the session activation that also terminates the episode.

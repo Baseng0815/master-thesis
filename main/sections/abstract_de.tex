@@ -11,35 +11,40 @@
 % group thesis.tex inputs this file in.
 \sisetup{output-decimal-marker={,}}
 
-Coverage-gesteuertes Greybox-Fuzzing verdankt seinen Erfolg beim Finden von Fehlern dem
-Durchsatz: Es führt Millionen von Eingaben aus und behält jene, die neuen Code erreichen, ohne je
-ein explizites Modell davon zu bilden, was eine gute Eingabe ausmacht.
-Wie das Ausführungsbudget verteilt wird, entscheiden handgetunte Heuristiken, und Zielprogramme,
-deren Verhalten nicht von einer einzelnen Eingabe, sondern von einer Folge vorheriger Eingaben
-abhängt, passen nicht in das zustandslose Modell, das dabei angenommen wird.
+Coverage-gesteuertes Greybox-Fuzzing ist ein wichtiges Werkzeug, um die Sicherheit von Software zu
+gewährleisten.
+Es führt Millionen von Eingaben aus und behält jene, die neuen Code erreichen, ohne ein explizites
+Modell davon zu bilden, was eine gute Eingabe ausmacht und wie sich ein Zielprogramm verhält;
+stattdessen verlässt es sich auf reinen Durchsatz.
+Welche Eingaben verwendet werden, welche verändert werden und wie sie verändert werden, bleibt
+weitgehend handgetunten Heuristiken überlassen und passt sich nicht an das getestete Programm an.
 
-Wir modellieren emulatorbasiertes Greybox-Fuzzing als Markov-Entscheidungsprozess und steuern es
-mit EfficientZero, einer stichprobeneffizienten MuZero-Variante, die mittels
-Monte-Carlo-Baumsuche in einem gelernten latenten Modell ihrer Umgebung plant.
-Die unter Emulation erfasste Basisblock-Coverage dient zugleich als Beobachtung und als Belohnung.
-Wir formulieren zwei Aktionsräume: Aktionen auf Eingabeebene, bei denen eine Aktion einer Eingabe
-entspricht, die das Programm konsumiert, und Aktionen auf Korpusebene, bei denen eine Aktion eine
-Position in einem Seed und den dort geschriebenen Bytewert auswählt.
-Beide sind in einer wiederverwendbaren Rust-Implementierung von EfficientZero auf Basis des
-Deep-Learning-Frameworks Burn und im Fuzzer \emph{mugiwara} umgesetzt, der seine Zielprogramme
-unter dem Emulations-Framework MOGI ausführt.
+Wir modellieren emulatorbasiertes Greybox-Fuzzing als Markov-Entscheidungsprozess und wenden darauf
+EfficientZero an, eine stichprobeneffiziente MuZero-Variante, die mittels Monte-Carlo-Baumsuche in
+einem gelernten latenten Modell ihrer Umgebung plant.
+Nach unserem besten Wissen ist dies der erste Fuzzer, der mit einem gelernten Modell des Verhaltens
+des Zielprogramms plant.
+Bisherige RL-basierte Fuzzer verwenden üblicherweise modellfreie Varianten des Q-Learning, und
+planende Fuzzer wenden Monte-Carlo-Baumsuche auf ein explizit konstruiertes Modell an.
+Die unter Emulation erfasste Basisblock-Coverage dient zugleich als Beobachtung und zur Ableitung
+eines Belohnungssignals.
+Wir verfolgen zwei verschiedene Aktionsansätze: Aktionen auf Eingabeebene, bei denen eine Aktion einer Eingabe
+entspricht, die das Programm einliest, und Aktionen auf Korpusebene, bei denen eine Aktion eine
+Position in einem Seed und den dort zu schreibenden Bytewert auswählt.
+Umgesetzt ist dieser Ansatz im Fuzzer \emph{mugiwara} in der Programmiersprache Rust und mit dem
+Emulations-Framework MOGI.
 
-Wir evaluieren sechs Zielprogramme.
-Der Agent löst alle drei Ziele mit Aktionen auf Eingabeebene: Er rekonstruiert einen 16~Byte langen
-Passcode Position für Position und aktiviert eine OPC~UA-Sitzung gegen open62541.
-Bei den Zielen mit Aktionen auf Korpusebene übertrifft er bei identischem Ausführungsbudget eine
-ungerichtete Kontrolle und erreicht auf cJSON im Median \num{645} abgedeckte Blöcke gegenüber
-\num{542}, im besten von vierzehn Ablationsläufen \num{958}.
-Er leitet zudem Struktur her, die ihm nie vorgegeben wurde: Die Eingaben mit der höchsten Coverage
-für cJSON und libxml2 sind tief verschachtelt, und der Anteil strukturell relevanter Bytes steigt
-auf cJSON von \num{0.09} auf \num{0.90}.
+Wir evaluieren sechs Zielprogramme, drei mit Aktionen auf Eingabeebene und drei mit Aktionen auf
+Korpusebene.
+Der Agent löst alle drei Ziele mit Aktionen auf Eingabeebene: Er rekonstruiert ein 16~Byte langes
+Passwort Position für Position und aktiviert eine OPC~UA-Sitzung für open62541.
+Bei den Zielen mit Aktionen auf Korpusebene übertrifft er bei identischem Ausführungsbudget die
+zufällige Kontrollbaseline im besten Lauf um den Faktor \num{1.62}.
+Er leitet zudem Struktur her, die mit der Eingabegrammatik des Zielprogramms zusammenhängt: Für die
+Parser cJSON und libxml2 erzeugt er leicht erkennbare verschachtelte Strukturen.
+Damit ist die Machbarkeit unseres Fuzzers belegt.
+
 Die Grenzen des Ansatzes liegen bei Durchsatz und Stabilität.
 Ausführungsraten von \num{21} bis \num{23} Eingaben pro Sekunde im Gast liegen drei
-Größenordnungen unter nativem coverage-gesteuertem Fuzzing, tiefere Suche zahlt sich jenseits von
-50 Simulationen nicht mehr aus, und jedes Korpusziel endet unterhalb seines eigenen Höchstwerts
-beim Anteil struktureller Bytes.
+Größenordnungen unter nativem coverage-gesteuertem Fuzzing, und das Training erweist sich als
+instabil und verschlechtert sich in bestimmten Konfigurationen ab einem gewissen Punkt merklich.

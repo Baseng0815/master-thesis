@@ -13,8 +13,8 @@ It is capable of successful credit assignment as illustrated by the input-action
 On high-and-low the agent plays high-coverage bytes at a rate above \num{0.99} where a random
 policy reaches $\frac{4}{256}\approx\num{0.0156}$~(\cref{sec:results-high-and-low}).
 On sequence it recovers the entire 16-byte passcode one position at a time,
-with the cost per additional byte growing from three bytes within the first six
-iterations to 55 iterations for the last one
+with the cost per additional byte growing from six iterations for the first
+three bytes to 55 iterations for the last one
 alone~(\cref{sec:results-sequence}).
 
 On the corpus-action targets the reward is raw coverage, and the agent manages to yield seeds with
@@ -58,8 +58,8 @@ We expect it to be possible to improve the throughput of our implementation by
 an order of magnitude since execution resources are not fully utilized, but
 this remains an engineering challenge and part of future work.
 
-Despite planning being an integral part of EfficientZero, we found planning to not
-contribute much to the targets tested here.
+We found an increasing \gls{mcts} simulation count to not contribute much to the
+targets tested here.
 For the cJSON ablation, coverage is flat across simulation counts: \num{687}, \num{640} and \num{645} blocks at 50, 100
 and 200 simulations.
 The rapidly falling KL divergence between the MCTS root visit count

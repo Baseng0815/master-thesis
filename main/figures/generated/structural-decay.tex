@@ -33,7 +33,7 @@
       table [col sep=comma, x=x, y=mid] {figures/data/structural-decay-picohttpparser.csv};
     \addlegendentry{picohttpparser}
     \addplot [only marks, mark=*, mark size=1.6pt, KITblack, forget plot] coordinates {(0.2408,0.9038)};
-    \addplot [only marks, mark=*, mark size=1.6pt, KITblack, forget plot] coordinates {(0.4962,0.7534)};
+    \addplot [only marks, mark=*, mark size=1.6pt, KITblack, forget plot] coordinates {(0.3058,0.7255)};
     \addplot [only marks, mark=*, mark size=1.6pt, KITblack, forget plot] coordinates {(0.1128,0.7323)};
     \end{axis}
   \end{tikzpicture}
@@ -41,7 +41,7 @@
     The structural byte rate against normalised training progress, median and
     interquartile range over seeds.
     cJSON peaks at 0.90 after 24\,\% of training and ends at 0.80; libxml2 peaks at
-    0.75 after 50\,\% of training and ends at 0.55; picohttpparser peaks at 0.73
+    0.73 after 31\,\% of training and ends at 0.55; picohttpparser peaks at 0.73
     after 11\,\% of training and ends at 0.36.
     Each of the three targets peaks before the end of training and finishes below its peak.}
   \label{fig:structural-decay}

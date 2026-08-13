@@ -9,15 +9,12 @@
         xlabel={training batches}, ylabel={total},
         title style={font=\small}, scaled x ticks=base 10:-3,
         legend pos=north east, legend style={font=\scriptsize}]
-      \addplot [KIT line plot A, ]
+      \addplot [KIT line plot A, forget plot]
         table [col sep=comma, x=batches, y=total] {figures/data/loss-high-and-low.csv};
-      \addlegendentry{high-and-low}
-      \addplot [KIT line plot B, ]
+      \addplot [KIT line plot B, forget plot]
         table [col sep=comma, x=batches, y=total] {figures/data/loss-sequence.csv};
-      \addlegendentry{sequence}
-      \addplot [KIT line plot C, ]
+      \addplot [KIT line plot C, forget plot]
         table [col sep=comma, x=batches, y=total] {figures/data/loss-open62541.csv};
-      \addlegendentry{open62541}
       \end{axis}
     \end{tikzpicture}
     \caption{total}
@@ -99,6 +96,26 @@
     \end{tikzpicture}
     \caption{simsiam}
   \end{subfigure}
-  \caption[Training losses on the input-level targets]{The five EfficientZero training losses on the three input-level targets, against training batches. Logarithmic ordinate on the three supervised losses, which stay positive; linear on the consistency loss, which is a negative cosine similarity, and on the total, which carries the consistency loss with a coefficient of two and therefore turns negative once the supervised terms fall below it. The targets ran for different numbers of iterations, so their curves end at different batch counts.}
+  \hfill
+  % Shared legend, placed in the free sixth cell of the 3x2 grid.
+  \begin{minipage}[b]{0.32\linewidth}
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[hide axis, width=0.88\linewidth, height=3.6cm,
+        xmin=0, xmax=1, ymin=0, ymax=1,
+        legend cell align=left,
+        legend style={font=\scriptsize, at={(0.5,0.5)}, anchor=center}]
+      \addplot [KIT line plot A] coordinates {(0,0)};
+      \addlegendentry{high-and-low}
+      \addplot [KIT line plot B] coordinates {(0,0)};
+      \addlegendentry{sequence}
+      \addplot [KIT line plot C] coordinates {(0,0)};
+      \addlegendentry{open62541}
+      \end{axis}
+    \end{tikzpicture}
+  \end{minipage}
+  \caption[Training losses on the input-level targets]{
+  The five EfficientZero training losses against training batches on a logarithmic scale,
+  except for the self-supervised consistency loss.}
   \label{fig:input-losses}
 \end{figure}

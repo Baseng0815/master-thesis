@@ -10,15 +10,12 @@
         ymode=log,
         title style={font=\small}, scaled x ticks=base 10:-3,
         legend pos=north east, legend style={font=\scriptsize}]
-      \addplot [KIT line plot A, ]
+      \addplot [KIT line plot A, forget plot]
         table [col sep=comma, x=batches, y=total] {figures/data/loss-cjson.csv};
-      \addlegendentry{cJSON}
-      \addplot [KIT line plot B, ]
+      \addplot [KIT line plot B, forget plot]
         table [col sep=comma, x=batches, y=total] {figures/data/loss-libxml2.csv};
-      \addlegendentry{libxml2}
-      \addplot [KIT line plot C, ]
+      \addplot [KIT line plot C, forget plot]
         table [col sep=comma, x=batches, y=total] {figures/data/loss-picohttpparser.csv};
-      \addlegendentry{picohttpparser}
       \end{axis}
     \end{tikzpicture}
     \caption{total}
@@ -100,6 +97,26 @@
     \end{tikzpicture}
     \caption{simsiam}
   \end{subfigure}
-  \caption[EfficientZero training losses]{The five EfficientZero training losses against training batches, for one representative run per target. Logarithmic ordinate except for the self-supervised consistency loss, which is a negative cosine similarity and crosses zero.}
+  \hfill
+  % Shared legend, placed in the free sixth cell of the 3x2 grid.
+  \begin{minipage}[b]{0.32\linewidth}
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[hide axis, width=0.88\linewidth, height=3.6cm,
+        xmin=0, xmax=1, ymin=0, ymax=1,
+        legend cell align=left,
+        legend style={font=\scriptsize, at={(0.5,0.5)}, anchor=center}]
+      \addplot [KIT line plot A] coordinates {(0,0)};
+      \addlegendentry{cJSON}
+      \addplot [KIT line plot B] coordinates {(0,0)};
+      \addlegendentry{libxml2}
+      \addplot [KIT line plot C] coordinates {(0,0)};
+      \addlegendentry{picohttpparser}
+      \end{axis}
+    \end{tikzpicture}
+  \end{minipage}
+  \caption[EfficientZero training losses]{
+  The five EfficientZero training losses against training batches on a logarithmic scale,
+  except for the self-supervised consistency loss.}
   \label{fig:losses}
 \end{figure}

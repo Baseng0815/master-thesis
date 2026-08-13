@@ -81,7 +81,7 @@ summarize the state, action and reward design.
 
   \item[Drozd and Wagner (2018)~\cite{drozd_fuzzergym_2018}]
     FuzzerGym\index{FuzzerGym} combines libFuzzer with OpenAI Gym and trains its agent with deep double
-    Q-learning and prioritized replay (\cref{fig:rw-fuzzergym}).
+    Q-learning and prioritized replay.
 
     \begin{itemize}
       \item \textbf{State.}
@@ -109,7 +109,7 @@ summarize the state, action and reward design.
 
   \item[Fang and Yan (2018)~\cite{lopez_emulation-instrumented_2018}]
     LEFT (LTE-Oriented Emulation-Instrumented Fuzzing Testbed)\index{LEFT} is a fuzzer for the
-    4G/LTE protocol stack on Android devices, driven through a network emulator.
+    4G/\gls{lte} protocol stack on Android devices, driven through a network emulator.
 
     \begin{itemize}
       \item \textbf{State.}
@@ -132,7 +132,7 @@ summarize the state, action and reward design.
         and when the emulator crashes (\emph{crash}).
     \end{itemize}
 
-  \item[Liu et al.\ (2019)~\cite{authors_reinforcement_nodate}]
+  \item[Liu et al.\ (2019)~\cite{liu_reinforcement_2019}]
     They introduce FuzzBoost\index{FuzzBoost}, a compiler fuzzer and automatic code synthesis framework.
 
     \begin{itemize}
@@ -154,7 +154,7 @@ summarize the state, action and reward design.
         covered by $p$ to unique basic blocks covered by $I$:
 
         \[
-          R(p,I)=\frac{B(T_p)}{\cup_{\rho\in I} B(T_p)}
+          R(p,I)=\frac{\lvert B(T_p)\rvert}{\left\lvert\bigcup_{\rho\in I} B(T_\rho)\right\rvert}
         \]
     \end{itemize}
     Unlike \textcite{bottinger_deep_2018}, who fuzz continuously, they use an episodic framing.

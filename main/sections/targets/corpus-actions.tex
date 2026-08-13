@@ -9,10 +9,10 @@ harness parsing a fixed-size seed input in a loop (\cref{sec:corpus-level-action
 
 \subsection{cJSON}\label{sec:target-cjson}
 
-cJSON 1.7.19 is a single-file recursive-descent JSON parser written in C.\index{target!cJSON}
+cJSON 1.7.19 is a single-file recursive-descent \gls{json} parser written in C.\index{target!cJSON}
 It is the target of our detailed ablation study.
 We provide a harness around the \code{cJSON\_ParseWithLength} function, which takes
-a buffer and a length and tries to parse the buffer content as JSON.
+a buffer and a length and tries to parse the buffer content as \gls{json}.
 The harness is shown in~\cref{lst:target-cjson}.
 It continuously reads a single 16-byte seed input from standard in and then
 tries to parse it.
@@ -87,12 +87,9 @@ The different parameter arms are listed in~\cref{tab:cjson-arms}.
 The corpus holds a single 16-byte seed, an episode is bounded at 64 mutations and therefore 128 MDP
 steps, and 128 environments run in parallel (\cref{sec:impl-corpus}).
 Every reset rebuilds the corpus from uniformly random bytes, so the agent has to
-apply mutations to reach valid JSON syntax on its own.
+apply mutations to reach valid \gls{json} syntax on its own.
 The reward is the coverage an execution adds to the corpus union plus a bonus per level by
 which it out-parses the deepest execution of its episode (\cref{sec:mdp-rewards}).
-Because the target executes additional blocks for each correctly guessed
-character and therefore rewards guesses in proportion to the length of the
-correct prefix, it can successively learn the password character-by-character.
 
 \subsection{libxml2}\label{sec:target-libxml2}
 

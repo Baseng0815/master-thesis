@@ -133,7 +133,7 @@ Moreover, even after the estimate has converged, the agent keeps exploring.
 This is typically countered by decaying $\varepsilon$ over time~\cite{sutton_reinforcement_2020}.
 
 \paragraph{Upper confidence bounds}
-Directed exploration makes use of the \emph{upper confidence bounds}\index{upper confidence bound} rule to estimate which arms
+Directed exploration makes use of the \gls{ucb}\index{upper confidence bound} rule to estimate which arms
 could still yield a high reward given how little they have been tried.
 The rule is formulated in terms of the current estimate plus the visit count of each action
 and prioritizes high-value actions with low visit count.
@@ -143,9 +143,9 @@ and prioritizes high-value actions with low visit count.
 \end{equation}
 
 This rule has been proven to be optimal in terms of regret minimization up to a constant factor~\cite{auer_finite-time_nodate}.
-UCB is generalizable from bandits to full MDPs by treating every decision point
+\Gls{ucb} is generalizable from bandits to full MDPs by treating every decision point
 of a search tree over the action space as its own bandit.
-This gives rise to the UCT rule\index{upper confidence bound!applied to trees}~\cite{hutchison_bandit_2006} that is used in an
+This gives rise to the \gls{uct} rule\index{upper confidence bound!applied to trees}~\cite{hutchison_bandit_2006} that is used in an
 algorithm called Monte-Carlo Tree Search (MCTS)~\cite{hutchison_efficient_2007}.
 
 \subsection{Solving MDPs}\label{sec:rl-solving}

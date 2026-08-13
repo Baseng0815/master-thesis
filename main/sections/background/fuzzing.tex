@@ -34,7 +34,7 @@ For example, Google's OSS-Fuzz
 \enquote{aims to make common open source software more secure and stable by combining
 modern fuzzing techniques with scalable, distributed execution}~\cite{arya_oss-fuzz_nodate}.
 It supports a variety of target languages and is therefore widely applicable.
-OSS-Fuzz has helped to fix over \num{13000} security vulnerabilities and \num{50000} bugs across
+OSS-Fuzz has helped to identify over \num{13000} security vulnerabilities and \num{50000} bugs across
 \num{1000} projects, proving the importance of modern fuzzing techniques for ensuring reliability and security.
 
 \subsection{Core Terminology}\label{sec:fuzzing-definitions}
@@ -78,6 +78,8 @@ We will introduce some general definitions that mainly follow \textcite{manes_ar
     a fuzzing campaign. The resulting execution is then judged by the bug oracle
     and the test case is recorded if the bug oracle deems it a violation of the
     security policy.
+    In our case, depending on the action model, this can either be a single byte or a 
+    complete byte sequence.
 
   \item \emph{Seed:}\index{seed}
     A seed is a commonly well-structured input to the PUT that the fuzzer uses
@@ -94,8 +96,6 @@ We will introduce some general definitions that mainly follow \textcite{manes_ar
     algorithm.
 \end{enumerate}
 
-% TODO include the Fuzz Testing ALGORITHM scheme with the steps PREPROCESS, CONTINUE, etc.
-
 \subsection{Taxonomy}\label{sec:fuzzing-taxonomy}
 
 Fuzzers can be roughly divided into four classes, defined by the amount of
@@ -108,7 +108,8 @@ They can only make use of the bug oracle to decide whether a given input violate
 the security policy or not.
 The core advantage of this approach is the wide applicability since no instrumentation
 is required.
-This lack of potential instrumentation overhead also benefits execution throughput.
+This lack of potential instrumentation overhead also benefits execution throughput
+as well as timing and reproducibility for targets like network interfaces.
 The obvious disadvantage is the lack of information about PUT behavior.
 This makes it difficult for fuzzers to generate high-coverage inputs.
 
@@ -137,7 +138,7 @@ better judge the behavior of the PUT for a given input and direct its exploratio
 
 There also exists a variety of hybrid approaches combining different fuzzing methodologies.
 A prominent example is \emph{Driller}\index{Driller}, which alternates pure greybox fuzzing with
-\emph{concolic} execution\index{concolic execution} (a combination of concrete and symbolic execution) to overcome hard branch
+\emph{concolic} execution\index{concolic execution} (a combination of concrete and symbolic execution) to overcome difficult branch
 conditions like CRC checks that have historically presented a major obstacle for fuzzers~\cite{stephens_driller_2016}.
 
 \subsection{Input generation}\label{sec:fuzzing-input-generation}
@@ -145,7 +146,7 @@ conditions like CRC checks that have historically presented a major obstacle for
 % Outline follows Manès et al. §5 (Input Generation); the § pointers below refer to that paper.
 
 The content of a test case directly controls whether a bug is triggered or not, making
-it one of the most influential design decisions of a fuzzer~\cite{manes_art_2019}.
+the way content is generated one of the most influential design decisions of a fuzzer~\cite{manes_art_2019}.
 Input generation can be categorized into either generation- or mutation-based.
 
 \subsubsection{Generation-based input generation}

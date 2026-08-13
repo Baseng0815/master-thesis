@@ -108,14 +108,14 @@ It models a learned policy $\pi(a|s)$ and acts as a search prior for MCTS.
 
 Monte-Carlo tree search
 (MCTS)\index{Monte-Carlo tree search}~\cite{hutchison_bandit_2006,hutchison_efficient_2007} is a tree search
-algorithm. It makes use of the UCT rule that derives from the UCB rule (\cref{eq:ucb}) introduced in
+algorithm. It makes use of the \gls{uct} rule that derives from the \gls{ucb} rule (\cref{eq:ucb}) introduced in
 \cref{sec:rl-exploration}.
 It searches through the action space $\mathcal{A}$ to find an action that maximizes the
 expected future return.
 On a high level, the search is guided by the policy network $p$, which acts as
 a prior distribution over the possible actions, as well as the value network
 $v$ and value-prefix network $\vpnet$ to prefer higher-valued states.
-The use of a prior entails a slight modification of the UCT rule, called pUCT (prior UCT).\index{upper confidence bound!prior (pUCT)}
+The use of a prior entails a slight modification of the \gls{uct} rule, called pUCT (prior UCT).\index{upper confidence bound!prior (pUCT)}
 The dynamics network $g$ is used to \enquote{imagine} the successor states when
 taking certain actions without actually needing to interact with the environment.
 MCTS is applied in each state and produces a root visit count distribution as well
@@ -172,12 +172,6 @@ reward on that edge:
     \bar{v}(s')  &= \frac{Q_\Sigma(s')}{N(s')}.
   \end{aligned}
 \end{equation}
-
-% TODO: $r(s,a)$ is not a prediction of the model: EfficientZero has no per-step
-% reward head and recovers the edge reward as a difference of consecutive value
-% prefixes (\cref{sec:ez-value-prefix}). Say so here --- as written, the reader
-% meets $r$ in \cref{eq:ez-qnorm} and \cref{eq:ez-backup} and only learns 150
-% lines later that nothing produces it directly.
 
 To improve exploration, the root priors are perturbed with Dirichlet noise\index{Dirichlet noise}
 before the search begins.
@@ -243,7 +237,7 @@ The temperature $T$ interpolates between sampling proportionally to the visit
 counts ($T=1$) and greedily playing the most-visited action
 ($T\rightarrow 0$).
 
-The resulting observation-reward tuples $(o,u)$ are stored in a replay buffer,\index{replay buffer}
+The resulting observation-reward tuples $(o,r)$ are stored in a replay buffer,\index{replay buffer}
 together with the root visit count distribution and root state value.
 As soon as an episode ends, the environment state is reset and data collection starts anew.
 

@@ -11,8 +11,11 @@ Which inputs to use, which inputs to modify and how to modify them is mostly
 left to hand-tuned heuristics and does not adapt to the program being tested.
 
 We frame emulator-based greybox fuzzing as a Markov decision process and apply EfficientZero
-to it, a sample-efficient MuZero variant that plans with Monte-Carlo Tree Search inside a
+to it, a sample-efficient MuZero variant that plans with Monte-Carlo tree search inside a
 learned latent model of its environment.
+To the best of our knowledge, this is the first fuzzer that plans with a learned model of the target's behavior.
+Prior RL-based fuzzers usually use model-free variants of Q-learning, and planning-based fuzzers
+apply Monte-Carlo tree search to an explicitly constructed model.
 Basic-block coverage collected from an emulator is used as an observation as well as to derive a reward.
 We formulate two action spaces: input-level actions, where an action is an input the program
 consumes, and corpus-level actions, where an action selects a position in a seed and the byte value
