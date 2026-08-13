@@ -2,52 +2,73 @@
 
 \section{Threats to Validity}\label{sec:discussion-threats}
 
-% TODO: Ordered by how hard each will be pressed in a defence. State each threat in
-% its strongest form first, then the mitigation, then the residual risk. A threat that
-% is not mitigated is stated anyway.
-%
-% 1. External validity --- sequence is not fuzzing. Its reward is hand-engineered,
-%    including the coverage sled that makes the final byte learnable at all, and a
-%    result under a designed reward does not transfer to a target whose reward cannot
-%    be shaped.
-%    Mitigation: real-world weight rests only on the raw-coverage corpus targets
-%    (\cref{sec:targets-corpus-actions}), and the configuration is frozen on cJSON and
-%    transferred unchanged to libxml2 and picohttpparser
-%    (\cref{sec:methodology-hyperparameters}). Residual risk: if the method works only
-%    where the reward was designed, that is the headline, and it should be said in the
-%    abstract. Note also what the transfer actually was --- $T = 2$ was not one of the
-%    ablated temperatures and the transfer runs were twice as long --- so "unchanged"
-%    is an overstatement unless it is qualified here.
-%
-% 2. Baseline fairness and compute currency. Uniform random against a deep lock is a
-%    strawman; the honest comparison is the coverage-guided climber, and the honest
-%    accounting reports both executions and wall-clock
-%    (\cref{sec:methodology-baselines,sec:methodology-currencies}).
-%
-% 3. Attribution --- is it planning, or a learned value function over coverage? On a
-%    deterministic target the win may be representation learning rather than
-%    lookahead. The one-simulation ablation settles it
-%    (\cref{sec:results-ablations}); no planning claim is made without it.
-%
-% 4. Exploratory versus confirmatory. The development history generated the
-%    hypotheses; headline claims are re-run on the pre-registered pool with the final
-%    code (\cref{sec:methodology-preregistration}). Results from before and after
-%    correctness fixes are never compared.
-%
-% 5. Internal validity --- the determinism the variance analysis depends on. Point at
-%    the evidence in \cref{sec:platform-determinism} and state the residual
-%    (non-deterministic accumulation on GPU, thread scheduling).
-%
-% 6. Construct validity --- coverage is a proxy for bugs, not a bug oracle. This
-%    thesis optimizes and measures coverage; no claim about bugs found is made beyond
-%    what the oracle of \cref{sec:fuzzing-definitions} actually detected. Note also
-%    that the coverage signal is block-level and hash-aliased, so "new coverage" is
-%    itself approximate.
-%
-% 7. Scaling. The observation width, the fixed episode length and the fixed-size
-%    inputs are all bounded by design decisions that a real target would violate.
-%
-% The two that will be pressed together: (1) and (3) --- "you engineered a reward for
-% a toy target and used an expensive planner to climb it; what did the method add over
-% a simple coverage-guided approach, and does any of it survive on a target you did
-% not design?" Have the answer to that composite question ready in one paragraph.
+Each threat below is stated in the form an examiner would put it, then what the design does about
+it, then what remains.
+The first is not mitigated at all, and it is the reason this thesis claims feasibility rather than
+competitiveness.
+
+\paragraph{No conventional fuzzer was run.}
+The experiment that would settle whether any of this is worth doing --- the same targets, the same
+wall-clock, AFL++ on one side and the agent on the other --- was never run, and no such measurement
+exists anywhere in the recorded campaigns.
+Every comparison in this thesis is therefore internal: the agent against a structure-blind random
+control that shares its emulator, its harness and its execution budget~(\cref{sec:target-cjson}),
+and configurations of the agent against each other.
+Nothing mitigates this.
+It bounds the strongest available claim to the one made in
+\cref{sec:discussion-interpretation} --- that the learned policy beats undirected mutation per
+execution --- and it makes every statement about competitiveness in this thesis an argument from
+throughput arithmetic rather than a measurement.
+A reader who wants the bake-off should treat the numbers here as the agent-side input to it and
+nothing more.
+
+\paragraph{The clearest results come from rewards that were designed for them.}
+high-and-low and sequence are solved under rewards built to be solvable, including the coverage
+sled that makes the final byte of the passcode learnable at all~(\cref{sec:target-sequence}), and a
+result obtained under a designed reward says nothing about a target whose reward cannot be shaped.
+The mitigation is that no real-world weight rests on those two targets: they are described as
+feasibility tests in \cref{sec:methodology-setup}, the corpus-action targets run on raw coverage
+with no shaping, and the configuration tuned on cJSON was transferred to libxml2 and picohttpparser
+rather than re-tuned per target.
+Two residuals qualify that transfer.
+The transferred configuration is not literally the cJSON baseline --- it runs at $T=2$, which was
+not one of the ablated temperatures, for twice as many iterations --- so "unchanged" describes the
+intent and not the runs.
+And the seeds of both transfer campaigns were not all produced by the same revision
+(\cref{tab:campaign-inventory}), which makes them four runs of a configuration rather than four
+repeated samples of one.
+
+\paragraph{The win may be the learned value function rather than the planning.}
+On a deterministic target a model-based planner and a well-fit value function over coverage are
+hard to tell apart, and the contribution claimed here is the planner.
+The ablation that separates them is a one-simulation arm, which was not run.
+What was run is 50, 100 and 200 simulations, and coverage does not respond to any of it while
+wall-clock scales with all of it~(\cref{sec:discussion-interpretation}); the divergence between the
+policy prior and the search posterior also falls threefold over
+training~(\cref{fig:policy-improvement}).
+Both observations are consistent with the search mattering early and the network absorbing its
+benefit later, and neither rules out the stronger reading that search width beyond 50 simulations
+is simply wasted.
+This thesis therefore makes no claim that planning as such is what produces its results.
+
+\paragraph{Coverage is a proxy for bugs, and the coverage measured here is itself approximate.}
+Every objective, reward and headline number in this thesis is basic-block coverage; no claim about
+bugs found is made beyond what the oracle of \cref{sec:fuzzing-definitions} detected.
+The proxy is standard in greybox fuzzing and it is what makes the comparison to a coverage-guided
+baseline meaningful at all, so the choice is deliberate rather than incidental.
+Two residuals remain.
+Coverage is collected at block rather than edge granularity and is hashed into a fixed bucket array,
+so distinct blocks collide and "new coverage" is an approximation whose error grows with the size
+of the target~(\cref{sec:impl-coverage}).
+And a policy optimised against a proxy will exploit the proxy: nothing in the reward distinguishes a
+deeply nested input that reaches new blocks from one that reaches new blocks and would also expose a
+defect.
+
+The two threats an examiner will put together are the first and the third: a planner was used to
+climb a reward on targets chosen for it, and neither the value of the planning nor the value of the
+whole approach was measured against the technique it means to improve on.
+The answer this thesis can give is that the learned policy beats undirected mutation by a factor of
+\num{71} per execution on cJSON under a raw-coverage reward, that it discovers nesting on two
+recursive-descent parsers without being told the grammar, and that both facts are worth having
+precisely because they are the preconditions for the comparison that was not run.
+What it cannot give is that comparison.

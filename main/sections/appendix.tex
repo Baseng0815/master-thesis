@@ -2,24 +2,331 @@
 
 \chapter{Model Architecture and Training Objective}\label{app:ez-details}
 
-% TODO: The parameterization that \cref{chap:efficientzero} leaves out on purpose,
-% at the level of detail needed to reimplement it:
-%   - the bodies of the five networks of \cref{sec:ez-architecture}: block types,
-%     depths and widths, and the recurrent value-prefix head,
-%   - the projection $P_1$ and prediction $P_2$ heads that \cref{eq:ez-consistency}
-%     refers to,
-%   - the categorical representation of value and value prefix: support size and
-%     the invertible scaling transform
-%     \todo{cite: value-scaling transform (Pohlen et al. 2018) --- not in references/*.bib yet},
-%   - the weighted total loss behind \cref{sec:ez-loss}. The reference
-%     configuration weights policy 1.0, value 0.25, value prefix 1.0 and
-%     consistency 2.0 (\code{efficientzero/src/learner/mod.rs}); the value term is
-%     down-weighted because its reanalyzed bootstrap targets are the noisiest signal,
-%   - gradient scaling across the unroll steps,
-%   - how the value loss becomes the replay priority \cite{schaul_prioritized_2016}.
-%
-% Boundary with \cref{app:configuration}: the formulas belong here, the frozen
-% numeric values belong in the hyperparameter table there.
+% Boundary with \cref{app:configuration}: the formulas and the architecture belong
+% here, the frozen numeric values belong in the hyperparameter table there. The
+% widths of \cref{tab:app-ez-widths} are the exception, since they define the
+% network bodies rather than parameterize a run.
+
+\Cref{chap:efficientzero} names the seven networks by what they compute.
+This appendix gives their bodies, the categorical encoding through which the scalar heads are
+trained, and the weighted loss that \cref{eq:ez-loss} abbreviates.
+Widths appear here as symbols; \cref{tab:app-ez-widths} resolves them.
+
+\section{From Convolutions to Multilayer Perceptrons}\label{sec:app-ez-mlp}
+
+The reference implementation of EfficientZero is convolutional throughout~\cite{ye_mastering_2021}.
+Its observation is a stack of four $96\times96$ Atari frames, and its representation network is a
+downsampling stem --- two strided $3\times3$ convolutions and two average-pooling stages,
+interleaved with four residual blocks --- followed by one further residual block at 64 channels.
+The latent state is therefore a $64\times6\times6$ tensor, and each head first reduces it with a
+$1\times1$ convolution to 16 channels and flattens the result before a two-layer \gls{mlp}.
+
+Neither observation space of this thesis is an image.
+Their coverage part is a bucket array: the block hit tracker folds basic-block addresses into a
+fixed number of buckets by hashing (\cref{sec:impl-coverage}), so two neighboring indices hold two
+unrelated basic blocks.
+The rest is heterogeneous --- seed bytes, a phase one-hot, the staging summary and the depth
+record (\cref{sec:mdp-states}) --- concatenated into one flat vector.
+A convolution buys weight sharing in exchange for locality and translation invariance, and hashing
+destroys both assumptions: the units a kernel reads together are related only by their hash
+values, and the pattern it learns at one offset means nothing at the next.
+We therefore replace every convolution with a fully connected layer, and every convolutional
+residual block with the \gls{mlp} block of \cref{eq:app-residual-block}:
+
+\begin{equation}\label{eq:app-residual-block}
+  R_{d,r}(x) = x + W_2\,\mathrm{GELU}\!\left(W_1\,\mathrm{LN}(x)+b_1\right)+b_2,
+  \qquad W_1\in\mathbb{R}^{r\times d},\quad W_2\in\mathbb{R}^{d\times r},
+\end{equation}
+
+a pre-norm bottleneck of width $r$ around a skip connection of width $d$.
+The latent state becomes a vector of width $L$ instead of a channel-height-width tensor, which
+also removes the heads' $1\times1$ reduction: what is left of a head is the \gls{mlp} that
+followed it.
+The trunk keeps the depth of the reference rather than its layout --- five residual blocks
+against the stem's four plus one --- since the single linear layer that projects an observation to
+the latent width does no mixing of its own.
+
+The remaining departures from the reference architecture are consequences of the same change or of
+the scale this thesis trains at.
+
+\paragraph{Layer instead of batch normalization}
+The reference normalizes with batch normalization~\cite{ioffe_batch_2015} at momentum 0.1.
+Batch statistics tie the prediction for one input to the other inputs it happens to be batched
+with, which \gls{mcts} cannot tolerate: the batch a node is evaluated in is a consequence of the
+tree shape and of the pool of environments stepped in parallel (\cref{sec:impl-efficientzero}), and
+evaluation runs a single environment at batch size one.
+We normalize with layer normalization~\cite{ba_layer_2016} instead, so the value the search reads
+back for a node is a function of that node alone.
+
+\paragraph{No latent renormalization}
+The reference min-max rescales every latent to $[0,1]$ before it enters a search node.
+We do not reproduce this.
+The layer normalization at the head of every residual block already presents each linear layer with
+a unit-scale input, whereas a min-max rescaling is set by the two extreme units of the vector and
+moves with any one of them.
+
+\paragraph{Action encoding}
+The reference appends the action to the latent as an additional channel plane, spending one of the
+64 channels on it.
+We concatenate a one-hot vector of width $|\mathcal{A}|$, so the dynamics network reads
+$L+|\mathcal{A}|$ inputs and returns $L$; the reference's identity skip is kept by adding back only
+the first $L$ components of that input.
+
+\paragraph{Optimizer}
+The reference trains with SGD at momentum 0.9, an initial learning rate of 0.2 under a warm-up and
+a step decay, and a coupled L2 penalty of $10^{-4}$.
+Both halves of that schedule are fractions of a fixed total of \num{120000} gradient steps, and
+this implementation has no such total: its outer loop is unbounded, and the optional run bound may
+be a count of learner iterations, of trajectories, of environment steps or of wall-clock time, only
+the first of which fixes a gradient-step count in advance.
+We therefore train with AdamW at a constant \num{1e-3} with the same $10^{-4}$ decay applied
+decoupled, and clip gradients at norm 5 per parameter tensor rather than globally.
+
+\paragraph{Zero-initialized outputs}
+The last linear layer of the policy, value and value-prefix heads is initialized to zero, as in the
+reference.
+An untrained policy head is then exactly uniform and an untrained value or value prefix decodes to
+exactly $0$, so the first searches of a run are unbiased by initialization noise.
+
+\section{Network Bodies}\label{sec:app-ez-bodies}
+
+\Cref{tab:app-ez-bodies} gives the seven networks layer by layer.
+$\mathrm{Lin}(i,o)$ is a linear layer with bias, $\mathrm{LN}(d)$ a layer normalization,
+$R_{d,r}$ the residual block of \cref{eq:app-residual-block}, and $|o|$, $|\mathcal{A}|$, $B_v$ and
+$B_x$ are the observation width, the action count and the two support sizes of
+\cref{sec:app-ez-categorical}.
+
+\begin{table}[htbp]
+  \centering
+  \caption[Network bodies]{%
+    The bodies of the seven networks.
+    A superscript $\times 5$ repeats a block with its own parameters; a dagger marks a
+    zero-initialized layer.
+    $\projnet$ and $\prednet$ are the projection and prediction heads of
+    \cref{eq:ez-consistency}; the reference's $\prednet$ bottleneck --- $w_q<P$, which is what
+    prevents the SimSiam collapse~\cite{chen_exploring_2020} --- is preserved at every width of
+    \cref{tab:app-ez-widths}.
+  }
+  \label{tab:app-ez-bodies}
+  \footnotesize
+  \begin{tabularx}{\textwidth}{@{}ll>{\raggedright\arraybackslash}Xl@{}}
+    \toprule
+    Network & & Layers & Out \\
+    \midrule
+    Representation
+      & $h$
+      & $\mathrm{Lin}(|o|,L)$, $\mathrm{LN}(L)$, GELU, $R_{L,r_h}^{\times 5}$
+      & $L$ \\
+    Dynamics
+      & $g$
+      & concatenate one-hot $a$, $R_{L+|\mathcal{A}|,\,r_g}$,
+        $\mathrm{Lin}(L+|\mathcal{A}|,L)$, add latent
+      & $L$ \\
+    Value
+      & $v$
+      & $R_{L,r_v}$, $\mathrm{Lin}(L,w_v)$, GELU, $\mathrm{Lin}(w_v,B_v)^{\dagger}$
+      & $B_v$ \\
+    Policy
+      & $p$
+      & $R_{L,r_p}$, $\mathrm{Lin}(L,w_p)$, GELU, $\mathrm{Lin}(w_p,|\mathcal{A}|)^{\dagger}$
+      & $|\mathcal{A}|$ \\
+    Value prefix
+      & $\vpnet$
+      & $\mathrm{Lin}(L,L)$, $\mathrm{LN}(L)$, GELU, $\mathrm{LSTM}(L,w_\ell)$,
+        $\mathrm{LN}(w_\ell)$, GELU, $\mathrm{Lin}(w_\ell,w_x)$, $\mathrm{LN}(w_x)$, GELU,
+        $\mathrm{Lin}(w_x,B_x)^{\dagger}$
+      & $B_x$ \\
+    Projection
+      & $\projnet$
+      & $\left[\mathrm{Lin}(\Cdot,P),\ \mathrm{LN}(P),\ \text{GELU}\right]^{\times 2}$,
+        $\mathrm{Lin}(P,P)$, $\mathrm{LN}(P)$
+      & $P$ \\
+    Prediction
+      & $\prednet$
+      & $\mathrm{Lin}(P,w_q)$, $\mathrm{LN}(w_q)$, GELU, $\mathrm{Lin}(w_q,P)$
+      & $P$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The value-prefix network is the only recurrent one and the only one whose forward pass is not a
+function of its input alone.
+It is stepped once per unroll step, consumes the latent of that step and emits the prefix logits
+from the hidden state it just produced, and its carry is zeroed every five steps
+(\cref{sec:app-ez-objective}).
+The projection head closes without an activation, which is what makes its output an embedding to
+compare rather than a representation to read.
+
+\section{Hidden-Width Presets}\label{sec:app-ez-widths}
+
+Every width of \cref{tab:app-ez-bodies} is set by one of three presets rather than tuned
+individually.
+\Cref{tab:app-ez-widths} lists them.
+\emph{Medium} is what every run of this thesis uses; the cJSON campaign's \code{SMALL} arm
+(\cref{tab:cjson-arms}) is one rung down from it and its \code{FULL} arm one rung up, which is the
+only capacity comparison this thesis makes.
+
+\begin{table}[htbp]
+  \centering
+  \caption[Hidden-width presets]{%
+    The three hidden-width presets and what they cost on the two corpus-action targets.
+    Parameter counts assume the widths of \cref{sec:target-cjson,sec:target-libxml2} ---
+    $|o|=\num{8247}$ and $|o|=\num{32871}$, $|\mathcal{A}|=256$ --- and $B_v=B_x=261$.
+  }
+  \label{tab:app-ez-widths}
+  \footnotesize
+  \begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}Xrrr@{}}
+    \toprule
+    & & Small & Medium & Full \\
+    \midrule
+    $L$        & Latent width                & 64 & 128 & 256 \\
+    $r_h$      & Representation bottleneck   & 32 & 64 & 128 \\
+    $r_g$      & Dynamics bottleneck         & 32 & 64 & 128 \\
+    $r_v$      & Value bottleneck            & 32 & 64 & 128 \\
+    $w_v$      & Value hidden width          & 64 & 128 & 256 \\
+    $r_p$      & Policy bottleneck           & 64 & 128 & 256 \\
+    $w_p$      & Policy hidden width         & 64 & 128 & 256 \\
+    $w_\ell$   & Value-prefix \gls{lstm} width & 64 & 256 & 512 \\
+    $w_x$      & Value-prefix hidden width   & 8 & 16 & 32 \\
+    $P$        & Projection width            & 64 & 128 & 256 \\
+    $w_q$      & Prediction bottleneck       & 32 & 64 & 128 \\
+    \addlinespace
+    \multicolumn{2}{@{}l}{Parameters, cJSON}
+      & \num{704010} & \num{1877770} & \num{5105674} \\
+    \multicolumn{2}{@{}l}{Parameters, libxml2}
+      & \num{2279946} & \num{5029642} & \num{11409418} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The ladder halves every width from one rung to the next with one exception: the value-prefix
+\gls{lstm} drops by a factor of four between \emph{Medium} and \emph{Small}.
+Because its four gates cost $4\,(L w_\ell + w_\ell^2 + 2 w_\ell)$ parameters and are therefore
+quadratic in $w_\ell$, that one deviation carries most of the difference between the two rungs:
+the value-prefix network falls from \num{421125} to \num{40581} parameters while the whole model
+falls from \num{1877770} to \num{704010}.
+
+A rung does not cost the same on both corpus targets.
+The representation network's input layer alone holds $|o|\cdot L$ weights, which at
+\emph{Medium} is \SI{56}{\percent} of cJSON's parameters and \SI{84}{\percent} of libxml2's ---
+libxml2 observes four times as many coverage buckets (\cref{sec:target-libxml2}).
+Capacity added by a rung therefore lands mostly in the encoder on the wider target and is spread
+more evenly on the narrower one, so the two are not the same experiment run at two scales.
+
+\section{Categorical Value and Value-Prefix Targets}\label{sec:app-ez-categorical}
+
+The value and value-prefix heads emit a distribution over a fixed support rather than a scalar,
+which trades the unbounded gradients of a regression loss for the bounded ones of a cross
+entropy~\cite{schrittwieser_mastering_2020,ye_mastering_2021}.
+A scalar target $y$ is first compressed by the invertible transform
+
+\begin{equation}\label{eq:app-scalar-transform}
+  \chi(y)=\operatorname{sgn}(y)\left(\sqrt{|y|+1}-1\right)+\epsilon\,y,
+  \qquad \epsilon=10^{-3},
+\end{equation}
+
+which is near-linear for small $|y|$ and square-root-like for large
+$|y|$\todo{cite: value-scaling transform (Pohlen et al.\ 2018) --- not in references/*.bib yet},
+and then two-hot encoded onto the support $z_1<\dots<z_B$ of $B$ evenly spaced points:
+the two neighbors bracketing $\chi(y)$ receive the mass $1-m$ and $m$, where $m$ is the fractional
+position of $\chi(y)$ between them.
+A target outside $[z_1,z_B]$ is clamped to the boundary, and a target that is not a number is
+encoded as $0$ so that it contributes no signal instead of poisoning the batch.
+
+A head is read back in the opposite order: its logits are softmaxed, the expectation under that
+distribution is taken against the support, and the result is mapped back with
+
+\begin{equation}\label{eq:app-scalar-transform-inverse}
+  \chi^{-1}(x)=\operatorname{sgn}(x)\left[
+    \left(\frac{\sqrt{1+4\epsilon\left(|x|+1+\epsilon\right)}-1}{2\epsilon}\right)^{2}-1
+  \right].
+\end{equation}
+
+Both supports are a per-target setting, since $[z_1,z_B]$ has to cover the returns the reward scale
+of a target actually produces, and $B$ enters the parameter count as the output width of both
+heads.
+
+\section{The Weighted Loss}\label{sec:app-ez-objective}
+
+\Cref{eq:ez-loss} omits three things the implementation cannot: which positions of an unroll are
+supervised at all, how a batch is normalized, and how gradients are scaled along the unroll.
+Writing $\mathcal{B}$ for the batch, $w_b$ for the importance-sampling weight of sample $b$
+(\cref{sec:app-ez-priorities}) and $m^{\text{v}}_{b,k},m_{b,k}\in\{0,1\}$ for the two masks below,
+the loss actually minimized is
+
+\begin{equation}\label{eq:app-ez-loss-full}
+  \begin{split}
+    \mathcal{L}(\theta)=\frac{1}{K}\sum_{k=0}^{K}\sum_{b\in\mathcal{B}}\frac{w_b}{|\mathcal{B}|}\Big[
+      &\lambda_p\,\ell^{\,p}_{b,k}
+      + m^{\text{v}}_{b,k}\left(\lambda_v\,\ell^{\,v}_{b,k}+\lambda_x\,\ell^{\,x}_{b,k}\right)\\
+      &+ m_{b,k}\,\mathbf{1}[k>0]\;\lambda_c\,\ell^{\,c}_{b,k}\Big].
+  \end{split}
+\end{equation}
+
+\paragraph{Masks}
+A position sampled near the end of a trajectory has fewer than $K$ successors, and the unroll runs
+past the end of the data.
+$m_{b,k}$ marks the positions that are backed by a real transition.
+The policy term needs no mask because its targets are zero-padded, which makes the cross entropy of
+a padded position exactly zero.
+The value and value-prefix terms use $m^{\text{v}}_{b,k}$, which additionally covers a bounded
+number of absorbing positions past the end of a trajectory --- value target $0$, value prefix
+frozen at the episode return.
+Without them a terminal transition's outcome is never trained on, and the value at post-terminal
+latents is left to extrapolation that the search will happily mine.
+The consistency term is skipped at $k=0$, where no dynamics step has run yet and the two branches
+of \cref{eq:ez-consistency} would compare a latent with itself.
+
+\paragraph{Normalization}
+Each term is summed over positions and divided by the full batch size, not by the number of
+positions that survived its mask.
+An unroll step at which few samples are valid therefore contributes proportionally less, rather
+than being upweighted to the same total as a fully valid one.
+
+\paragraph{Gradient scaling}
+The total is divided by $K$, the number of dynamics applications rather than the number of
+supervised positions, so that the gradient reaching a shared parameter does not grow with the
+unroll length.
+Each dynamics output additionally passes through $x\mapsto\tfrac12 x+\tfrac12\operatorname{sg}(x)$,
+which leaves the forward pass unchanged and halves the gradient flowing back through that step.
+The latent at unroll step $k$ therefore contributes to the representation network with weight
+$2^{-k}$, which keeps the encoder from being dominated by the deepest, least reliable end of the
+unroll.
+The consistency loss contributes a stop-gradient of its own: its target branch
+$\projnet(h(o_{t+k};\theta);\theta)$ is detached, so the representation network is not trained to
+meet the dynamics network halfway.
+
+\paragraph{The recurrent window}
+The value-prefix \gls{lstm} carries its hidden state across the unroll and is reset every five
+steps, in training and in search alike.
+Its target is reset at the same boundary and is the \emph{exclusive} prefix
+$\sum_{j<k}\gamma^{j}u_{t+j+1}$, so the root's target is the empty sum $0$ and the difference of a
+child's and its parent's prefix telescopes to the reward on the edge between them
+(\cref{sec:ez-value-prefix}).
+
+\section{Replay Priorities}\label{sec:app-ez-priorities}
+
+The value loss of \cref{eq:ez-loss} is what \gls{per}~\cite{schaul_prioritized_2016} prioritizes
+on.
+The reanalyze worker already computes a fresh value target $z_b$ for every sampled position and
+already holds the head's prediction $v(s^0_b;\theta)$, so it writes back
+
+\begin{equation}\label{eq:app-ez-priority}
+  p_b=\left|v(s^0_b;\theta)-z_b\right|+10^{-6}
+\end{equation}
+
+as that position's priority, the constant being a floor that keeps a perfectly predicted position
+samplable.
+A position is then sampled with probability proportional to $p_b^{\alpha}$ and its contribution to
+\cref{eq:app-ez-loss-full} is corrected by the importance-sampling weight
+$w_b\propto(N p_b^{\alpha}/\sum_j p_j^{\alpha})^{-\beta}$, for the two exponents of
+\cref{tab:app-ez-params} and over the $N$ samplable positions in the buffer.
+The weights are divided by the largest one in the batch, so the largest is exactly $1$ and the
+correction only ever scales a sample down.
+A freshly inserted trajectory has no measured error yet and enters at the largest priority observed
+so far, which puts it ahead of older positions whose error has already been measured and found
+small; the reanalyze worker overwrites that placeholder with \cref{eq:app-ez-priority} the first
+time the position is drawn.
 
 \chapter{Frozen Configuration}\label{app:configuration}
 
@@ -112,5 +419,6 @@
 \chapter{Additional Results}\label{app:results}
 
 % TODO: Per-run curves, the peripheral ablations labelled indicative in
-% \cref{sec:results-ablations}, and the diagnostic series that support
-% \cref{chap:failure-modes} without belonging in it.
+% \cref{sec:results-ablations}, and the diagnostic series that support the
+% collapse and degradation findings of \cref{sec:results-corpus-actions} without
+% belonging in it.

@@ -2,23 +2,73 @@
 
 \section{Input-Level Action Spaces}\label{sec:results-input-actions}
 
-As outlined in~\cref{sec:targets-input-actions}, we use the input action targets
-as feasibility tests and do not go into further detail.
+The learner managed to solve both input-action targets~(\cref{sec:targets-input-actions}), proving its correctness.
+Each target was run once with one PRG seed and a sensible baseline configuration.
+high-and-low reaches its ceiling after 100 of a nominal 400 iterations and \SI{1.5}{\hour}, at
+which point it was stopped.
+sequence uses all 400 of its iterations and \SI{3.2}{\hour}.
+We plot the learning progress as well as the action entropy for both targets.
+The learning progress includes the raw return for both targets, as well as a
+more direct, target-specific success metric.
+For high-and-low, the main success metric is simply the ratio of correctly played bytes.
+For sequence, a possible success metric is the actual episode length, since a longer
+episode indicates later termination and therefore a longer correct password prefix.
 
-\subsection{high-and-low}
+\input{figures/generated/input-learning}
+\input{figures/generated/input-entropy}
 
-\todo{add reward progression}
-\todo{describe reward progression}
-\todo{add loss curves}
-\todo{describe loss curves}
-\todo{add entropy curves}
-\todo{describe entropy curves}
+\subsection{high-and-low}\label{sec:results-high-and-low}
 
-\subsection{Sequence}
+The agent learns to play the correct bytes in \code{[A-D]} after roughly 18 iterations.
+Before that, it does worse than random chance.
+A random policy is expected to achieve a high-coverage byte rate of $\frac{4}{256}\approx 0.0156$,
+while the agent plays high-coverage bytes at a rate of about \num{0.0004} by iteration 12.
+At this point, the action entropy has fallen from \num{5.30} to \num{3.17},
+while the random policy has an action entropy of $\ln 256 = \num{5.55}$~(\cref{fig:input-entropy}).
+This indicates that the agent initially trends towards a policy that is worse than random.
+The trend reverses after an additional six iterations, after which the agent achieves a
+high-coverage byte rate of about \num{0.5} which then peaks at iteration 28 above \num{0.99}.
+It later falls to \num{0.95}~(\cref{fig:input-learning}), illustrating that training
+is not necessarily stable, even after it has found an optimal policy.
 
-\todo{add reward progression}
-\todo{describe reward progression}
-\todo{add loss curves}
-\todo{describe loss curves}
-\todo{add entropy curves}
-\todo{describe entropy curves}
+Episode return follows the exact same pattern since it is a perfect proxy for
+the high-coverage byte rate, up to a constant factor.
+The median return holds near \num{82} through iteration 16, reaches \num{518.8} at iteration 20
+and then drifts back to \num{504.9} by the end of training.
+The best single trajectory of the run returns \num{525.7}.
+Action entropy continues to fall after the switch, to \num{0.73} nats at iteration 25 and
+\num{0.25} at the end of training.
+
+The policy loss~(\cref{fig:input-losses}) falls from \num{5.88} to \num{0.17}
+and the value-prefix loss from \num{6.27} to \num{0.37}.
+The value loss is the exception: it falls to \num{0.96} at iteration 23, steps up as the agent
+solves the target and ends at \num{2.59}, the largest of the three supervised losses.
+
+\subsection{Sequence}\label{sec:results-sequence}
+
+The agent manages to recover the entire 16-byte passcode.
+At the final iteration, the rate of correctly played positions sits between \num{0.946} and \num{0.992}.
+It learns that passcode one position at a time.
+
+Median episode length rises from 1 to 16 and median return from \num{2.83} to
+\num{24.57}~(\cref{fig:input-learning}).
+Because the program exits on the first wrong byte, the episode length in this case
+is also a perfect proxy for the episode return.
+The agent first constructs a full passcode at iteration 269, and the median of all executions reaches 16 at iteration 305.
+
+Action entropy ends at \num{2.80} nats, against the \num{0.25} high-and-low ends at and a uniform
+$\ln 26 = \num{3.26}$~(\cref{fig:input-entropy}).
+In contrast to high-and-low, there is no low-entropy correct policy since the problem
+is not a simple bandit and requires a different action in each state.
+A perfectly deterministic policy requires an action entropy of $\ln 16 =
+\num{2.77}$, closely aligned with our final result of \num{2.80}.
+
+Even at the end of training, a quarter of all trajectories end before position 12.
+This can be attributed to the still ongoing exploration because of the Dirichlet noise
+that is mixed into the policy priors at a fraction of $\rho = \num{0.4}$.
+
+The training losses follow the same pattern as on high-and-low~(\cref{fig:input-losses}): the
+policy loss falls from \num{0.54} to \num{0.12} and the value-prefix loss from \num{2.95} to
+\num{0.34}, while the value loss rises from \num{0.31} to \num{1.46}.
+
+\input{figures/generated/input-losses}

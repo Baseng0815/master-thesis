@@ -1,0 +1,130 @@
+%!TEX root = ../../thesis.tex
+
+\section{What the Approach Demonstrates and What It Costs}\label{sec:discussion-interpretation}
+
+The agent learns to fuzz, and it does not fuzz competitively.
+Both halves of that sentence rest on \cref{chap:results}, and the second is not a caveat attached
+to the first but a result of the same experiments.
+This section states what the evidence carries, with the target, the baseline and the budget named
+for each claim, and then what the approach costs to obtain it.
+
+Credit assignment across a sequence of decisions is the capability the input-action targets
+isolate, and the learner has it.
+On high-and-low the agent plays high-coverage bytes at a rate above \num{0.99} where a random
+policy reaches $\frac{4}{256}\approx\num{0.0156}$~(\cref{sec:results-high-and-low}).
+On sequence it recovers the entire 16-byte passcode one position at a time, and the cost of each
+additional byte grows from three positions within the first six iterations to 55 iterations for
+the last one alone~(\cref{sec:results-sequence}).
+That last number is the point: a mutation-based fuzzer with no notion of return has no mechanism
+that makes the sixteenth byte cheaper than exhaustive search over it, and the agent's is a value
+function that carries reward backwards across steps.
+The scope of the claim is narrow.
+Both targets reward the agent for progress that no coverage signal on a real program would supply
+unprompted (\cref{sec:target-sequence}), and each ran on a single PRG seed.
+What is demonstrated is credit assignment under a designed reward, not fuzzing.
+
+On the corpus-action targets the reward is raw coverage, and the agent still converges on
+structure.
+The highest-coverage cJSON input is \code{[[[[[2,[[[[[1\ldots}\ and the highest-coverage libxml2
+input nests tags to a comparable depth~(\cref{tab:best-inputs}), neither of which was described to
+the agent in any form.
+The structural byte rate makes the same point over training rather than at its end: it rises from
+\num{0.08} to a peak of \num{0.90} on cJSON and from \num{0.05} to \num{0.75} on
+libxml2~(\cref{fig:structural-decay}).
+A recursive-descent parser rewards nesting with coverage, and the agent finds that out from the
+coverage vector alone.
+
+Planning also beats undirected mutation at an identical execution budget, on the one target where
+that comparison was run.
+At \num{1638400} guest executions the cJSON baseline reaches a median of \num{645} covered blocks
+against \num{542} for the structure-blind random control, and the campaign's registered primary
+metric --- the fraction of episodes whose best seed reaches the 99th percentile of the pooled
+control distribution --- separates them by a factor of roughly \num{71}, \SI{76.7}{\percent}
+against \SI{1.08}{\percent}, on every paired seed~(\cref{sec:target-cjson}).
+The best-performing arm reaches \num{958} blocks, so the gap to the control widens further under a
+better configuration~(\cref{tab:campaign-inventory}).
+Two things bound this.
+The control is uniform random mutation, not a coverage-guided fuzzer, so the comparison establishes
+that the learned policy is doing something rather than that it is doing something better than the
+state of the art.
+And the primary metric's threshold sits below the plateau every trained arm reaches early, so it
+separates trained from untrained decisively and the trained arms from each other not at all.
+
+Where coverage does not grow with input structure, the approach buys nothing.
+picohttpparser ends at \num{81} covered blocks with a seed-to-seed range of one block, reaches
+\SI{90}{\percent} of that ceiling within \SI{25}{\percent} of its budget and gains nothing at all in
+the final quarter~(\cref{fig:saturation,tab:campaign-inventory}).
+This is not a failure of learning.
+The structural byte rate on picohttpparser rises from \num{0.03} to a peak of
+\num{0.73}~(\cref{fig:structural-decay}), so the agent learns to produce better-formed requests
+just as it does on the other two targets; the target simply does not pay for them, because a
+header parser's block count is bounded by its grammar rather than by the depth of any single
+request.
+The property that predicts whether the approach helps is therefore a property of the target and
+not of the agent: coverage that keeps growing as inputs grow more structured.
+A practitioner can check it cheaply, and should, before spending anything on the machinery this
+thesis describes.
+
+The dominant cost is throughput.
+Under the eight-way concurrency the campaigns ran at, a cJSON run executes \num{1638400} inputs in
+\SI{21.3}{\hour} and the two 400-iteration campaigns execute \num{3328128} in \SI{42.1}{} and
+\SI{40.7}{\hour}, which is between \num{21} and \num{23} guest executions per second in every
+case~(\cref{tab:campaign-inventory}).
+Removing the search entirely raises this only to \num{41}: the random control covers the same
+budget in \SI{11.3}{\hour}, so emulation and the learner, not the planner, set the ceiling.
+Measured alone on the card a run is roughly three times faster, which moves the figure to the order
+of \num{100} and no further.
+A native persistent-mode harness on a parser of this size executes on the order of \num{e4} inputs
+per second on one core~\cite{fioraldi_afl_nodate}, a figure this thesis cites rather than measures,
+since no conventional fuzzer was run on these targets.
+Taken at that value the agent must extract roughly three orders of magnitude more coverage per
+execution than random mutation to break even in wall-clock, and the factor of \num{71} it does
+achieve on cJSON is measured per execution against a control that shares its own slow harness.
+\todo{Pin the \num{e4} figure to a specific measurement in the cited source, or replace it with a
+measured AFL++ run on cJSON.}
+
+The search is the component that pays for itself least.
+Coverage is flat across simulation counts --- \num{687}, \num{640} and \num{645} blocks at 50, 100
+and 200 simulations --- while wall-clock scales close to linearly with them, at \SI{7.6}{},
+\SI{11.5}{} and \SI{21.3}{\hour}~(\cref{tab:campaign-inventory}).
+In the execution currency the three arms are indistinguishable; in the wall-clock currency the
+cheapest of them dominates the configuration this thesis otherwise treats as its baseline.
+The policy-improvement diagnostic points the same way: the mean divergence between the prior and
+the \gls{mcts} posterior falls from \num{0.99} to \num{0.28} nats over
+training~(\cref{fig:policy-improvement}), so the search corrects a policy that increasingly does
+not need correcting.
+None of this shows that planning is worthless, because the smallest search that was run is still 50
+simulations wide; it shows that beyond that width the thesis paid for search and got coverage that
+was already there.
+
+Reliability is the second cost, and it is a property of every run rather than of unlucky ones.
+The structural byte rate peaks before the end of training on all three corpus targets and finishes
+below its peak in each: \num{0.90} to \num{0.80} on cJSON, \num{0.75} to \num{0.55} on libxml2 and
+\num{0.73} to \num{0.36} on picohttpparser~(\cref{fig:structural-decay}).
+Per-position action entropy falls to between \num{0.4} and \num{0.7} nats by the end of
+training~(\cref{fig:collapse-entropy}), and the share of replay transitions carrying a non-zero
+reward falls as the reachable coverage is exhausted~(\cref{fig:buffer-reward-density}).
+A fuzzer that is best some fraction of the way into its run and worse afterwards needs a stopping
+rule that this thesis does not provide, and the comparison it loses is against a technique whose
+failure mode is to make no further progress rather than to give up ground.
+
+The remaining costs are ones the design fixed in advance.
+The strongest results in this thesis are on the two targets whose reward was engineered, and that
+effort transfers to a new target no better than the per-target harness work that coverage-guided
+fuzzing was invented to avoid~(\cref{sec:fuzzing-limitations}).
+The action space is a flat categorical over an enumerated branching factor with no
+masking~(\cref{sec:mdp-actions}), which is what rules out variable-length inputs and
+phase-dependent legal actions; the observation is a fixed hashed coverage vector that aliases
+blocks and does not grow with the target~(\cref{sec:impl-coverage}); and the corpus holds a single
+seed~(\cref{sec:impl-corpus}), which makes selection and eviction degenerate.
+Against a fuzzer that ships as one binary, the approach needs an emulator, a learner, a probe stack
+and a GPU per run.
+
+Separating the two kinds of limitation is what makes the rest of this useful.
+Throughput under emulation, the single-seed corpus, the fixed input length, the hashed observation
+and the missing stopping rule are limitations of this implementation, and each has a concrete
+remedy that costs engineering rather than insight~(\cref{chap:future-work}).
+The dependence on a target whose coverage grows with input structure, the dependence on a reward
+that someone designed, and the cost of a learned policy that must be paid before it returns
+anything are limitations of the approach.
+Only the latter three decide whether reinforcement learning belongs in a fuzzer at all.

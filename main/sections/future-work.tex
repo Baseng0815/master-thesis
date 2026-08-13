@@ -3,8 +3,10 @@
 \chapter{Future Work}\label{chap:future-work}
 
 % TODO: Follow-up directions, each tied to a limitation established in
-% \cref{sec:discussion-disadvantages} or \cref{sec:discussion-threats} rather than
-% listed generically. Candidates:
+% \cref{sec:discussion-interpretation} or \cref{sec:discussion-threats} rather than
+% listed generically. The closing paragraph of \cref{sec:discussion-interpretation}
+% already splits them into implementation limits (remedied by engineering) and
+% approach limits (open problems); only the latter belong here. Candidates:
 %
 %   - Factored action heads with sampled search, lifting the enumerable-branching
 %     -factor constraint C5 (\cref{sec:mdp-constraints}) and letting the policy
@@ -25,6 +27,7 @@
 %     per-target engineering are the natural next question.
 %   - Hybrid deployment: run the agent alongside a conventional fuzzer rather than
 %     instead of one, which is how most prior RL fuzzers deal with the throughput gap.
-%   - Reliability: collapse is the dominant failure (\cref{chap:failure-modes}), so
-%     making runs reliably converge is worth more than making converged runs better.
+%   - Reliability: every corpus target ends below its own structural-rate peak
+%     (\cref{fig:structural-decay}), so a stopping rule --- or training that does not
+%     give ground back --- is worth more than making converged runs better.
 %   - Broader targets, and a crash-finding rather than coverage-maximizing objective.
