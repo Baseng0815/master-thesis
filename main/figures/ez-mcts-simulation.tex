@@ -73,7 +73,7 @@
     \end{minipage}
   \end{subfigure}
 
-  \par\medskip
+  \par\vspace{3.5ex}
   % ===== (b) Expansion and evaluation ======================================
   \begin{subfigure}[b]{\textwidth}
     \begin{minipage}[c]{0.60\textwidth}
@@ -110,7 +110,7 @@
     \end{minipage}
   \end{subfigure}
 
-  \par\medskip
+  \par\vspace{3.5ex}
   % ===== (c) Backup ========================================================
   \begin{subfigure}[b]{\textwidth}
     \begin{minipage}[c]{0.60\textwidth}
@@ -143,6 +143,10 @@
   \caption[One MCTS simulation]{A single iteration of Monte-Carlo
     tree search, where $\lvert\mathcal{A}\rvert=2$ and $\gamma=1$.
     Search starts from a true root latent $s^0$ and is then continued by imagined rollouts
-  to imagined latents $s^1$ and $s^2$.}
+    to imagined latents $s^1$ and $s^2$.
+    $Q_\Sigma$ represents the sum of all backed-up Q values, $N$ represents the visit count,
+    $\bar{Q}=\frac{Q_\Sigma}{N}$ the average Q value of the node, and $\text{pUCT}$ the actual score
+    according to the pUCT rule~(\cref{eq:ez-puct}).
+    Colored nodes and edges indicate the search path while the edges are labeled with the prior $p$.}
   \label{fig:ez-mcts-simulation}
 \end{figure}
