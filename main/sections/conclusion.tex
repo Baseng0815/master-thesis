@@ -13,23 +13,31 @@ We also analyzed drawbacks that are mainly concerned with throughput.
 We answer the research questions posed in~\cref{sec:introduction-rqs} as follows:
 
 \begin{enumerate}[label=\textbf{RQ\arabic*.}, ref=RQ\arabic*, leftmargin=*]
-  \item\label{rq:learnability}
+  \item\label{ans:learnability}
     \enquote{Can EfficientZero learn a useful policy on fuzzing-shaped rewards?
     Coverage rewards are sparse, and observations alias distinct program states
     while giving only a partial view of the true state.}
 
-    We answer this question with a clear yes.
+    We answer this question with a clear \enquote{yes}.
     The targets can be successfully learned by using a fuzzing-shaped reward
     derived from coverage instrumentation.
 
-  \item\label{rq:action-space}
+  \item\label{ans:action-space}
     \enquote{How should the fuzzing action space be modeled?
     We pursue two approaches: modeling actual inputs a program expects as actions,
-  as well as modeling mutation operators acting on a corpus as actions.}
+    as well as modeling mutation operators acting on a corpus as actions.}
 
-  \item\label{rq:planning}
+    Both approaches work, but we think that the mutational approach is better suited.
+    It allows the use of a corpus for stateful fuzzing and is closer to the classical
+    approach used in \gls{cgf}.
+
+  \item\label{ans:planning}
     \enquote{Does planning with a learned model help? A core part of EfficientZero is
     \enquote{imagining} how a program behaves given an input. How well can this be learned?}
+
+    This question can also be answered with a \enquote{yes} as seen by the KL divergence
+    between the policy prior and \gls{mcts} root visit count distribution and the
+    empirical results of a growing return.
 \end{enumerate}
 
 Whether this deep RL-based approach can ultimately beat conventional \gls{cgf} fuzzers
