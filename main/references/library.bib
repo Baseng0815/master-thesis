@@ -101,6 +101,7 @@
 	abstract = {Reinforcement learning policies face the exploration versus exploitation dilemma, i.e. the search for a balance between exploring the environment to ﬁnd proﬁtable actions while taking the empirically best action as often as possible. A popular measure of a policy’s success in addressing this dilemma is the regret, that is the loss due to the fact that the globally optimal policy is not followed all the times. One of the simplest examples of the exploration/exploitation dilemma is the multi-armed bandit problem. Lai and Robbins were the ﬁrst ones to show that the regret for this problem has to grow at least logarithmically in the number of plays. Since then, policies which asymptotically achieve this regret have been devised by Lai and Robbins and many others. In this work we show that the optimal logarithmic regret is also achievable uniformly over time, with simple and efﬁcient policies, and for all reward distributions with bounded support.},
 	language = {en},
 	author = {Auer, Peter and Cesa-Bianchi, Nicolo and Fischer, Paul},
+	year = {2002},
 	file = {PDF:/home/bastian/Zotero/storage/RMI9P4YQ/Auer et al. - Finite-time Analysis of the Multiarmed Bandit Problem.pdf:application/pdf},
 }
 
@@ -679,6 +680,7 @@
 	abstract = {In this paper, we present AFL++, a community-driven opensource tool that incorporates state-of-the-art fuzzing research, to make the research comparable, reproducible, combinable and — most importantly – useable. It offers a variety of novel features, for example its Custom Mutator API, able to extend the fuzzing process at many stages. With it, mutators for speciﬁc targets can also be written by experienced security testers. We hope for AFL++ to become a new baseline tool not only for current, but also for future research, as it allows to test new techniques quickly, and evaluate not only the effectiveness of the single technique versus the state-of-theart, but also in combination with other techniques. The paper gives an evaluation of hand-picked fuzzing technologies —shining light on the fact that while each novel fuzzing method can increase performance in some targets — it decreases performance for other targets. This is an insight future fuzzing research should consider in their evaluations.},
 	language = {en},
 	author = {Fioraldi, Andrea and Maier, Dominik and Eißfeldt, Heiko and Heuse, Marc},
+	year = {2020},
 	file = {PDF:/home/bastian/Zotero/storage/8TFBG87M/Fioraldi et al. - AFL++ Combining Incremental Steps of Fuzzing Research.pdf:application/pdf},
 }
 
@@ -728,6 +730,7 @@
 	abstract = {Data ﬂow analysis (e.g., dynamic taint analysis) has proven to be useful for guiding fuzzers to explore hard-to-reach code and ﬁnd vulnerabilities. However, traditional taint analysis is labor-intensive, inaccurate and slow, affecting the fuzzing efﬁciency. Apart from taint, few data ﬂow features are utilized. In this paper, we proposed a data ﬂow sensitive fuzzing solution GREYONE. We ﬁrst utilize the classic feature taint to guide fuzzing. A lightweight and sound fuzzing-driven taint inference (FTI) is adopted to infer taint of variables, by monitoring their value changes while mutating input bytes during fuzzing. With the taint, we propose a novel input prioritization model to determine which branch to explore, which bytes to mutate and how to mutate. Further, we use another data ﬂow feature constraint conformance, i.e., distance of tainted variables to values expected in untouched branches, to tune the evolution direction of fuzzing.},
 	language = {en},
 	author = {Gan, Shuitao and Zhang, Chao},
+	year = {2020},
 	file = {PDF:/home/bastian/Zotero/storage/6YXGWVRH/Gan and Zhang - GreyOne Data Flow Sensitive Fuzzing.pdf:application/pdf},
 }
 
@@ -1217,8 +1220,8 @@
 	language = {en},
 	urldate = {2025-11-10},
 	author = {Kaiser, Lukasz and Babaeizadeh, Mohammad and Milos, Piotr and Osinski, Blazej and Campbell, Roy H. and Czechowski, Konrad and Erhan, Dumitru and Finn, Chelsea and Kozakowski, Piotr and Levine, Sergey and Mohiuddin, Afroz and Sepassi, Ryan and Tucker, George and Michalewski, Henryk},
-	month = apr,
-	year = {2024},
+	month = mar,
+	year = {2019},
 	note = {arXiv:1903.00374 [cs]},
 	keywords = {Computer Science - Machine Learning, Statistics - Machine Learning},
 	file = {nature24270:/home/bastian/Zotero/storage/IBGBCSL7/nature24270.pdf:application/pdf;PDF:/home/bastian/Zotero/storage/3GXN79BS/Kaiser et al. - 2024 - Model-Based Reinforcement Learning for Atari.pdf:application/pdf},
@@ -1470,6 +1473,7 @@
 	abstract = {Mutation-based fuzzing is one of the most popular vulnerability discovery solutions. Its performance of generating interesting test cases highly depends on the mutation scheduling strategies. However, existing fuzzers usually follow a speciﬁc distribution to select mutation operators, which is inefﬁcient in ﬁnding vulnerabilities on general programs. Thus, in this paper, we present a novel mutation scheduling scheme MOPT, which enables mutation-based fuzzers to discover vulnerabilities more efﬁciently. MOPT utilizes a customized Particle Swarm Optimization (PSO) algorithm to ﬁnd the optimal selection probability distribution of operators with respect to fuzzing effectiveness, and provides a pacemaker fuzzing mode to accelerate the convergence speed of PSO. We applied MOPT to the stateof-the-art fuzzers AFL, AFLFast and VUzzer, and implemented MOPT-AFL, -AFLFast and -VUzzer respectively, and then evaluated them on 13 real world open-source programs. The results showed that, MOPT-AFL could ﬁnd 170\% more security vulnerabilities and 350\% more crashes than AFL. MOPT-AFLFast and MOPT-VUzzer also outperform their counterparts. Furthermore, the extensive evaluation also showed that MOPT provides a good rationality, compatibility and steadiness, while introducing negligible costs.},
 	language = {en},
 	author = {Lyu, Chenyang},
+	year = {2019},
 	file = {PDF:/home/bastian/Zotero/storage/YLNMPPIJ/Lyu - MOpt Optimized Mutation Scheduling for Fuzzers.pdf:application/pdf},
 }
 
@@ -2215,6 +2219,7 @@
 	abstract = {We examined the sequence of decision problems that are encountered in the game of Tetris and found that most of the problems are easy in the following sense: One can choose well among the available actions without knowing an evaluation function that scores well in the game. This is a consequence of three conditions that are prevalent in the game: simple dominance, cumulative dominance, and noncompensation. These conditions can be exploited to develop faster and more effective learning algorithms. In addition, they allow certain types of domain knowledge to be incorporated with ease into a learning algorithm. Among the sequential decision problems we encounter, it is unlikely that Tetris is unique or rare in having these properties.},
 	language = {en},
 	author = {Simsek, Özgür and Algorta, Simón and Kothiyal, Amit},
+	year = {2016},
 	file = {PDF:/home/bastian/Zotero/storage/SS94LWBB/Simsek et al. - Why Most Decisions Are Easy in Tetris—And Perhaps inOther Sequential Decision Problems, As Well.pdf:application/pdf},
 }
 
@@ -2329,7 +2334,7 @@
 	abstract = {"Reinforcement learning, one of the most active research areas in artificial intelligence, is a computational approach to learning whereby an agent tries to maximize the total amount of reward it receives while interacting with a complex, uncertain environment. In Reinforcement Learning, Richard Sutton and Andrew Barto provide a clear and simple account of the field's key ideas and algorithms."--},
 	language = {en},
 	publisher = {The MIT Press},
-	author = {Sutton, Richard S. and Barto, Andrew},
+	author = {Sutton, Richard S. and Barto, Andrew G.},
 	year = {2020},
 	file = {PDF:/home/bastian/Zotero/storage/5L273WCY/Sutton and Barto - 2020 - Reinforcement learning an introduction.pdf:application/pdf},
 }
@@ -2747,6 +2752,7 @@
 	abstract = {Address Sanitizer (ASan) is a powerful memory error detector. It can detect various errors ranging from spatial issues like out-of-bound accesses to temporal issues like use-afterfree. However, ASan has the major drawback of high runtime overhead. With every functionality enabled, ASan incurs an overhead of more than 1x.},
 	language = {en},
 	author = {Zhang, Yuchen and Pang, Chengbin and Portokalidis, Georgios and Triandopoulos, Nikos and Xu, Jun},
+	year = {2022},
 	file = {PDF:/home/bastian/Zotero/storage/AE9WS9XV/Zhang et al. - Debloating Address Sanitizer.pdf:application/pdf},
 }
 
