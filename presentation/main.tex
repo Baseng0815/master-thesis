@@ -15,6 +15,8 @@
 
 \usetheme[progressbar=frametitle]{metropolis}
 \metroset{sectionpage=none, numbering=fraction, block=fill}
+% keep backup frames out of the x/y total and the progress bar
+\usepackage{appendixnumberbeamer}
 
 % Speaker notes: uncomment for a two-up PDF for pdfpc / presenter view.
 %\setbeameroption{show notes on second screen=right}
@@ -79,7 +81,8 @@
     thesis result plot,
     tick label style={font=\scriptsize},
     label style={font=\footnotesize},
-    legend style={font=\scriptsize, draw=none, fill=none},
+    legend style={font=\scriptsize, draw=none, fill=white,
+      fill opacity=0.85, text opacity=1},
     every axis plot/.append style={semithick}},
 }
 
@@ -91,7 +94,8 @@
   alt/.code args={<#1>#2#3}{\alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}}},
 }
 
-% quantile band: \band{path prefix}{csv}{fill color}
+% quantile band: \band{path suffix}{csv} -- defines name paths lo<suffix> and
+% hi<suffix> from the csv's lo/hi columns; fill between them afterwards
 \newcommand{\band}[2]{%
   \addplot [draw=none, forget plot, name path=lo#1]
     table [col sep=comma, x=x, y=lo] {#2};
@@ -104,6 +108,8 @@
 \institute{Karlsruhe Institute of Technology \,\textperiodcentered\, Fraunhofer IOSB\\
   Reviewer: Prof.\ Dr.-Ing.\ J\"urgen Beyerer \,\textperiodcentered\, Advisor: M.Sc.\ Mark Leon Giraud}
 \date{\today} % TODO: set the colloquium date
+% NOTE: metropolis sets the title graphic in a `\vbox to 0pt' by design, so
+% this block always logs two benign `Overfull \vbox' warnings on page 1.
 \titlegraphic{%
   \hfill
   \includegraphics[height=7mm]{logos/kit-en.pdf}\hspace{2em}%
@@ -112,8 +118,8 @@
 \begin{document}
 
 \maketitle
-\note{Timing plan: motivation+idea 3 min, approach 6 min, results 8 min,
-  limitations+conclusion 3 min.}
+\note{Timing plan: intro+motivation+idea 5 min, approach 6 min, results 7 min,
+  limitations+conclusion 2 min.}
 
 % ========================================================== INTRODUCTION ====
 % Spoken content for every frame lives in NOTES.md (one section per slide);
@@ -514,8 +520,7 @@
   \]
 
   \medskip
-  {\footnotesize reward only \emph{new} coverage to force exploration\\
-   episodic: the emulator snapshot is restored at episode end}
+  {\footnotesize reward only \emph{new} coverage to force exploration}
   \note{Script: NOTES.md. Marginal-only reward is time-dependent (late
     novelty pays less); the depth-record term compensates. $\omega=0$ is the
     W0 ablation arm later.}
@@ -629,9 +634,9 @@
     input & sequence & 16-byte passcode, POMDP & bytes \code{[A-Z]} & 26 \\
     input & open62541 & real OPC UA server, reach session & protocol messages & 15 \\
     \addlinespace
-    corpus & cJSON & \textbf{ablation: 15 arms $\times$ 4 seeds} & position + byte write & \\
-    corpus & libxml2 & transfer of cJSON config, 400 iters & position + byte write & \\
-    corpus & picohttpparser & transfer of cJSON config, 400 iters & position + byte write & \\
+    corpus & cJSON & \textbf{ablation: 15 arms $\times$ 4 seeds} & position + byte write & 256 \\
+    corpus & libxml2 & transfer of cJSON config, 400 iters & position + byte write & 256 \\
+    corpus & picohttpparser & transfer of cJSON config, 400 iters & position + byte write & 256 \\
     \bottomrule
   \end{tabular}
   \medskip
@@ -865,7 +870,7 @@
           xlabel={training progress (fraction of iterations)},
           ylabel={structural byte rate},
           xmin=0, xmax=1, ymin=0, ymax=1,
-          legend style={at={(0.55,0.03)}, anchor=south}]
+          legend style={at={(0.97,0.04)}, anchor=south east}]
           \band{A}{figures/data/structural-decay-cjson.csv}
           \addplot [KITblue15, forget plot] fill between [of=loA and hiA];
           \addplot [KIT line plot A]
@@ -916,19 +921,20 @@
           \node[font=\scriptsize, anchor=west] at (axis cs:22,0) {22};
           \node[font=\scriptsize, anchor=west] at (axis cs:41,1) {41};
           \node[font=\scriptsize, anchor=west] at (axis cs:66,2) {${\sim}66$};
-          \node[font=\scriptsize, anchor=east, text=white]
+          \node[font=\scriptsize, anchor=east]
             at (axis cs:10000,3) {${\sim}10^4$};
         \end{axis}
       \end{tikzpicture}
 
       \smallskip
-      {\scriptsize\color{KITblack70} measured under 8-way GPU contention;
-       the gap to native is ${\sim}3$ orders of magnitude\par}
+      {\scriptsize\color{KITblack70} the gap to native is ${\sim}3$ orders of magnitude\par}
     \end{column}
     \begin{column}{0.54\textwidth}
       \begin{itemize}
         \item \textbf{throughput is very low}: emulation and model-based RL
           require high execution resources, slowing down fuzzing
+        \item \textbf{no conventional-fuzzer baseline}: no AFL++/libFuzzer
+          run --- the results show feasibility, not competitiveness
         \item \textbf{high experiment variance}: only 5 of 13 trained arms
           separate cleanly from the baseline, more runs are needed
         \item \textbf{single fixed-length seed}: full corpus formulation
@@ -963,6 +969,17 @@
   better implementation
   \note{End on the reframing: this thesis moves the question from `can RL
     fuzz?' to `can it become cheap enough?'.}
+\end{frame}
+
+\begin{frame}[standout]
+  Questions?
+
+  \bigskip
+  {\small
+   \num{1.77}$\times$ random search at an identical budget\\[0.6ex]
+   \code{[[[[[2,[[[[[1...} --- input structure the agent invented\\[0.6ex]
+   the first fuzzer that plans with a \emph{learned} model of its target}
+  \note{Q\&A anchor slide --- leave it on screen. Script: NOTES.md.}
 \end{frame}
 
 % ================================================================ BACKUP ====
@@ -1108,6 +1125,7 @@
   \begin{tikzpicture}
     \begin{axis}[slide plot, width=10.5cm, height=5.8cm,
       xlabel={learner iteration}, ylabel={share of buffer steps with reward},
+      yticklabel style={/pgf/number format/fixed},
       xmin=0, ymin=0, legend pos=north west]
       \addplot [KIT line plot A]
         table [col sep=comma, x=iteration, y=rewarded_step_share] {figures/data/buffer-cjson.csv};

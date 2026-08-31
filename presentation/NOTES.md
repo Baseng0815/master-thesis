@@ -15,10 +15,10 @@ program it is attacking — using model-based reinforcement learning on top of
 an emulator. I'll motivate why, show how the system is built, and then spend
 most of the time on what the experiments actually say.
 
-*(Timing plan: motivation + idea 3 min, approach 6 min, results 8 min,
-limitations + conclusion 3 min.)*
+*(Timing plan: intro + motivation + idea ~5 min, approach ~6 min, results
+~7 min, limitations + conclusion ~2 min.)*
 
-## 1988: a thunderstorm invents fuzzing
+## The origins of fuzzing (1988)
 
 *(~1 min. Beats: storm garbles the session → tools crash on garbage → the
 storm is mutating valid input → `fuzz` systematizes it → transition.)*
@@ -97,7 +97,7 @@ scalar — "did this input reach new coverage?" — and the rest is discarded.
 but nothing in the loop learns from it. So — what if the fuzzer could
 learn?
 
-## Idea: a fuzzer that plans with a learned model of the target
+## Idea: a fuzzer that acts as a reinforcement learning agent
 
 *(~1.5 min.)*
 
@@ -138,7 +138,7 @@ planning: does planning with the learned model actually help — can the agent
 usefully imagine how the target reacts? The conclusion answers them in
 order.
 
-## EfficientZero (1): a learned model of the target
+## EfficientZero (1): learning a model of the target
 
 *(~1.5 min. The algorithm has two halves: a learned model, and search inside
 it. This slide: the model.)*
@@ -167,7 +167,7 @@ produces from the real next observation, which keeps the model honest.
 **Transition:** So we have a model of the target. What do we do with it? We
 search in it.
 
-## EfficientZero (2): planning = search inside the model
+## EfficientZero (2): planning using the learned model
 
 *(~1.5 min. Four builds — advance the slide as each step is narrated:
 select → expand → evaluate → back up. The payoff text appears with the
@@ -244,7 +244,7 @@ the agent learns its own mutation strategy.
 Both give what EfficientZero needs: a discrete, deterministic action space
 of tractable size.
 
-## System: three layers, two seams
+## System architecture
 
 *(~1 min.)*
 
@@ -258,7 +258,7 @@ emulator contract below. Networks run on the `burn` framework with a CUDA
 backend; 128 environments step in parallel, one emulator and guest each,
 reset by snapshot restore.
 
-## Evaluation: six targets, one ablation campaign
+## Evaluation targets
 
 *(~1 min.)*
 
@@ -289,7 +289,7 @@ the episode cap, because activation ends the episode. The optimal policy is
 to loiter, and the agent finds that: return 21 of a possible 22. Credit
 assignment works on a real server.
 
-## RQ1: corpus actions — planning beats random search
+## RQ1: planning beats random search
 
 *(~1.5 min.)*
 
@@ -305,7 +305,7 @@ baseline versus 1.1 percent for random — about 71 times as often. This is a
 fair comparison against undirected mutation — not against AFL++; no
 conventional fuzzer was run, that's on the limitations slide.
 
-## Ablation: exploration is the knob that matters
+## Ablation: exploration is most important
 
 *(~1.5 min.)*
 
@@ -333,7 +333,7 @@ The simulation-count arms say the same thing: 50, 100, 200 simulations give
 21.3 hours. So the honest RQ3 answer: yes, the learned model is good enough
 to plan in, but on targets this small, cheap planning is enough.
 
-## The agent discovers input structure on its own
+## The agent discovers input structure
 
 *(~1 min.)*
 
@@ -347,7 +347,7 @@ climbs from chance to 0.90 on cJSON, 0.73 on the others. And
 picohttpparser is the honest negative case: it saturates at 81 blocks —
 the target simply has little coverage to give for structure.
 
-## But: structure decays and the policy narrows
+## Performance degrades after a while
 
 *(~1 min.)*
 
@@ -401,6 +401,6 @@ loops, larger targets, and throughput engineering.
 
 ## Questions?
 
-Thank the audience; keep the three anchors on screen: 1.77× random at equal
-budget, the invented nested-array input, first fuzzer planning with a
-learned model.
+Thank the audience and advance to the standout slide — it carries the three
+anchors and stays on screen for Q&A: 1.77× random at equal budget, the
+invented nested-array input, first fuzzer planning with a learned model.
