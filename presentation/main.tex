@@ -1,0 +1,1197 @@
+% ============================================================================
+% main.tex -- defense presentation (~20 minutes)
+%
+% Applications of Reinforcement Learning to Emulator-Based Stateful Greybox
+% Fuzzing -- Bastian Engel
+%
+% Beamer + metropolis, 16:9. Figures are re-drawn for the slide format but read
+% the exact CSVs the thesis figures are generated from (figures/ is a symlink
+% into ../main/figures), so the numbers cannot drift from the thesis.
+%
+% Build: make            -> build/main.pdf
+%        make watch      -> rebuild on save
+% ============================================================================
+\documentclass[aspectratio=169,10pt]{beamer}
+
+\usetheme[progressbar=frametitle]{metropolis}
+\metroset{sectionpage=none, numbering=fraction, block=fill}
+
+% Speaker notes: uncomment for a two-up PDF for pdfpc / presenter view.
+%\setbeameroption{show notes on second screen=right}
+
+% ----- Fonts (pdflatex; metropolis only auto-loads Fira under Xe/LuaLaTeX) ---
+\usepackage[T1]{fontenc}
+\usepackage[sfdefault]{FiraSans}
+\usepackage[scaled=0.85]{FiraMono}
+
+% ----- Colors: KIT palette, same as the thesis -------------------------------
+\usepackage{KAcolors}
+\setbeamercolor{progress bar}{fg=KITgreen}
+\setbeamercolor{alerted text}{fg=KITgreen}
+\setbeamercolor{example text}{fg=KITblue}
+
+% ----- Numbers, tables, code -------------------------------------------------
+\usepackage{siunitx}
+\usepackage{booktabs}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\arm}[1]{\texttt{#1}}
+
+% ----- Plots: thesis styles, restated for the slide format -------------------
+\usepackage{tikz}
+\usetikzlibrary{positioning,calc,fit,arrows.meta,decorations.pathmorphing}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.11}
+\usepgfplotslibrary{fillbetween}
+\usepgfplotslibrary{colormaps}
+
+\pgfplotsset{
+  % KIT line styles, copied from ../main/preamble/03-graphics.tex
+  KIT line plot A/.style={KITblue,semithick},
+  KIT line plot B/.style={KITred,semithick},
+  KIT line plot C/.style={KITorange,semithick},
+  KIT line plot D/.style={KITlilac,semithick},
+  KIT scatter plot A/.style={draw=none,only marks,mark=*,
+    mark options={draw=KITblue,fill=KITblue}},
+  % the shared result-plot look, copied from ../main/preamble/06-thesis.tex
+  thesis result plot/.style={
+    axis lines=left,
+    axis on top=false,
+    scale only axis=false,
+    tick align=outside,
+    grid=major,
+    grid style={KITblack15,very thin},
+    legend cell align=left,
+    % NOTE: the thesis versions add rotate=90 here to undo the label styles
+    % its global `axis lines=center' default installs; without that default
+    % the extra rotation flips the label upside down, so it is dropped.
+    xlabel style={at={(ticklabel cs:0.5)},anchor=near ticklabel},
+    ylabel style={at={(ticklabel cs:0.5)},anchor=near ticklabel}},
+  thesis matrix plot/.style={
+    axis lines=left,
+    scale only axis=false,
+    tick align=outside,
+    enlargelimits=false,
+    axis on top,
+    xlabel style={at={(ticklabel cs:0.5)},anchor=near ticklabel},
+    ylabel style={at={(ticklabel cs:0.5)},anchor=near ticklabel}},
+  % slide sizing on top
+  slide plot/.style={
+    thesis result plot,
+    tick label style={font=\scriptsize},
+    label style={font=\footnotesize},
+    legend style={font=\scriptsize, draw=none, fill=none},
+    every axis plot/.append style={semithick}},
+}
+
+% overlay-aware TikZ styles (MCTS walkthrough frame): hide via opacity so
+% the bounding box -- and thus the layout -- is identical on every overlay
+\tikzset{
+  invisible/.style={opacity=0, text opacity=0},
+  visible on/.style={alt=#1{}{invisible}},
+  alt/.code args={<#1>#2#3}{\alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}}},
+}
+
+% quantile band: \band{path prefix}{csv}{fill color}
+\newcommand{\band}[2]{%
+  \addplot [draw=none, forget plot, name path=lo#1]
+    table [col sep=comma, x=x, y=lo] {#2};
+  \addplot [draw=none, forget plot, name path=hi#1]
+    table [col sep=comma, x=x, y=hi] {#2};}
+
+% ----- Metadata --------------------------------------------------------------
+\title{Applications of Reinforcement Learning to Emulator-Based Stateful Greybox Fuzzing}
+\author{Bastian Engel}
+\institute{Karlsruhe Institute of Technology \,\textperiodcentered\, Fraunhofer IOSB\\
+  Reviewer: Prof.\ Dr.-Ing.\ J\"urgen Beyerer \,\textperiodcentered\, Advisor: M.Sc.\ Mark Leon Giraud}
+\date{\today} % TODO: set the colloquium date
+\titlegraphic{%
+  \hfill
+  \includegraphics[height=7mm]{logos/kit-en.pdf}\hspace{2em}%
+  \includegraphics[height=7mm]{logos/iosb.pdf}}
+
+\begin{document}
+
+\maketitle
+\note{Timing plan: motivation+idea 3 min, approach 6 min, results 8 min,
+  limitations+conclusion 3 min.}
+
+% ========================================================== INTRODUCTION ====
+% Spoken content for every frame lives in NOTES.md (one section per slide);
+% \note{} keeps only presenter cues and examiner contingencies.
+\begin{frame}{The origins of fuzzing (1988)}
+  \centering
+  % ---- the accident: noise on the wire crashes Unix tools --------------------
+  \begin{tikzpicture}[
+      font=\footnotesize, >={Stealth[round]},
+      box/.style={draw, rounded corners=2pt, align=center,
+        minimum height=9mm, inner sep=4pt},
+    ]
+    \node[box, fill=KITblue15] (term) {Bart Miller, on dial-up\\types \code{cat notes.txt}};
+    \node[box, fill=KITblue15, right=38mm of term] (util)
+      {the utility receives\\\code{c\^{}t n\&es.t\#t}};
+    \node[box, fill=KITred15, text=KITred, right=9mm of util] (crash) {\textbf{crash}};
+    % the wire, garbled in the middle
+    \coordinate (w1) at ($(term.east)+(7mm,0)$);
+    \coordinate (w2) at ($(util.west)+(-7mm,0)$);
+    \draw[semithick, KITblack70] (term.east) -- (w1);
+    \draw[semithick, KITblack70, decorate,
+      decoration={zigzag, segment length=2.5mm, amplitude=0.7mm}] (w1) -- (w2);
+    \draw[->, semithick, KITblack70] (w2) -- (util.west);
+    \draw[->] (util) -- (crash);
+    % storm cloud + lightning bolt over the wire
+    \coordinate (mid) at ($(w1)!0.5!(w2)+(0,13mm)$);
+    \fill[KITblack30] (mid) circle [radius=2.6mm]
+      ($(mid)+(-3.4mm,-1mm)$) circle [radius=2mm]
+      ($(mid)+(3.4mm,-1mm)$) circle [radius=2mm];
+    \draw[fill=KITyellow, draw=KITorange, thin]
+      ($(mid)+(-1.5mm,-2.5mm)$) -- ++(3mm,0) -- ++(-1.6mm,-3.2mm) -- ++(1.6mm,0)
+      -- ++(-3.2mm,-4.6mm) -- ++(1.1mm,3.4mm) -- ++(-1.5mm,0) -- cycle;
+    \node[right=6mm of mid, font=\scriptsize, text=KITblack70, align=left]
+      {a thunderstorm puts\\noise on the line};
+  \end{tikzpicture}
+
+  \bigskip
+  {\footnotesize\itshape the storm mutates valid input at random --- Miller
+  turns the accident into the program fuzz}
+  \smallskip
+
+  % ---- the method: fuzz ------------------------------------------------------
+  \begin{tikzpicture}[
+      font=\footnotesize, >={Stealth[round]},
+      box/.style={draw, rounded corners=2pt, align=center,
+        minimum height=9mm, inner sep=4pt},
+    ]
+    \node[box, fill=KITgreen15] (fuzz) {\code{fuzz}\\random byte streams};
+    \node[box, fill=KITblue15, right=12mm of fuzz] (utils)
+      {${\sim}90$ utilities\\on 7 Unix systems};
+    \node[box, fill=KITred15, right=12mm of utils] (res)
+      {\textbf{25--33\,\%}\\crash or hang};
+    \draw[->] (fuzz) -- (utils);
+    \draw[->] (utils) -- (res);
+  \end{tikzpicture}
+
+  \smallskip
+  {\scriptsize\color{KITblack70} random corruption of (valid) input crashes a
+   third of the programs of a mature OS [Miller et al.\ 1990]}
+  \note{Script: NOTES.md. Beats: storm garbles his session $\to$ tools crash
+    on garbage $\to$ the storm is mutating valid input $\to$ \code{fuzz}
+    systematizes it $\to$ transition: for 25 years it stays this simple; what
+    industrialized it is one added ingredient --- feedback.}
+\end{frame}
+
+\begin{frame}{Today: coverage-guided fuzzing}
+  \centering
+  % ---- the CGF loop ----------------------------------------------------------
+  \begin{tikzpicture}[
+      font=\footnotesize, >={Stealth[round]},
+      box/.style={draw, rounded corners=2pt, align=center,
+        minimum height=8.5mm, inner sep=4pt},
+    ]
+    \node[box, fill=KITblue15] (corpus) {seed\\corpus};
+    \node[box, fill=KITblue15, right=12mm of corpus] (mut)
+      {pick a seed,\\\textbf{mutate} it};
+    \node[box, fill=KITgreen15, right=12mm of mut] (exec)
+      {run the\\\textbf{instrumented} target};
+    \node[box, fill=KITblue15, right=12mm of exec] (cov)
+      {coverage\\bitmap};
+    \node[below=4.5mm of mut, font=\scriptsize, text=KITblack70, align=center]
+      {bit flips, arithmetic,\\splices, havoc};
+    \draw[->] (corpus) -- (mut);
+    \draw[->] (mut) -- (exec);
+    \draw[->] (exec) -- (cov);
+    \draw[->, KITgreen, thick] (cov.north) -- ++(0,5mm) -| (corpus.north)
+      node[pos=0.25, above, font=\scriptsize, text=KITgreen]
+        {new coverage $\Rightarrow$ add to corpus};
+    \draw[->, KITblack50] (cov.south) -- ++(0,-5mm)
+      node[below, font=\scriptsize, text=KITblack70] {else discard};
+    \node[box, fill=KITred15, below=5mm of exec, font=\scriptsize] (crash)
+      {crash $\Rightarrow$ \textbf{bug}};
+    \draw[->, KITred] (exec) -- (crash);
+  \end{tikzpicture}
+
+  \medskip
+  {\footnotesize \textbf{AFL} (2013) made coverage feedback the standard ---
+   maintained today as \textbf{AFL++} (2020);\\
+   \textbf{OSS-Fuzz} (2016--) runs it at scale:
+   $>$\num{13000} security vulnerabilities, $>$\num{50000} bugs,
+   \num{1000} projects}
+
+  \smallskip
+  {\scriptsize\color{KITblack70} no model of the target anywhere in the loop
+   --- it wins by raw throughput: $10^3$--$10^4$ executions per second, natively}
+  \note{Script: NOTES.md. Beats: the missing ingredient was feedback $\to$
+    walk the loop (corpus, mutate, instrumented run, keep on new coverage)
+    $\to$ OSS-Fuzz numbers $\to$ still blind mutation, the storm
+    industrialized, redeemed by throughput $\to$ transition: nothing in this
+    loop learns.}
+\end{frame}
+
+% ============================================================ MOTIVATION ====
+\begin{frame}{Motivation: two problems with the loop}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \centering
+      \textbf{1 --- hand-tuned heuristics}
+      \bigskip
+
+      \begin{tikzpicture}[font=\scriptsize]
+        \node[draw, rounded corners=2pt, fill=KITblue15, align=center,
+          minimum width=42mm, minimum height=10mm] (mut)
+          {pick a seed, \textbf{mutate} it};
+        \draw[fill=white, draw=KITblack70]
+          ($(mut.south)+(-13mm,-6mm)$) circle [radius=3mm];
+        \draw[semithick, KITred]
+          ($(mut.south)+(-13mm,-6mm)$) -- ++(120:2.6mm);
+        \node[below, align=center, text=KITblack70]
+          at ($(mut.south)+(-13mm,-9.4mm)$) {seed\\schedule};
+        \draw[fill=white, draw=KITblack70]
+          ($(mut.south)+(0mm,-6mm)$) circle [radius=3mm];
+        \draw[semithick, KITred]
+          ($(mut.south)+(0mm,-6mm)$) -- ++(45:2.6mm);
+        \node[below, align=center, text=KITblack70]
+          at ($(mut.south)+(0mm,-9.4mm)$) {operator\\mix};
+        \draw[fill=white, draw=KITblack70]
+          ($(mut.south)+(13mm,-6mm)$) circle [radius=3mm];
+        \draw[semithick, KITred]
+          ($(mut.south)+(13mm,-6mm)$) -- ++(200:2.6mm);
+        \node[below, align=center, text=KITblack70]
+          at ($(mut.south)+(13mm,-9.4mm)$) {mutation\\energy};
+      \end{tikzpicture}
+
+      \medskip
+      {\scriptsize\color{KITblack70}
+       the optimal configuration is target-dependent
+       [Woo et al.\ 2013; B\"ohme et al.\ 2016]\par}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \centering
+      \textbf{2 --- information discarded}
+      \bigskip
+
+      \begin{tikzpicture}[font=\scriptsize, >={Stealth[round]},
+          item/.style={draw, rounded corners=1.5pt, align=center,
+            inner sep=2.5pt, fill=KITblue15, minimum width=24mm}]
+        \node[item] (t1) {execution trace};
+        \node[item, below=1.4mm of t1] (t2) {hit counts};
+        \node[item, below=1.4mm of t2] (t3) {states, values};
+        \coordinate (fl) at ($(t2.east)+(3.5mm,0)$);
+        \draw[fill=KITblack15, draw=KITblack50]
+          ($(fl)+(0,10mm)$) -- ($(fl)+(8mm,2.3mm)$) -- ($(fl)+(8mm,-2.3mm)$)
+          -- ($(fl)+(0,-10mm)$) -- cycle;
+        \node[draw, rounded corners=1.5pt, fill=KITorange15, align=center,
+          inner sep=2.5pt] (out) at ($(fl)+(20mm,0)$)
+          {one scalar:\\new coverage?};
+        \draw[->] ($(fl)+(8.5mm,0)$) -- (out.west);
+        \draw[->, dashed, KITblack50]
+          ($(fl)+(4mm,-6.2mm)$) -- ++(0,-4.5mm)
+          node[below, text=KITblack50] {rest: discarded};
+      \end{tikzpicture}
+
+      \medskip
+      {\scriptsize\color{KITblack70}
+       every run produces a rich behavioral signal which gets reduced to a
+       single novelty scalar\par}
+    \end{column}
+  \end{columns}
+  \bigskip
+  \centering
+  \note{Script: NOTES.md. Two problems: decisions frozen at ship time and
+    target-independent; rich execution signal collapsed to one scalar. If
+    statefulness comes up: history-dependent coverage strengthens the case,
+    and emulator snapshots make it tractable --- it returns on the idea,
+    system and evaluation slides.}
+\end{frame}
+
+\begin{frame}{Idea: a fuzzer that acts as a reinforcement learning agent}
+  \centering
+  \begin{tikzpicture}[font=\footnotesize, >={Stealth[round]},
+      box/.style={draw, rounded corners=2pt, align=center, inner sep=4pt}]
+    \node[box, fill=KITgreen15, minimum width=52mm, minimum height=22mm] (agent) {};
+    \node[anchor=north, font=\footnotesize\bfseries]
+      at ($(agent.north)+(0,-0.8mm)$) {agent: EfficientZero};
+    \node[box, fill=white, font=\scriptsize, anchor=west]
+      at ($(agent.west)+(2mm,-2.5mm)$) (model) {\textbf{learns} a latent\\model of the target};
+    \node[box, fill=white, font=\scriptsize, anchor=east]
+      at ($(agent.east)+(-2mm,-2.5mm)$) (plan) {\textbf{plans} in it\\(MCTS)};
+    \draw[->] (model) -- (plan);
+    \node[box, fill=KITblue15, right=26mm of agent, minimum height=22mm,
+      minimum width=34mm] (env) {environment:\\target under\\emulation};
+    \draw[->, thick] ($(agent.east)+(0,6.5mm)$) -- ($(env.west)+(0,6.5mm)$)
+      node[midway, above, font=\scriptsize] {action $a_t$};
+    \draw[->, thick] ($(env.west)+(0,-6.5mm)$) -- ($(agent.east)+(0,-6.5mm)$)
+      node[midway, below, font=\scriptsize] {$o_t$, reward $r_t$};
+  \end{tikzpicture}
+
+  \medskip
+  {\footnotesize fuzzing is sequential decision making, which RL targets\\
+   EfficientZero (AlphaZero lineage): superhuman Atari/Chess/Go performance
+   with high sample efficiency}
+
+  \medskip
+  \begin{alertblock}{To the best of our knowledge}
+    the first fuzzer that plans with a \emph{learned} model of the target's
+    behavior.
+  \end{alertblock}
+  \note{Script: NOTES.md. Contrast to have ready: prior RL fuzzers are
+    model-free (Q-learning variants); prior planning fuzzers search an
+    explicitly constructed model. The trade: information per execution bought
+    with compute per execution --- cheap natively, not under emulation.}
+\end{frame}
+
+\begin{frame}{Research questions}
+  \begin{enumerate}
+    \item[\textbf{RQ1}] \textbf{Learnability} --- can EfficientZero learn a
+      useful policy from coverage-shaped rewards?
+    \bigskip
+    \item[\textbf{RQ2}] \textbf{Action space} --- program \emph{inputs} as
+      actions, or \emph{mutations on a corpus}?
+    \bigskip
+    \item[\textbf{RQ3}] \textbf{Planning} --- does planning with the learned
+      model actually help?
+  \end{enumerate}
+  \note{Script: NOTES.md. These three structure the whole talk; the
+    conclusion answers them in order. Elaborations if asked: rewards are
+    sparse and observations alias program states (RQ1); imagining how the
+    target reacts (RQ3).}
+\end{frame}
+
+% ============================================================== APPROACH ====
+\begin{frame}{EfficientZero (1): learning a model of the target}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \centering
+      \begin{tikzpicture}[font=\scriptsize, >={Stealth[round]},
+          box/.style={draw, rounded corners=2pt, align=center, fill=KITblue15,
+            minimum height=8mm, inner sep=3pt},
+          net/.style={box, fill=KITgreen15}]
+        \node[box] (obs) {$o_t$\\coverage, seed};
+        \node[box, right=6mm of obs] (s0) {$s^0$};
+        \node[box, right=10mm of s0] (s1) {$s^1$};
+        \node[box, right=10mm of s1] (s2) {$s^2$};
+        \node[right=3mm of s2] (dots) {$\cdots$};
+        \draw[->] (obs) -- (s0) node[midway, above] {$h$};
+        \draw[->] (s0) -- (s1) node[midway, above] {$g$}
+          node[midway, below, font=\tiny] {$a^1$};
+        \draw[->] (s1) -- (s2) node[midway, above] {$g$}
+          node[midway, below, font=\tiny] {$a^2$};
+        \draw[->] (s2) -- (dots);
+        \node[net, below=5mm of s0] (h0) {$p,v$};
+        \node[net, below=5mm of s1] (h1) {$p,v$};
+        \node[net, below=5mm of s2] (h2) {$p,v$};
+        \draw[->] (s0) -- (h0);
+        \draw[->] (s1) -- (h1);
+        \draw[->] (s2) -- (h2);
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.46\textwidth}
+      {\footnotesize
+      \begin{itemize}
+        \item $h$ --- representation (\textbf{observation encoding})
+        \item $g$ --- dynamics (\textbf{model behavior})
+        \item $v$ --- value function (\textbf{how good is a state?})
+        \item $p$ --- action prior (\textbf{search guiding})
+      \end{itemize}}
+    \end{column}
+  \end{columns}
+
+  \bigskip
+  \centering
+  \begin{tikzpicture}[font=\scriptsize, >={Stealth[round]},
+      box/.style={draw, rounded corners=2pt, align=center, inner sep=3pt,
+        minimum height=7mm}]
+    \node[box, fill=KITblue15] (sp) {self-play\\(\num{128} envs)};
+    \node[box, fill=KITblack15, right=12mm of sp] (buf)
+      {prioritized\\replay buffer};
+    \node[box, fill=KITgreen15, right=12mm of buf] (lrn) {GPU learner};
+    \node[right=5mm of lrn, align=left, text=KITblack70] (upd)
+      {trains all networks:\\visit counts $\to p$,\\
+       $n$-step returns $\to v$};
+    \draw[->] (sp) -- (buf)
+      node[midway, above, font=\tiny] {generate data};
+    \draw[->] (buf) -- (lrn)
+      node[midway, above, font=\tiny] {sample data};
+    \draw[->, dashed] (lrn) -- (upd);
+  \end{tikzpicture}
+
+  \smallskip
+  {\scriptsize\color{KITblack70} latents are learned, not hand-designed ---
+   and no simulator access anywhere: the model comes from trajectories alone}
+  \note{Script: NOTES.md. Key: $g$ is the model --- stepping it is an
+    imagined execution of the target. If asked what EfficientZero adds over
+    MuZero: a value-prefix head predicting cumulative reward along the
+    unroll (deliberately left off the slide), plus the consistency loss and
+    off-policy value correction.}
+\end{frame}
+
+\begin{frame}{EfficientZero (2): planning using the learned model}
+  \begin{columns}[T]
+    \begin{column}{0.46\textwidth}
+      \centering
+      \begin{tikzpicture}[font=\scriptsize, >={Stealth[round]},
+          lat/.style={draw, circle, fill=KITblue15, minimum size=6.5mm,
+            inner sep=0pt}]
+        \node[lat] (r) {$s^0$};
+        \node[draw, rounded corners=2pt, fill=KITblack15, inner sep=3pt,
+          left=9mm of r] (obs) {$o_t$};
+        \draw[->] (obs) -- (r) node[midway, above, font=\tiny] {$h$};
+        \node[above=1.5mm of r, text=KITblack70]
+          {root: priors $p$ + Dirichlet noise};
+        \node[lat, below left=6mm and 12mm of r] (c1) {};
+        \node[lat, below=6mm of r] (c2) {$s^1$};
+        \node[lat, below right=6mm and 12mm of r] (c3) {};
+        \draw[->, KITblack50] (r) -- (c1)
+          node[midway, above left, font=\tiny] {$a^1$};
+        \draw[->, thick, KITblue] (r) -- (c2)
+          node[midway, right=0.5mm, font=\tiny] {$a^2$};
+        \draw[->, KITblack50] (r) -- (c3)
+          node[midway, above right, font=\tiny] {$a^3$};
+        \node[lat, below=6mm of c2, visible on=<2->] (d) {$s^2$};
+        \draw[->, thick, KITblue, visible on=<2->] (c2) -- (d)
+          node[midway, right=0.5mm, font=\tiny, visible on=<2->]
+            {$g(s^1, a)$};
+        \node[below=2mm of d, text=KITgreen, visible on=<3->]
+          {evaluate: $v(s^2)$};
+        \draw[->, dashed, KITred, visible on=<4->] (d) to[bend left=45]
+          node[midway, left=0.5mm, font=\tiny, text=KITred,
+            visible on=<4->] {back up} (c2);
+        \draw[->, dashed, KITred, visible on=<4->] (c2) to[bend left=45] (r);
+      \end{tikzpicture}
+      {\scriptsize
+      \[
+        \mathrm{pUCT}(s,a)=
+        \underbrace{Q(s,a)}_{\substack{\text{value}\\\text{estimate}}}
+        +\;c\cdot
+        \underbrace{P(s,a)}_{\substack{\text{prior}\\\text{from }p}}
+        \cdot
+        \underbrace{\frac{\sqrt{N(s)}}{1+N(s,a)}}_{\substack{\text{fades with}\\\text{visits }N(s,a)}}
+      \]\par}
+    \end{column}
+    \begin{column}{0.52\textwidth}
+      \begin{enumerate}
+        \item<1-> \alert<1>{\textbf{select}} --- descend the tree by pUCT
+        \item<2-> \alert<2>{\textbf{expand}} --- apply $g(s,a)$
+        \item<3-> \alert<3>{\textbf{evaluate}} --- score the new node using $v$
+        \item<4-> \alert<4>{\textbf{back up}} --- update value estimate
+      \end{enumerate}
+      \medskip
+      \onslide<4->{%
+      {\footnotesize repeat for $N{=}200$ simulations (baseline)}}
+    \end{column}
+  \end{columns}
+  \medskip
+  \centering
+  \note{Script: NOTES.md. Four builds, one per step --- advance the slide as
+    each step is narrated. All four networks are on the figure: $h$ at the
+    root, $p$ in the priors, $g$ on the expand edge, $v$ at the leaf.
+    Foreshadowing to exploit later: $T$ and $\alpha$ return as the winning
+    ablation arms (T25/T15, ALPHA004); the 200 simulations return as the
+    SIMS arms in RQ3.}
+\end{frame}
+
+\begin{frame}{Fuzzing as an MDP: observations and reward}
+  \centering
+  \begin{tikzpicture}[font=\scriptsize, >={Stealth[round]},
+      box/.style={draw, rounded corners=2pt, align=center, inner sep=3pt,
+        minimum height=8.5mm}]
+    \node[box, fill=KITblack15] (hits) {basic-block\\hit counts};
+    \node[box, fill=KITblue15, right=7mm of hits] (hash)
+      {FNV hash into\\\num{4096} buckets};
+    \node[box, fill=KITblue15, right=7mm of hash] (lvl)
+      {AFL-style levels\\$\ell(n)=\min(1{+}\lfloor\log_2 n\rfloor,\ell_{\max})$};
+    \node[box, fill=KITgreen15, right=7mm of lvl] (obs)
+      {observation $o_t$\\(corpus: + seed bytes)};
+    \draw[->] (hits) -- (hash);
+    \draw[->] (hash) -- (lvl);
+    \draw[->] (lvl) -- (obs);
+  \end{tikzpicture}
+
+  \bigskip
+  \textbf{Reward: breadth + depth}
+  \[
+    r_t=\lambda\Bigl[\underbrace{\textstyle\sum_i\bigl(\ell(c_{t,i})-\ell(u_{t,i})\bigr)_+}_{\text{breadth: novelty vs.\ union } u_t}
+    +\;\omega\underbrace{\bigl(\sigma(c_t)-d_t\bigr)_+}_{\text{depth: beat record } d_t}\Bigr],
+    \qquad \sigma(c)=\textstyle\sum_i \ell(c_i)
+  \]
+
+  \medskip
+  {\footnotesize reward only \emph{new} coverage to force exploration\\
+   episodic: the emulator snapshot is restored at episode end}
+  \note{Script: NOTES.md. Marginal-only reward is time-dependent (late
+    novelty pays less); the depth-record term compensates. $\omega=0$ is the
+    W0 ablation arm later.}
+\end{frame}
+
+\begin{frame}{Two action-space formulations}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \centering
+      \textbf{input-level: actions \emph{are} the input}
+      \medskip
+
+      \begin{tikzpicture}[font=\scriptsize, >={Stealth[round]},
+          byte/.style={draw, minimum size=5.5mm, inner sep=1pt, fill=KITblue15},
+          box/.style={draw, rounded corners=2pt, align=center, inner sep=3pt,
+            minimum height=8mm}]
+        \node[byte] (b1) {$a_1$};
+        \node[byte, right=1.5mm of b1] (b2) {$a_2$};
+        \node[byte, right=1.5mm of b2] (b3) {$a_3$};
+        \node[right=1.5mm of b3] (dots) {$\cdots$};
+        \node[box, fill=KITgreen15, right=5mm of dots] (tgt)
+          {target consumes\\byte by byte};
+        \draw[->] (dots) -- (tgt);
+      \end{tikzpicture}
+
+      \smallskip
+      {\scriptsize\color{KITblack70} one byte or protocol message per step\\
+       the policy is a generative model of the input language\par}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \centering
+      \textbf{corpus-level: actions mutate a seed}
+      \medskip
+
+      \begin{tikzpicture}[font=\scriptsize, >={Stealth[round]},
+          byte/.style={draw, minimum size=5.5mm, inner sep=1pt, fill=KITblue15},
+          box/.style={draw, rounded corners=2pt, align=center, inner sep=3pt,
+            minimum height=8mm}]
+        \node[box, fill=KITgreen15] (act) {action: write $v$ at $i$\\(+ retain / discard)};
+        \node[byte, below=5mm of act.south west, anchor=north west] (c1) {\code{[}};
+        \node[byte, right=0mm of c1] (c2) {\code{[}};
+        \node[byte, right=0mm of c2, fill=KITorange15] (c3) {$v$};
+        \node[byte, right=0mm of c3] (c4) {\code{1}};
+        \node[byte, right=0mm of c4] (c5) {\code{,}};
+        \node[byte, right=0mm of c5] (c6) {\code{]}};
+        \draw[->] (act.south) -- (c3.north);
+        \node[box, fill=KITgreen15, right=5mm of c6] (run) {run the\\whole seed};
+        \draw[->] (c6) -- (run);
+      \end{tikzpicture}
+
+      \smallskip
+      {\scriptsize\color{KITblack70} deterministic byte writes on a single
+       fixed-length seed\par}
+    \end{column}
+  \end{columns}
+  \bigskip
+  \centering
+  EfficientZero needs a \textbf{discrete, deterministic} action space of tractable size
+  \note{Script: NOTES.md. Determinism is the binding constraint: MuZero-style
+    planning cannot absorb probabilistic mutation operators. Replacing
+    operator selection with direct byte writes removes the randomness and the
+    hand-crafted operator catalogue at once.}
+\end{frame}
+
+\begin{frame}{System architecture}
+  \begin{columns}[T]
+    \begin{column}{0.58\textwidth}
+      \centering
+      \begin{tikzpicture}[
+          font=\scriptsize, >={Stealth[round]},
+          layer/.style={draw, rounded corners=2pt, align=center,
+            minimum width=52mm, minimum height=11mm},
+        ]
+        \node[layer, fill=KITgreen15] (ez)
+          {\code{efficientzero} --- the RL agent};
+        \node[layer, fill=KITblue15, below=7mm of ez] (mug)
+          {\code{mugiwara} --- the fuzzing environment};
+        \node[layer, fill=KITblack15, below=7mm of mug] (mogi)
+          {MOGI --- user-space emulation (Unicorn/QEMU)};
+        \draw[->, thick, KITblack70] ([xshift=-16mm]ez.south) -- ([xshift=-16mm]mug.north)
+          node[midway, left] {action $a_t$};
+        \draw[->, thick, KITblack70] ([xshift=16mm]mug.north) -- ([xshift=16mm]ez.south)
+          node[midway, right] {$o_t$, $r_t$, done};
+        \draw[->, thick, KITblack70] ([xshift=-16mm]mug.south) -- ([xshift=-16mm]mogi.north)
+          node[midway, left] {input, run, restore};
+        \draw[->, thick, KITblack70] ([xshift=16mm]mogi.north) -- ([xshift=16mm]mug.south)
+          node[midway, right] {block hits, exit};
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.40\textwidth}
+      \begin{itemize}
+        \item implemented in Rust using \code{burn}
+        \item \code{efficientzero} is generic, not bound to fuzzing
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \note{Script: NOTES.md. Both seams are plain Rust traits. The top seam is
+    the generic RL environment interface; the bottom one is the emulator
+    contract (run under budget, block hooks, snapshot capture/restore).}
+\end{frame}
+
+% ============================================================ EVALUATION ====
+\begin{frame}{Evaluation targets}
+  \centering
+  \footnotesize
+  \begin{tabular}{@{}llllr@{}}
+    \toprule
+    Setting & Target & Role & Actions & $|\mathcal{A}|$ \\
+    \midrule
+    input & high-and-low & bandit sanity check & input bytes & 256 \\
+    input & sequence & 16-byte passcode, POMDP & bytes \code{[A-Z]} & 26 \\
+    input & open62541 & real OPC UA server, reach session & protocol messages & 15 \\
+    \addlinespace
+    corpus & cJSON & \textbf{ablation: 15 arms $\times$ 4 seeds} & position + byte write & \\
+    corpus & libxml2 & transfer of cJSON config, 400 iters & position + byte write & \\
+    corpus & picohttpparser & transfer of cJSON config, 400 iters & position + byte write & \\
+    \bottomrule
+  \end{tabular}
+  \medskip
+  \begin{itemize}
+    \item 4 PRG seeds $\times$ \num{128} environments on one L40S ---
+      cJSON \num{1.66}M executions (${\sim}21$\,h),
+      transfers \num{3.33}M (${\sim}42$\,h)
+    \item \arm{CTRL-RAND}: random search at an identical execution budget
+  \end{itemize}
+  \note{Script: NOTES.md. Input targets = correctness tests for the learner
+    (single seed, single run). The cJSON ablation sets the config; libxml2
+    and picohttpparser test transfer of that config unchanged.}
+\end{frame}
+
+% =============================================================== RESULTS ====
+\begin{frame}{RQ1: the learner solves all three input-level targets}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[slide plot, width=4.4cm, height=3.8cm,
+      title={\footnotesize high-and-low}, xlabel={iteration},
+      ylabel={high-cov.\ byte rate}, xmin=0, ymin=0, ymax=1]
+      \addplot [KIT line plot A, forget plot]
+        table [col sep=comma, x=iteration, y=rate] {figures/data/input-rate-high-and-low.csv};
+      \addplot [KITblack50, dashed, forget plot] coordinates {(0,0.01553) (99,0.01553)};
+    \end{axis}
+  \end{tikzpicture}\hfill
+  \begin{tikzpicture}
+    \begin{axis}[slide plot, width=4.4cm, height=3.8cm,
+      title={\footnotesize sequence}, xlabel={iteration},
+      ylabel={episode length}, xmin=0, ymin=0]
+      \band{L}{figures/data/input-length-sequence.csv}
+      \addplot [KITred15, forget plot] fill between [of=loL and hiL];
+      \addplot [KIT line plot B, forget plot]
+        table [col sep=comma, x=x, y=mid] {figures/data/input-length-sequence.csv};
+      \addplot [KITblack50, dashed, forget plot] coordinates {(0,16) (399,16)};
+    \end{axis}
+  \end{tikzpicture}\hfill
+  \begin{tikzpicture}
+    \begin{axis}[slide plot, width=4.4cm, height=3.8cm,
+      title={\footnotesize open62541}, xlabel={iteration},
+      ylabel={episode return}, xmin=0, ymin=0]
+      \band{R}{figures/data/input-return-open62541.csv}
+      \addplot [KITblue15, forget plot] fill between [of=loR and hiR];
+      \addplot [KIT line plot A, forget plot]
+        table [col sep=comma, x=x, y=mid] {figures/data/input-return-open62541.csv};
+    \end{axis}
+  \end{tikzpicture}
+  \begin{itemize}
+    \item \textbf{high-and-low}: paying-byte rate $>\num{0.99}$
+      (random: \num{0.016})
+    \item \textbf{sequence}: recovers the full 16-byte passcode
+    \item \textbf{open62541}: \code{hel} $\to$ \code{opn} $\to$
+      \code{create} $\to$ \code{activate} --- return 21 of 22
+  \end{itemize}
+  \note{Script: NOTES.md. Correctness tests, single seed each. open62541
+    detail: the activating step ends the episode, so the optimal policy
+    loiters --- the agent finds that. Credit assignment works on a real
+    server. high-and-low first trends \emph{below} random before learning.}
+\end{frame}
+
+\begin{frame}{RQ1: planning beats random search}
+  \begin{columns}[T]
+    \begin{column}{0.58\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \begin{axis}[slide plot, width=7.6cm, height=5.4cm,
+          xlabel={executions per environment ($10^3$)}, ylabel={blocks covered},
+          xmin=0, ymin=0, scaled x ticks=false, legend pos=south east]
+          \band{A}{figures/data/coverage-executions-cjson-t25.csv}
+          \addplot [KITblue15, forget plot] fill between [of=loA and hiA];
+          \addplot [KIT line plot A]
+            table [col sep=comma, x=x, y=mid] {figures/data/coverage-executions-cjson-t25.csv};
+          \addlegendentry{T25}
+          \band{B}{figures/data/coverage-executions-cjson-alpha004.csv}
+          \addplot [KITred15, forget plot] fill between [of=loB and hiB];
+          \addplot [KIT line plot B]
+            table [col sep=comma, x=x, y=mid] {figures/data/coverage-executions-cjson-alpha004.csv};
+          \addlegendentry{ALPHA004}
+          \band{C}{figures/data/coverage-executions-cjson-base.csv}
+          \addplot [KITorange15, forget plot] fill between [of=loC and hiC];
+          \addplot [KIT line plot C]
+            table [col sep=comma, x=x, y=mid] {figures/data/coverage-executions-cjson-base.csv};
+          \addlegendentry{BASE}
+          \band{D}{figures/data/coverage-executions-cjson-ctrl-rand.csv}
+          \addplot [KITlilac15, forget plot] fill between [of=loD and hiD];
+          \addplot [KIT line plot D]
+            table [col sep=comma, x=x, y=mid] {figures/data/coverage-executions-cjson-ctrl-rand.csv};
+          \addlegendentry{CTRL-RAND}
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.40\textwidth}
+      cJSON, identical execution budget, medians over 4 seeds
+      $\times$ 128 environments:
+      \begin{itemize}
+        \item bootstrap corpus: \num{240} blocks
+        \item random control: \num{542}
+        \item baseline config: \num{645}
+        \item best arm (\arm{T25}): \alert{\num{958} ---
+          \num{1.77}$\times$ the random control}
+      \end{itemize}
+      \medskip
+    \end{column}
+  \end{columns}
+  \note{Same budget, so this is a fair comparison against undirected mutation
+    --- not against AFL++ (none was run; that is on the limitations slide).}
+\end{frame}
+
+\begin{frame}{Ablation: exploration is most important}
+  \begin{columns}[T]
+    \begin{column}{0.56\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \begin{axis}[slide plot, width=7.8cm, height=6.4cm,
+          xlabel={blocks covered at end of training},
+          axis y line=left, axis x line=bottom, grid=major,
+          ytick={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14},
+          yticklabels={CTRL-RAND,BASE,W0,SIMS100,SIMS50,SMALL,NOSEED,MEDIUM,EDGE,NOCOV,REUSE4,ALPHA010,ALPHA004,T25,T15},
+          yticklabel style={font=\tiny}, ymin=-0.7, ymax=14.7, xmin=0]
+          \addplot [KIT scatter plot A, mark size=1.5pt, opacity=0.75]
+            table [col sep=comma, x=coverage, y=y] {figures/data/ablation-strip.csv};
+          \addplot [only marks, mark=|, mark size=4pt, KITred, very thick]
+            table [col sep=comma, x=coverage, y=y] {figures/data/ablation-strip-median.csv};
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.42\textwidth}
+      15 arms $\times$ 4 seeds; dots are seeds, bars medians.
+      \begin{itemize}
+        \item \textbf{constant high temperature wins}: \arm{T25} \num{958},
+          \arm{T15} \num{936} vs.\ baseline \num{645}
+        \item scaled Dirichlet noise adds more: \arm{ALPHA004} \num{876}
+        \item most other knobs move less than the within-arm seed spread
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \note{Every trained arm beats random. Caveat to have ready: the arm labelled
+    FULL in the thesis tables is this strip's MEDIUM --- its configuration is
+    identical to BASE (the capacity override was a builder no-op), so it is
+    best read as a baseline replication (680 vs 645), i.e.\ run-to-run
+    variance, not a capacity result. SMALL's proper control is that
+    replication (683 vs 680: no effect).}
+\end{frame}
+
+\begin{frame}{RQ3: planning helps early, then fades}
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \begin{axis}[slide plot, width=7.0cm, height=5.0cm,
+          xlabel={learner iteration},
+          ylabel={KL(search $\|$ prior) in nats},
+          xmin=0, ymin=0, legend pos=north east]
+          \addplot [KIT line plot A]
+            table [col sep=comma, x=iteration, y=selfplay_kl_mean] {figures/data/improvement-cjson.csv};
+          \addlegendentry{cJSON}
+          \addplot [KIT line plot B]
+            table [col sep=comma, x=iteration, y=selfplay_kl_mean] {figures/data/improvement-libxml2.csv};
+          \addlegendentry{libxml2}
+          \addplot [KIT line plot C]
+            table [col sep=comma, x=iteration, y=selfplay_kl_mean] {figures/data/improvement-picohttpparser.csv};
+          \addlegendentry{picohttpparser}
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.43\textwidth}
+      How far MCTS moves the policy away from the network prior:
+      \begin{itemize}
+        \item falls near-monotonically on all targets
+          (cJSON \num{0.99} $\to$ \num{0.28} nats)
+        \item planning contributes most in the first iterations,
+          little at the end
+      \end{itemize}
+      \medskip
+      Simulation-count arms (cJSON):
+      \smallskip
+
+      \footnotesize
+      \begin{tabular}{@{}lrrr@{}}
+        \toprule
+        & \arm{SIMS50} & \arm{SIMS100} & \arm{BASE} \\
+        \midrule
+        blocks & 687 & 640 & 645 \\
+        hours & 7.6 & 11.5 & 21.3 \\
+        \bottomrule
+      \end{tabular}
+    \end{column}
+  \end{columns}
+  \medskip
+  Coverage is flat across $4\times$ less search while wall-clock scales
+  linearly with it --- on targets this small, cheap planning is enough.
+  \note{Honest RQ3 answer: yes, the learned model is good enough to plan in
+    (the search systematically improves on the prior, return grows), but the
+    marginal value of many simulations is near zero here. Open question:
+    artefact of small PUTs, or a general limit? Also on the threats list: no
+    1-simulation arm was run, so `value function only' is not fully excluded.}
+\end{frame}
+
+\begin{frame}{The agent discovers input structure}
+  \centering
+  \footnotesize
+  \begin{tabular}{@{}llrl@{}}
+    \toprule
+    Target & Seed/arm & Blocks & Highest-coverage input \\
+    \midrule
+    cJSON & 0 / \arm{T25} & 789 & \code{[[[[[1,[[8[....8} \\
+    cJSON & 3 / \arm{ALPHA004} & 831 & \code{[[[[[2,[[[[[1...} \\
+    libxml2 & 3 / \arm{LIBXML2-400} & 4382 & \code{<:>/..<P.\&.<:....4<b...\&H:..<...} \\
+    picohttpparser & 0 / \arm{PICOHTTPPARSER-400} & 68 & \code{AAk  .,T.\%...?...4.b.  .lr......} \\
+    \bottomrule
+  \end{tabular}
+  \begin{itemize}
+    \item all four cJSON seeds, three different arms, converge on nested arrays
+    \item libxml2: nested tags; coverage \num{1416} $\to$ \num{5281} blocks
+    \item structural byte rate climbs from chance to \num{0.90} /
+      \num{0.73} / \num{0.73} (cJSON / libxml2 / picohttpparser)
+    \item picohttpparser: saturates at \num{81} blocks
+  \end{itemize}
+  \note{Script: NOTES.md. A recursive-descent parser pays coverage for
+    nesting --- the agent found that property, not us. The motif reproduces
+    across PRG seeds and arms, so it is a property of target + reward, not
+    one lucky run.}
+\end{frame}
+
+\begin{frame}{Performance degrades after a while}
+  \begin{columns}[T]
+    \begin{column}{0.56\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \begin{axis}[slide plot, width=7.4cm, height=5.4cm,
+          xlabel={training progress (fraction of iterations)},
+          ylabel={structural byte rate},
+          xmin=0, xmax=1, ymin=0, ymax=1,
+          legend style={at={(0.55,0.03)}, anchor=south}]
+          \band{A}{figures/data/structural-decay-cjson.csv}
+          \addplot [KITblue15, forget plot] fill between [of=loA and hiA];
+          \addplot [KIT line plot A]
+            table [col sep=comma, x=x, y=mid] {figures/data/structural-decay-cjson.csv};
+          \addlegendentry{cJSON}
+          \band{B}{figures/data/structural-decay-libxml2.csv}
+          \addplot [KITred15, forget plot] fill between [of=loB and hiB];
+          \addplot [KIT line plot B]
+            table [col sep=comma, x=x, y=mid] {figures/data/structural-decay-libxml2.csv};
+          \addlegendentry{libxml2}
+          \band{C}{figures/data/structural-decay-picohttpparser.csv}
+          \addplot [KITorange15, forget plot] fill between [of=loC and hiC];
+          \addplot [KIT line plot C]
+            table [col sep=comma, x=x, y=mid] {figures/data/structural-decay-picohttpparser.csv};
+          \addlegendentry{picohttpparser}
+          \addplot [only marks, mark=*, mark size=1.6pt, KITblack, forget plot]
+            coordinates {(0.2408,0.9038) (0.3058,0.7255) (0.1128,0.7323)};
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.42\textwidth}
+      \begin{itemize}
+        \item every target \emph{ends below its peak} (peaks at
+          \SI{24}{} / \SI{31}{} / \SI{11}{\percent} of the budget)
+        \item MCTS action visit entropy collapses somewhat
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \note{This connects back to the ablation: the winning arms are exactly the
+    ones that inject more exploration. Entropy heatmap is in the backup.}
+\end{frame}
+
+% ============================================================ DISCUSSION ====
+\begin{frame}{Limitations and threats to validity}
+  \begin{columns}[T]
+    \begin{column}{0.44\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \begin{axis}[slide plot, width=4.2cm, height=4.6cm, xbar,
+          xmode=log, xmin=1, xmax=90000,
+          ytick={0,1,2,3},
+          yticklabels={this work, no MCTS, solo (est.), native harness},
+          y dir=reverse, ymin=-0.6, ymax=3.6,
+          xlabel={guest executions per second},
+          bar width=7pt, clip=false]
+          \addplot [draw=KITblue, fill=KITblue15]
+            coordinates {(22,0) (41,1) (66,2) (10000,3)};
+          \node[font=\scriptsize, anchor=west] at (axis cs:22,0) {22};
+          \node[font=\scriptsize, anchor=west] at (axis cs:41,1) {41};
+          \node[font=\scriptsize, anchor=west] at (axis cs:66,2) {${\sim}66$};
+          \node[font=\scriptsize, anchor=east, text=white]
+            at (axis cs:10000,3) {${\sim}10^4$};
+        \end{axis}
+      \end{tikzpicture}
+
+      \smallskip
+      {\scriptsize\color{KITblack70} measured under 8-way GPU contention;
+       the gap to native is ${\sim}3$ orders of magnitude\par}
+    \end{column}
+    \begin{column}{0.54\textwidth}
+      \begin{itemize}
+        \item \textbf{throughput is very low}: emulation and model-based RL
+          require high execution resources, slowing down fuzzing
+        \item \textbf{high experiment variance}: only 5 of 13 trained arms
+          separate cleanly from the baseline, more runs are needed
+        \item \textbf{single fixed-length seed}: full corpus formulation
+          with multiple seeds not evaluated
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \note{Script: NOTES.md. Bring the NOCOV point up yourself --- better than
+    having it raised from the audience (reading: on a target this small the
+    seed alone may carry enough signal). Also have ready: no 1-simulation
+    arm, and wave-1 vs wave-2 revisions differ across ablation arms.}
+\end{frame}
+
+\begin{frame}{Conclusions}
+  \begin{enumerate}
+    \item[\textbf{RQ1}] \textbf{Yes} --- useful policies on all six targets,
+      up to an OPC UA session and invented JSON/XML nesting.
+    \item[\textbf{RQ2}] \textbf{Both work; corpus-level is more flexible}
+      --- classical CGF without hand-crafted operators.
+    \item[\textbf{RQ3}] \textbf{Planning helps early, fades late} ---
+      simulation count barely moves final coverage at this scale.
+  \end{enumerate}
+  \medskip
+  \begin{alertblock}{Takeaway}
+    Model-based deep RL can drive a fuzzer end-to-end. The main obstacle is
+    execution throughput.
+  \end{alertblock}
+  \medskip
+  \textbf{Future work}: full seed corpus (action-space scaling via
+  Sampled/Gumbel MuZero, EfficientZero~V2) \textperiodcentered{}
+  hybrid CGF + RL loop \textperiodcentered{} larger targets \textperiodcentered{}
+  better implementation
+  \note{End on the reframing: this thesis moves the question from `can RL
+    fuzz?' to `can it become cheap enough?'.}
+\end{frame}
+
+% ================================================================ BACKUP ====
+\appendix
+
+\begin{frame}[standout]
+  Backup
+\end{frame}
+
+\begin{frame}{Backup: campaign inventory}
+  \centering
+  \scriptsize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}llrrrrrrl@{}}
+    \toprule
+    Target & Arm & $n$ & Iter. & $T$ & $\xi$ & Cov. & Range & Hours \\
+    \midrule
+    cJSON & \arm{ALPHA004} & 4 & 200 & sched. & 0.04 & 876 & 829--880 & 22.0 \\
+    cJSON & \arm{ALPHA010} & 4 & 200 & sched. & 0.1 & 817 & 666--897 & 21.8 \\
+    cJSON & \arm{BASE} & 4 & 200 & sched. & 1 & 645 & 613--668 & 21.3 \\
+    cJSON & \arm{CTRL-RAND} & 4 & 200 & sched. & 1 & 542 & 540--543 & 11.3 \\
+    cJSON & \arm{EDGE} & 4 & 200 & sched. & 1 & 708 & 660--730 & 21.7 \\
+    cJSON & \arm{MEDIUM} & 4 & 200 & sched. & 1 & 680 & 656--754 & 20.8 \\
+    cJSON & \arm{NOCOV} & 4 & 200 & sched. & 1 & 755 & 678--799 & 21.1 \\
+    cJSON & \arm{NOSEED} & 4 & 200 & sched. & 1 & 669 & 610--754 & 21.6 \\
+    cJSON & \arm{REUSE4} & 4 & 200 & sched. & 1 & 734 & 684--866 & 30.6 \\
+    cJSON & \arm{SIMS100} & 4 & 197--200 & sched. & 1 & 640 & 620--671 & 11.5 \\
+    cJSON & \arm{SIMS50} & 4 & 200 & sched. & 1 & 687 & 629--697 & 7.6 \\
+    cJSON & \arm{SMALL} & 4 & 200 & sched. & 1 & 683 & 635--695 & 21.8 \\
+    cJSON & \arm{T15} & 4 & 200 & 1.5 & 1 & 936 & 926--1120 & 21.0 \\
+    cJSON & \arm{T25} & 4 & 192--198 & 2.5 & 1 & 958 & 938--969 & 20.8 \\
+    cJSON & \arm{W0} & 4 & 200 & sched. & 1 & 641 & 636--648 & 19.5 \\
+    libxml2 & \arm{LIBXML2-400} & 4 & 400 & 2 & 0.039 & 5281 & 5085--5419 & 42.1 \\
+    picohttp. & \arm{PICO...-400} & 4 & 400 & 2 & 0.039 & 81 & 80--81 & 40.7 \\
+    \bottomrule
+  \end{tabular}
+  \note{The arm the thesis tables label FULL is listed here as MEDIUM: its
+    recorded configuration equals BASE (builder default already Medium), so
+    it replicates the baseline on the wave-2 revision.}
+\end{frame}
+
+\begin{frame}{Backup: deep-seed rate (primary cJSON metric)}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \footnotesize
+      Percentage of episodes whose best seed reaches the 99th percentile of
+      the \arm{CTRL-RAND} distribution:
+      \medskip
+
+      \begin{tabular}{@{}lr@{}}
+        \toprule
+        Arm & Mean \\
+        \midrule
+        \arm{CTRL-RAND} & 1.08 \\
+        \arm{SIMS50} & 68.68 \\
+        \arm{BASE} & 76.66 \\
+        \arm{NOCOV} & 77.98 \\
+        \arm{T25} & 80.21 \\
+        \arm{W0} & 81.63 \\
+        \arm{EDGE} & 82.51 \\
+        \arm{REUSE4} & \textbf{87.46} \\
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.46\textwidth}
+      \begin{itemize}
+        \item complements final union coverage: measures how reliably
+          episodes find deep seeds, not just the best one
+        \item every trained arm sits between \SI{68.7}{} and
+          \SI{87.5}{\percent}; random at \SI{1.08}{\percent}
+        \item note the ranking differs from final coverage
+          (\arm{REUSE4} leads here, \arm{T25} there)
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Backup: coverage against wall-clock (cJSON)}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[slide plot, width=10.5cm, height=5.8cm,
+      xlabel={wall-clock hours}, ylabel={blocks covered},
+      xmin=0, ymin=0, legend pos=south east]
+      \band{A}{figures/data/coverage-wallclock-cjson-t25.csv}
+      \addplot [KITblue15, forget plot] fill between [of=loA and hiA];
+      \addplot [KIT line plot A]
+        table [col sep=comma, x=x, y=mid] {figures/data/coverage-wallclock-cjson-t25.csv};
+      \addlegendentry{T25}
+      \band{B}{figures/data/coverage-wallclock-cjson-alpha004.csv}
+      \addplot [KITred15, forget plot] fill between [of=loB and hiB];
+      \addplot [KIT line plot B]
+        table [col sep=comma, x=x, y=mid] {figures/data/coverage-wallclock-cjson-alpha004.csv};
+      \addlegendentry{ALPHA004}
+      \band{C}{figures/data/coverage-wallclock-cjson-base.csv}
+      \addplot [KITorange15, forget plot] fill between [of=loC and hiC];
+      \addplot [KIT line plot C]
+        table [col sep=comma, x=x, y=mid] {figures/data/coverage-wallclock-cjson-base.csv};
+      \addlegendentry{BASE}
+      \band{D}{figures/data/coverage-wallclock-cjson-ctrl-rand.csv}
+      \addplot [KITlilac15, forget plot] fill between [of=loD and hiD];
+      \addplot [KIT line plot D]
+        table [col sep=comma, x=x, y=mid] {figures/data/coverage-wallclock-cjson-ctrl-rand.csv};
+      \addlegendentry{CTRL-RAND}
+    \end{axis}
+  \end{tikzpicture}
+
+  \smallskip
+  \footnotesize The random control finishes its budget in half the time ---
+  search costs a factor of ${\sim}2$ in throughput.
+\end{frame}
+
+\begin{frame}{Backup: saturation}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[slide plot, width=10.5cm, height=5.8cm,
+      xlabel={executions per environment}, ylabel={fraction of final coverage},
+      xmin=0, ymin=0, ymax=1.02, legend pos=south east]
+      \band{A}{figures/data/saturation-cjson.csv}
+      \addplot [KITblue15, forget plot] fill between [of=loA and hiA];
+      \addplot [KIT line plot A]
+        table [col sep=comma, x=x, y=mid] {figures/data/saturation-cjson.csv};
+      \addlegendentry{cJSON}
+      \band{B}{figures/data/saturation-libxml2.csv}
+      \addplot [KITred15, forget plot] fill between [of=loB and hiB];
+      \addplot [KIT line plot B]
+        table [col sep=comma, x=x, y=mid] {figures/data/saturation-libxml2.csv};
+      \addlegendentry{libxml2}
+      \band{C}{figures/data/saturation-picohttpparser.csv}
+      \addplot [KITorange15, forget plot] fill between [of=loC and hiC];
+      \addplot [KIT line plot C]
+        table [col sep=comma, x=x, y=mid] {figures/data/saturation-picohttpparser.csv};
+      \addlegendentry{picohttpparser}
+    \end{axis}
+  \end{tikzpicture}
+
+  \smallskip
+  \footnotesize picohttpparser reaches \SI{90}{\percent} of its final coverage
+  within the first quarter of the budget and adds nothing in the last quarter.
+\end{frame}
+
+\begin{frame}{Backup: reward density in the replay buffer}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[slide plot, width=10.5cm, height=5.8cm,
+      xlabel={learner iteration}, ylabel={share of buffer steps with reward},
+      xmin=0, ymin=0, legend pos=north west]
+      \addplot [KIT line plot A]
+        table [col sep=comma, x=iteration, y=rewarded_step_share] {figures/data/buffer-cjson.csv};
+      \addlegendentry{cJSON}
+      \addplot [KIT line plot B]
+        table [col sep=comma, x=iteration, y=rewarded_step_share] {figures/data/buffer-libxml2.csv};
+      \addlegendentry{libxml2}
+      \addplot [KIT line plot C]
+        table [col sep=comma, x=iteration, y=rewarded_step_share] {figures/data/buffer-picohttpparser.csv};
+      \addlegendentry{picohttpparser}
+    \end{axis}
+  \end{tikzpicture}
+
+  \smallskip
+  \footnotesize The share of reward-carrying transitions climbs throughout
+  training (cJSON \num{0.012} $\to$ \num{0.147}) --- the agent increasingly
+  picks actions that still find new coverage.
+\end{frame}
+
+\begin{frame}{Backup: per-position entropy collapse (cJSON)}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[thesis matrix plot, width=10.5cm, height=4.6cm,
+      tick label style={font=\scriptsize}, label style={font=\footnotesize},
+      xlabel={learner iteration}, ylabel={episode step},
+      colormap/viridis, colorbar horizontal,
+      colorbar style={font=\scriptsize, height=0.14cm, axis lines=box,
+        axis line style={KITblack50, thin}, tick align=outside,
+        at={(0.5,-0.55)}, anchor=north, xtick align=outside,
+        width=0.9*\pgfkeysvalueof{/pgfplots/parent axis width}}]
+      \addplot [matrix plot*, point meta=explicit, mesh/cols=22]
+        table [col sep=comma, x=iteration, y=position, meta=value] {figures/data/collapse-entropy-cjson.csv};
+    \end{axis}
+  \end{tikzpicture}
+
+  \smallskip
+  \footnotesize MCTS root visit entropy per episode step. Entropy falls after
+  ${\sim}23$ iterations; early positions collapse first while later steps
+  keep exploring.
+\end{frame}
+
+\begin{frame}{Backup: throughput accounting and model sizes}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \textbf{Throughput} (derived: $128$ envs $\times$ execs/env $/$ hours;
+      all under 8-way GPU sharing on one L40S)
+      \smallskip
+
+      \footnotesize
+      \begin{tabular}{@{}lrr@{}}
+        \toprule
+        Arm & Total execs & Execs/s \\
+        \midrule
+        cJSON \arm{BASE} (200 sims) & 1.66M & ${\sim}22$ \\
+        cJSON \arm{SIMS100} & 1.66M & ${\sim}40$ \\
+        cJSON \arm{SIMS50} & 1.66M & ${\sim}61$ \\
+        cJSON \arm{CTRL-RAND} (no search) & 1.66M & ${\sim}41$ \\
+        libxml2 / picohttp.\ main & 3.33M & ${\sim}22$ \\
+        \bottomrule
+      \end{tabular}
+
+      \smallskip
+      \normalsize solo (uncontended): roughly $3\times$ these numbers
+      (\SI{96}{\second} vs.\ \SI{300}{\second} per iteration)
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \textbf{Model parameters} (Small / Medium presets)
+      \smallskip
+
+      \footnotesize
+      \begin{tabular}{@{}lrr@{}}
+        \toprule
+        Target & Small & Medium \\
+        \midrule
+        cJSON & 0.70M & 1.88M \\
+        libxml2 & 2.28M & 5.03M \\
+        \bottomrule
+      \end{tabular}
+
+      \smallskip
+      \normalsize observation sizes: \num{8247} (cJSON:
+      \num{4096} buckets + 16-byte seed), \num{32871} (libxml2)
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\end{document}
